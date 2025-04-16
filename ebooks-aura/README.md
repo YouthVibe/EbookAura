@@ -1,36 +1,135 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EbookAura Frontend
 
-## Getting Started
+This is the frontend application for EbookAura, built with Next.js to provide a modern and responsive user interface for browsing, viewing, and downloading e-books.
 
-First, run the development server:
+## Technology Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Next.js** - React framework with server-side rendering
+- **React** - UI library
+- **CSS Modules** - Scoped styling
+- **React Icons** - Icon library
+- **Next Router** - Client-side routing
+
+## Features
+
+### User Features
+- Browse books by category, tag, or search term
+- View book details, including cover, description, and metadata
+- View PDF books directly in the browser
+- Download PDF books for offline reading
+- Rate and review books
+- User authentication (login, register, profile management)
+- Responsive design for mobile and desktop
+
+### Admin Features
+- Upload new books with metadata
+- Upload cover images
+- Manage existing books
+- View statistics on book views and downloads
+
+## Pages and Components
+
+### Main Pages
+- **Home** (`/`) - Landing page with featured books
+- **Search** (`/search`) - Book search and browsing
+- **Book Details** (`/books/[id]`) - Individual book page with download/view options
+- **Login** (`/login`) - User login page
+- **Register** (`/register`) - New user registration
+- **Profile** (`/profile`) - User profile management
+- **Admin Dashboard** (`/admin`) - Admin tools (protected route)
+
+### Key Components
+- **BookCard** - Displays book information in grid/list views
+- **BookReview** - Handles book ratings and reviews
+- **SearchFilters** - Provides filtering options for book search
+- **BookUploadForm** - For admins to upload new books
+- **AuthContext** - Manages authentication state
+
+## PDF Handling
+
+The application provides two methods to interact with PDFs:
+
+1. **View PDF** - Opens the PDF in a new browser tab for online reading
+2. **Download PDF** - Downloads the PDF file to the user's device with proper filename
+
+The download functionality has been implemented with a multi-step approach:
+- Fetches PDF data from the backend proxy
+- Creates a Blob with the PDF data
+- Generates a download link with the proper filename
+- Triggers the download programmatically
+
+## Setup and Installation
+
+1. Install dependencies:
+   ```
+   npm install
+   ```
+
+2. Configure environment variables (create `.env.local` file):
+   ```
+   NEXT_PUBLIC_API_URL=http://localhost:5000/api
+   ```
+
+3. Run the development server:
+   ```
+   npm run dev
+   ```
+
+4. Build for production:
+   ```
+   npm run build
+   ```
+
+5. Start the production server:
+   ```
+   npm start
+   ```
+
+## API Integration
+
+The frontend communicates with the backend API using fetch requests. The main API endpoints used are:
+
+- `/api/books` - Get book listings and details
+- `/api/books/:id/pdf` - View PDF in browser
+- `/api/books/:id/pdf-content` - Download PDF file
+- `/api/auth/*` - Authentication endpoints
+- `/api/upload/*` - File upload endpoints (admin only)
+
+## Folder Structure
+
+```
+src/
+├── app/                # Next.js App Router
+│   ├── api/            # API routes
+│   ├── books/          # Book-related pages
+│   ├── components/     # Shared React components
+│   ├── context/        # React context providers (e.g., AuthContext)
+│   ├── admin/          # Admin pages and components
+│   ├── profile/        # User profile pages
+│   └── utils/          # Utility functions
+├── public/             # Static assets
+└── styles/             # Global styles
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## State Management
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+- **Local state** - React useState for component-level state
+- **Context API** - For global state like authentication
+- **Server components** - For data fetching and initial state
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Browser Compatibility
 
-## Learn More
+The application is tested and works on:
+- Chrome (latest)
+- Firefox (latest)
+- Safari (latest)
+- Edge (latest)
+- Mobile browsers (iOS Safari, Android Chrome)
 
-To learn more about Next.js, take a look at the following resources:
+## Contributing
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request

@@ -138,10 +138,9 @@ const uploadPdf = async (req, res) => {
       return res.status(400).json({ message: 'Cover image size should be less than 5MB' });
     }
 
-    // Create a sanitized filename for the PDF based on title
+    // No need for this variable anymore since we use folder parameter
     const sanitizedTitle = title.replace(/[^a-zA-Z0-9]/g, '_');
     const uniqueId = Date.now();
-    const pdfPublicId = `ebook_aura/pdfs/${sanitizedTitle}_${uniqueId}`;
     
     // Upload cover image to Cloudinary first (smaller file, less likely to timeout)
     let coverResult;
@@ -169,9 +168,17 @@ const uploadPdf = async (req, res) => {
     try {
       console.log(`Attempting to upload PDF: ${pdfFile.name}, Size: ${(pdfFile.size / (1024 * 1024)).toFixed(2)}MB, MIME: ${pdfFile.mimetype}`);
       
+      // Generate a more readable public ID
+      const timestamp = Date.now();
+      const sanitizedTitle = title.replace(/[^a-zA-Z0-9]/g, '_');
+      
+      console.log(`Using public ID for PDF: ${sanitizedTitle}_${timestamp} in folder ebook_aura/pdfs`);
+      
+      // Upload the PDF as a raw file to Cloudinary
       pdfResult = await cloudinary.uploader.upload(pdfFile.tempFilePath, {
-        public_id: pdfPublicId,
-        resource_type: 'raw',
+        public_id: sanitizedTitle + '_' + timestamp,
+        folder: 'ebook_aura/pdfs',
+        resource_type: 'raw', // This is critical - raw files for PDF
         type: 'upload',
         tags: ['pdf', 'ebook'],
         use_filename: true,
@@ -179,6 +186,7 @@ const uploadPdf = async (req, res) => {
       });
       
       console.log(`PDF upload successful, URL: ${pdfResult.secure_url}`);
+      console.log(`PDF public ID: ${pdfResult.public_id}`);
       
       // Remove PDF file from temp directory
       fs.unlinkSync(pdfFile.tempFilePath);
@@ -186,6 +194,7 @@ const uploadPdf = async (req, res) => {
       // If PDF upload fails, we need to clean up the cover image that was already uploaded
       if (coverResult && coverResult.public_id) {
         await cloudinary.uploader.destroy(coverResult.public_id);
+        console.log(`Deleted cover image ${coverResult.public_id} after PDF upload failure`);
       }
       
       console.error('Error uploading PDF:', uploadError);
@@ -195,9 +204,13 @@ const uploadPdf = async (req, res) => {
       });
     }
     
-    // Store the direct raw URL without any content-disposition transformations
-    // The endpoint will handle adding the appropriate headers based on view/download
+    // Store the direct raw URL for the PDF
+    // We'll handle content-disposition in the PDF endpoint
     const pdfUrl = pdfResult.secure_url;
+    
+    // For debugging - log the PDF URL structure
+    console.log('PDF URL saved to database:', pdfUrl);
+    console.log('PDF ID saved to database:', pdfResult.public_id);
     
     // Create new book in database
     const book = await Book.create({
@@ -213,6 +226,10 @@ const uploadPdf = async (req, res) => {
       tags: req.body.tags ? req.body.tags.split(',').map(tag => tag.trim()) : [],
       uploadedBy: req.user._id
     });
+    
+    console.log(`Book created successfully with ID: ${book._id}`);
+    console.log(`PDF URL stored: ${book.pdfUrl}`);
+    console.log(`PDF ID stored: ${book.pdfId}`);
     
     res.status(201).json({
       success: true,

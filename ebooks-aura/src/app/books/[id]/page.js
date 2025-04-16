@@ -63,15 +63,48 @@ export default function BookPage() {
         method: 'POST',
       });
 
-      // Get a sanitized file name
+      // Get a sanitized file name for the PDF
       const fileName = `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
       
-      // Create the download URL with parameters to indicate this is a download request
-      // and that the download has already been counted
-      const downloadUrl = `/api/books/${id}/pdf?download=true&counted=true`;
-      
-      // Open in new tab instead of using anchor element for more reliable downloads
-      window.open(downloadUrl, '_blank');
+      try {
+        // Use our backend proxy to fetch the PDF content
+        console.log(`Fetching PDF content via backend proxy for book: ${book.title}`);
+        
+        // Fetch the PDF data from our proxy endpoint
+        const proxyUrl = `/api/books/${id}/pdf-content?download=true&counted=true`;
+        const response = await fetch(proxyUrl);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
+        }
+        
+        // Get the PDF content as a blob
+        const pdfBlob = await response.blob();
+        
+        // Create a blob URL for the PDF
+        const blobUrl = URL.createObjectURL(pdfBlob);
+        
+        // Create a link element to trigger the download
+        const downloadLink = document.createElement('a');
+        downloadLink.href = blobUrl;
+        downloadLink.download = fileName;
+        downloadLink.style.display = 'none';
+        
+        // Add the link to the document and click it
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        
+        // Clean up by removing the link and revoking the blob URL
+        document.body.removeChild(downloadLink);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+        
+        console.log(`PDF downloaded as: ${fileName}`);
+      } catch (directDownloadError) {
+        console.warn('Direct download failed, using fallback:', directDownloadError);
+        // Fallback to original backend endpoint if proxy fails
+        const fallbackUrl = `/api/books/${id}/pdf?download=true&counted=true`;
+        window.open(fallbackUrl, '_blank');
+      }
       
       // Update local state to show download count increased
       setBook({
@@ -95,11 +128,24 @@ export default function BookPage() {
       setViewing(true);
       console.log('Viewing PDF for book ID:', id);
       
-      // Use our backend endpoint that serves PDFs with proper headers for viewing
-      // The counted parameter ensures we don't double-count this as a download
-      const pdfUrl = `/api/books/${id}/pdf?counted=true`;
-      window.open(pdfUrl, '_blank');
-      
+      // For viewing, we'll open the PDF directly in a new tab
+      // Use the original URL which should work for viewing
+      try {
+        // Use the existing PDF endpoint which sets proper headers for viewing
+        const viewUrl = `/api/books/${id}/pdf?counted=true`;
+        console.log(`Opening PDF for viewing at: ${viewUrl}`);
+        window.open(viewUrl, '_blank');
+      } catch (viewError) {
+        console.warn('Error viewing PDF:', viewError);
+        // Fallback - try direct URL if our endpoint fails
+        if (book.pdfUrl) {
+          const directUrl = book.pdfUrl.endsWith('.pdf') ? book.pdfUrl : `${book.pdfUrl}.pdf`;
+          console.log(`Fallback: Opening PDF directly at: ${directUrl}`);
+          window.open(directUrl, '_blank');
+        } else {
+          throw new Error('No PDF URL available for viewing');
+        }
+      }
     } catch (err) {
       console.error('Error viewing PDF:', err);
     } finally {

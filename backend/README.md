@@ -1,92 +1,119 @@
 # EbookAura Backend
 
-This is the backend API for the EbookAura application with authentication system and Cloudinary integration.
+This is the backend API for the EbookAura e-book management platform. It provides RESTful API endpoints for managing books, user authentication, and file uploads.
 
-## Features
+## Technology Stack
 
-- User authentication with JWT
-- Email verification
-- Password reset functionality
-- Profile management
-- Cloudinary integration for file uploads
-- Error handling middleware
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js (>=14.x)
-- MongoDB
-- Gmail account (for sending emails)
-- Cloudinary account
-
-### Installation
-
-1. Clone the repository
-2. Install dependencies:
-   ```
-   npm install
-   ```
-3. Create a `.env` file in the root directory with the following variables:
-   ```
-   PORT=5000
-   MONGO_URI=your_mongodb_connection_string
-   JWT_SECRET=your_jwt_secret
-   EMAIL_USER=your_gmail_email
-   EMAIL_PASS=your_gmail_app_password
-   NODE_ENV=development
-   CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
-   CLOUDINARY_API_KEY=your_cloudinary_api_key
-   CLOUDINARY_API_SECRET=your_cloudinary_api_secret
-   ```
-
-### Running the Server
-
-Development mode:
-```
-npm run dev
-```
-
-Production mode:
-```
-npm start
-```
+- **Node.js** - JavaScript runtime
+- **Express** - Web framework
+- **MongoDB** - Database
+- **Mongoose** - MongoDB ODM (Object Data Modeling)
+- **JWT** - JSON Web Tokens for authentication
+- **Cloudinary** - Cloud storage for books and images
+- **Express-fileupload** - Middleware for handling file uploads
 
 ## API Endpoints
 
 ### Authentication
 
-- `POST /api/users` - Register a new user
-- `POST /api/users/verify-email` - Verify email with code
-- `POST /api/users/login` - Login user
-- `POST /api/users/forgot-password` - Request password reset
-- `PUT /api/users/reset-password/:resetToken` - Reset password
-- `POST /api/users/resend-verification` - Resend verification email
+- `POST /api/auth/register` - Register a new user
+- `POST /api/auth/login` - Login a user and get JWT token
+- `GET /api/auth/me` - Get current user profile
+- `POST /api/auth/forgot-password` - Request password reset
+- `PUT /api/auth/reset-password/:resetToken` - Reset password with token
 
-### User Profile
+### Books
 
-- `GET /api/users/profile` - Get user profile (protected)
-- `PUT /api/users/profile` - Update user profile (protected)
-- `PUT /api/users/profile/image` - Update profile image (protected)
+- `GET /api/books` - Get all books (with filters and pagination)
+- `GET /api/books/:id` - Get a specific book by ID
+- `GET /api/books/categories` - Get list of book categories
+- `GET /api/books/tags` - Get list of book tags
+- `GET /api/books/:id/pdf` - View or download a book PDF
+- `GET /api/books/:id/pdf-content` - Get raw PDF content for download
+- `POST /api/books/:id/download` - Increment download count for a book
 
-### File Upload
+### Reviews
 
-- `POST /api/upload` - Upload a file to Cloudinary (protected)
-- `DELETE /api/upload/:publicId` - Delete a file from Cloudinary (protected)
+- `GET /api/books/:bookId/reviews` - Get reviews for a book
+- `GET /api/books/:bookId/rating` - Get average rating for a book
+- `POST /api/books/:bookId/reviews` - Create a new review for a book
 
-## Authentication Flow
+### Uploads (Admin Only)
 
-1. User registers with email, name, and password
-2. A verification code is sent to the user's email
-3. User verifies email with the code
-4. User can now login with email and password
-5. Upon login, a JWT token is issued for authentication
+- `POST /api/upload` - Upload an image file
+- `POST /api/upload/pdf` - Upload a PDF book with metadata
+- `DELETE /api/upload/:publicId` - Delete an uploaded file
+- `DELETE /api/upload/book/:id` - Delete a book and its files
 
-## Cloudinary Integration
+## Setup and Installation
 
-The backend integrates with Cloudinary for file storage:
+1. Install dependencies:
+   ```
+   npm install
+   ```
 
-- Profile image uploads
-- General file uploads
-- Automatic cleaning of temporary files
-- Secure URL generation for uploaded files 
+2. Create a `.env` file with the following variables:
+   ```
+   PORT=5000
+   MONGO_URI=your_mongodb_connection_string
+   JWT_SECRET=your_jwt_secret
+   JWT_EXPIRE=30d
+   CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+   CLOUDINARY_API_KEY=your_cloudinary_api_key
+   CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+   EMAIL_SERVICE=your_email_service
+   EMAIL_USERNAME=your_email_username
+   EMAIL_PASSWORD=your_email_password
+   EMAIL_FROM=your_email_from_address
+   ```
+
+3. Start the development server:
+   ```
+   npm run dev
+   ```
+
+4. Start the production server:
+   ```
+   npm start
+   ```
+
+## Data Models
+
+### User Model
+- Username, email, password, role (user/admin)
+- Authentication tokens and reset password functionality
+
+### Book Model
+- Title, author, description, category, tags
+- Cover image (URL and Cloudinary ID)
+- PDF file (URL and Cloudinary ID)
+- Metrics: views, downloads, average rating
+
+### Review Model
+- Book reference, user reference
+- Rating, comment, creation date
+
+## PDF Handling Features
+
+- **Direct Upload to Cloudinary**: PDF books are uploaded directly to Cloudinary
+- **Custom PDF Endpoints**: Specialized endpoints for viewing and downloading PDFs
+- **Download Tracking**: The application keeps track of book downloads
+- **Proper Content Headers**: Ensures PDFs are served with correct MIME types and content disposition
+
+## Security
+
+- Password encryption using bcrypt
+- JWT token-based authentication
+- Role-based access control for admin operations
+- Secure file upload with size and type validation
+- CORS configuration for API security
+
+## Development
+
+To contribute to the development:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request 
