@@ -9,7 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import styles from './upload-image.module.css';
 
 export default function UploadProfileImage() {
-  const { user, login } = useAuth();
+  const { user, login, getToken } = useAuth();
   const router = useRouter();
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -81,14 +81,19 @@ export default function UploadProfileImage() {
     setError('');
     setSuccess('');
     
-    const formData = new FormData();
-    formData.append('image', selectedFile);
-    
     try {
+      const token = getToken();
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const formData = new FormData();
+      formData.append('image', selectedFile);
+      
       const response = await fetch('http://localhost:5000/api/users/profile/image', {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${user.token}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: formData,
       });

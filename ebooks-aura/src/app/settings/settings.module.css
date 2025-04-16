@@ -1,0 +1,431 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+.settingsContainer {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: var(--card-background);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.settingsHeader {
+  margin-bottom: 2rem;
+}
+
+.settingsHeader h1 {
+  color: var(--heading-color);
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.settingsHeader p {
+  color: var(--text-secondary);
+}
+
+.settingsSection {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background-color: var(--item-background);
+  border-radius: 6px;
+}
+
+.settingsSection h2 {
+  color: var(--heading-color);
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.settingsForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.formGroup label {
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.formGroup input,
+.formGroup select {
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--card-background);
+  color: var(--text-color);
+}
+
+.formGroup input:focus,
+.formGroup select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.primaryButton {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.primaryButton:hover {
+  background-color: var(--primary-hover);
+}
+
+.secondaryButton {
+  background-color: var(--button-secondary);
+  color: var(--text-color);
+}
+
+.secondaryButton:hover {
+  background-color: var(--button-secondary-hover);
+}
+
+.dangerButton {
+  background-color: var(--danger);
+  color: white;
+}
+
+.dangerButton:hover {
+  background-color: var(--danger-hover);
+}
+
+.message {
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.successMessage {
+  background-color: var(--success-background);
+  color: var(--success);
+}
+
+.errorMessage {
+  background-color: var(--error-background);
+  color: var(--error);
+}
+
+.warningMessage {
+  background-color: var(--warning);
+  color: var(--text-color);
+}
+
+.backLink {
+  display: flex;
+  align-items: center;
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+  margin-bottom: 20px;
+  align-self: flex-start;
+  transition: color 0.2s;
+}
+
+.backLink:hover {
+  color: var(--primary-hover);
+}
+
+.backIcon {
+  margin-right: 8px;
+}
+
+.headerTitle {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--heading-color);
+}
+
+.headerSubtitle {
+  font-size: 16px;
+  color: var(--text-secondary);
+  margin: 10px 0 0;
+}
+
+.settingsSection:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.sectionTitle {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: var(--heading-color);
+}
+
+.settingItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background-color: var(--item-background);
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.settingInfo {
+  flex: 1;
+}
+
+.settingTitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 5px;
+  color: var(--heading-color);
+}
+
+.settingDescription {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.deleteButton, .themeButton {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  font-size: 14px;
+}
+
+.deleteButton {
+  background-color: var(--danger-light);
+  color: var(--danger);
+}
+
+.deleteButton:hover {
+  background-color: var(--danger);
+  color: white;
+}
+
+.themeButton {
+  background-color: var(--primary-light);
+  color: var(--primary-color);
+}
+
+.themeButton:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.deleteIcon, .themeIcon {
+  margin-right: 8px;
+}
+
+.reviewsList, .bookmarksList {
+  margin-top: 20px;
+}
+
+.subsectionTitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: var(--heading-color);
+}
+
+.reviewItem, .bookmarkItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background-color: var(--item-background);
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.reviewInfo, .bookmarkInfo {
+  flex: 1;
+}
+
+.bookTitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 5px;
+  color: var(--heading-color);
+}
+
+.rating {
+  display: flex;
+  margin-bottom: 8px;
+}
+
+.starIcon {
+  color: var(--star-empty);
+  margin-right: 2px;
+}
+
+.starIcon.filled {
+  color: var(--star-filled);
+}
+
+.reviewText {
+  font-size: 14px;
+  color: var(--text-color);
+  margin: 0 0 5px;
+}
+
+.reviewDate, .bookmarkDate {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.deleteReviewButton, .deleteBookmarkButton {
+  background: none;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.deleteReviewButton:hover, .deleteBookmarkButton:hover {
+  background-color: var(--danger-light);
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+.loadingAnimation {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border-color);
+  border-top: 4px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Modal Styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal {
+  background-color: var(--card-background);
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.warningIcon {
+  color: var(--warning);
+  font-size: 24px;
+  margin-right: 12px;
+}
+
+.modalTitle {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--heading-color);
+}
+
+.modalContent {
+  padding: 20px;
+}
+
+.modalContent p {
+  margin: 0 0 10px;
+  color: var(--text-color);
+  font-size: 14px;
+}
+
+.modalContent p:last-child {
+  margin-bottom: 0;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 15px 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.cancelButton, .confirmDeleteButton {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  font-size: 14px;
+  margin-left: 10px;
+}
+
+.cancelButton {
+  background-color: var(--button-secondary);
+  color: var(--text-color);
+}
+
+.cancelButton:hover {
+  background-color: var(--button-secondary-hover);
+}
+
+.confirmDeleteButton {
+  background-color: var(--danger);
+  color: white;
+}
+
+.confirmDeleteButton:hover {
+  background-color: var(--danger-hover);
+} 

@@ -39,7 +39,7 @@ export default function Login() {
         throw new Error(data.message || 'Invalid email or password');
       }
       
-      // Use the login function from context
+      // Use the login function from context with the complete data (including token)
       login(data);
       
       // Redirect to homepage

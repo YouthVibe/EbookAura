@@ -4,6 +4,33 @@ const User = require('../models/User');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const { createTransporter } = require('../config/email');
+const { protect, validateAuth } = require('../middleware/auth');
+
+// Auth check route - returns 200 if authenticated, 401 if not
+router.get('/check', protect, (req, res) => {
+  res.status(200).json({ 
+    isAuthenticated: true,
+    user: {
+      _id: req.user._id,
+      name: req.user.name,
+      username: req.user.username,
+      email: req.user.email
+    }
+  });
+});
+
+// Enhanced auth check route - validates both token and API key
+router.get('/validate', validateAuth, (req, res) => {
+  res.status(200).json({ 
+    isAuthenticated: true,
+    user: {
+      _id: req.user._id,
+      name: req.user.name,
+      email: req.user.email,
+      isAdmin: req.user.isAdmin
+    }
+  });
+});
 
 // Password reset routes
 router.post('/request-reset', async (req, res) => {

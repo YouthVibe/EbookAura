@@ -6,6 +6,8 @@ const nodemailer = require('nodemailer');
 const { cloudinary } = require('../config/cloudinary');
 const fs = require('fs');
 const path = require('path');
+const Review = require('../models/Review');
+const Bookmark = require('../models/Bookmark');
 
 // Create a transporter
 const transporter = nodemailer.createTransport({
@@ -196,6 +198,7 @@ const verifyEmail = async (req, res) => {
       fullName: newUser.fullName,
       email: newUser.email,
       isEmailVerified: newUser.isEmailVerified,
+      isAdmin: newUser.isAdmin,
       token
     });
   } catch (error) {
@@ -229,6 +232,11 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
     
+    // Check if user is banned
+    if (user.isBanned) {
+      return res.status(403).json({ message: 'Your account has been suspended. Please contact support for assistance.' });
+    }
+    
     // Generate JWT token
     const token = generateToken(user._id);
     
@@ -239,6 +247,7 @@ const loginUser = async (req, res) => {
       email: user.email,
       isEmailVerified: user.isEmailVerified,
       profileImage: user.profileImage,
+      isAdmin: user.isAdmin,
       token
     });
   } catch (error) {
@@ -267,6 +276,7 @@ const getUserProfile = async (req, res) => {
       phoneNumber: user.phoneNumber,
       isEmailVerified: user.isEmailVerified,
       profileImage: user.profileImage,
+      isAdmin: user.isAdmin,
       createdAt: user.createdAt
     });
   } catch (error) {
@@ -677,6 +687,31 @@ const resetPasswordWithCode = async (req, res) => {
   }
 };
 
+// @desc    Delete user account
+// @route   DELETE /api/users/profile
+// @access  Private
+const deleteAccount = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Delete all user data
+    await Review.deleteMany({ user: user._id });
+    await Bookmark.deleteMany({ user: user._id });
+    
+    // Delete the user account
+    await user.remove();
+    
+    res.status(200).json({ message: 'Account deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = {
   registerUser,
   verifyEmail,
@@ -688,5 +723,6 @@ module.exports = {
   resetPassword,
   resendVerificationEmail,
   forgotPasswordWithCode,
-  resetPasswordWithCode
+  resetPasswordWithCode,
+  deleteAccount
 }; 

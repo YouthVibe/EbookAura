@@ -7,14 +7,18 @@ const fs = require('fs');
 const path = require('path');
 const connectDB = require('./config/db');
 const { errorHandler } = require('./utils/errorHandler');
-const { initCloudinary } = require('./config/cloudinary');
+const { initCloudinary, testCloudinaryConnection } = require('./config/cloudinary');
 const { createTransporter } = require('./config/email');
 const fileUpload = require('express-fileupload');
 const userRoutes = require('./routes/userRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
-const authRoutes = require('./routes/auth');
+const authRoutes = require('./routes/authRoutes');
 const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
+const reviewRoutes = require('./routes/reviewRoutes');
+const bookmarkRoutes = require('./routes/bookmarkRoutes');
+const bookRoutes = require('./routes/bookRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -25,6 +29,19 @@ connectDB();
 // Initialize services
 const emailTransporter = createTransporter();
 initCloudinary();
+
+// Test Cloudinary connection
+testCloudinaryConnection()
+  .then(success => {
+    if (!success) {
+      console.warn('⚠️ Cloudinary connection test failed. PDF uploads may not work correctly.');
+    } else {
+      console.log('✅ Cloudinary connection verified. PDF uploads should work correctly.');
+    }
+  })
+  .catch(err => {
+    console.error('Error testing Cloudinary connection:', err);
+  });
 
 // Initialize Express app
 const app = express();
@@ -41,7 +58,7 @@ const fileUploadOptions = {
   useTempFiles: true,
   tempFileDir: path.join(__dirname, 'temp'),
   createParentPath: true,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max file size
+  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB max file size
   abortOnLimit: true,
   safeFileNames: true,
   preserveExtension: true,
@@ -64,6 +81,12 @@ app.get('/ping', (req, res) => {
     version: '1.0.0'
   });
 });
+
+// Routes
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/bookmarks', bookmarkRoutes);
+app.use('/api/books', bookRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Apply error handler middleware
 app.use(errorHandler);

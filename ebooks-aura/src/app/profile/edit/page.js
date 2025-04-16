@@ -9,7 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import styles from './edit.module.css';
 
 export default function EditProfile() {
-  const { user, login } = useAuth();
+  const { user, login, getToken } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -39,10 +39,15 @@ export default function EditProfile() {
     setError('');
 
     try {
+      const token = getToken();
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
       const response = await fetch('http://localhost:5000/api/users/profile', {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${user.token}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -81,10 +86,15 @@ export default function EditProfile() {
     setSuccess('');
 
     try {
+      const token = getToken();
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
       const response = await fetch('http://localhost:5000/api/users/profile', {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${user.token}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(formData),

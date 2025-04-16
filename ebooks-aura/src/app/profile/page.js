@@ -4,12 +4,12 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { FaArrowLeft, FaEdit, FaCamera } from 'react-icons/fa';
+import { FaArrowLeft, FaEdit, FaCamera, FaCog } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import styles from './profile.module.css';
 
 export default function Profile() {
-  const { user, logout } = useAuth();
+  const { user, logout, getToken } = useAuth();
   const router = useRouter();
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -33,10 +33,15 @@ export default function Profile() {
     setError('');
 
     try {
+      const token = getToken();
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
       const response = await fetch('http://localhost:5000/api/users/profile', {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${user.token}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -161,6 +166,15 @@ export default function Profile() {
                 <Link href="/profile/edit" className={styles.editProfileButton}>
                   Edit Profile
                 </Link>
+                <Link href="/settings" className={styles.editProfileButton}>
+                  <FaCog className={styles.buttonIcon} />
+                  Settings
+                </Link>
+                {(user && user.isAdmin) || (profileData && profileData.isAdmin) ? (
+                  <Link href="/profile/upload-pdf" className={styles.editProfileButton}>
+                    Upload PDF
+                  </Link>
+                ) : null}
               </div>
             </div>
           </>

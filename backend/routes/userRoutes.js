@@ -13,6 +13,12 @@ const {
   forgotPasswordWithCode,
   resetPasswordWithCode
 } = require('../controllers/userController');
+const { 
+  getUserBookmarks, 
+  toggleBookmark, 
+  deleteBookmark,
+  deleteAllUserBookmarks 
+} = require('../controllers/bookmarkController');
 const { protect } = require('../middleware/auth');
 const fileUpload = require('express-fileupload');
 const path = require('path');
@@ -44,6 +50,12 @@ router.put('/profile', protect, updateUserProfile);
 
 // Apply fileUpload middleware only for the image upload route
 router.put('/profile/image', protect, fileUpload(fileUploadOptions), updateProfileImage);
+
+// Bookmark routes
+router.get('/bookmarks', protect, getUserBookmarks);
+router.post('/bookmarks', protect, toggleBookmark);
+router.delete('/bookmarks', protect, deleteBookmark);
+router.delete('/bookmarks/all', protect, deleteAllUserBookmarks);
 
 module.exports = router;
  
