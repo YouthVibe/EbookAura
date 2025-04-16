@@ -1,4 +1,13 @@
-const mongoose = require('mongoose');
+/**
+ * Script to create a Book model file.
+ * Run this with: node utils/createBookModel.js
+ */
+
+const fs = require('fs');
+const path = require('path');
+
+// The Book model definition
+const bookModelContent = `const mongoose = require('mongoose');
 
 // Define the schema
 const bookSchema = new mongoose.Schema({
@@ -68,4 +77,25 @@ const bookSchema = new mongoose.Schema({
 const Book = mongoose.model('Book', bookSchema);
 
 // Export the model
-module.exports = Book;
+module.exports = Book;`;
+
+// Path to the Book model file
+const bookModelPath = path.join(__dirname, '../models/Book.js');
+
+// Delete the existing file if it exists
+if (fs.existsSync(bookModelPath)) {
+  console.log(`Deleting existing file at ${bookModelPath}`);
+  fs.unlinkSync(bookModelPath);
+}
+
+// Write the new file
+console.log(`Creating Book.js model file at ${bookModelPath}`);
+fs.writeFileSync(bookModelPath, bookModelContent, 'utf8');
+
+// Verify the file was created
+if (fs.existsSync(bookModelPath)) {
+  const stats = fs.statSync(bookModelPath);
+  console.log(`File created successfully. Size: ${stats.size} bytes`);
+} else {
+  console.error('Failed to create the file!');
+} 

@@ -213,7 +213,7 @@ const uploadPdf = async (req, res) => {
     console.log('PDF URL saved to database:', pdfUrl);
     console.log('PDF ID saved to database:', pdfResult.public_id);
     
-    // Create new book document with all required data
+    // Create book document data
     const bookData = {
       title,
       author,
@@ -228,56 +228,40 @@ const uploadPdf = async (req, res) => {
       uploadedBy: req.user._id
     };
     
-    // Create new book in database using the most reliable method
-    let book;
+    // Create new book in database
     try {
-      // Direct document creation with the model
-      book = await Book.create(bookData);
-      console.log(`Book created successfully with ID: ${book._id}`);
-    } catch (createError) {
-      console.error('Error using Book.create method:', createError);
+      const book = await Book.create(bookData);
       
-      // If the first method fails, try an alternative approach
-      try {
-        // Try manual document insertion
-        const collection = mongoose.connection.collection('books');
-        const result = await collection.insertOne({
-          ...bookData,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        });
-        
-        // Get the inserted document
-        book = await Book.findById(result.insertedId);
-        console.log(`Book created using alternative method with ID: ${book._id}`);
-      } catch (altError) {
-        console.error('Alternative book creation also failed:', altError);
-        
-        // Clean up Cloudinary resources if both book creation methods fail
-        if (coverResult && coverResult.public_id) {
-          await cloudinary.uploader.destroy(coverResult.public_id);
+      console.log(`Book created successfully with ID: ${book._id}`);
+      console.log(`PDF URL stored: ${book.pdfUrl}`);
+      console.log(`PDF ID stored: ${book.pdfId}`);
+      
+      res.status(201).json({
+        success: true,
+        message: 'Book uploaded successfully',
+        book: {
+          id: book._id,
+          title: book.title,
+          coverImage: book.coverImage,
+          pdfUrl: book.pdfUrl
         }
-        if (pdfResult && pdfResult.public_id) {
-          await cloudinary.uploader.destroy(pdfResult.public_id, { resource_type: 'raw' });
-        }
-        
-        throw new Error('Failed to create book in database after successful file uploads');
+      });
+    } catch (dbError) {
+      console.error('Error creating book in database:', dbError);
+      
+      // Clean up Cloudinary resources if book creation fails
+      if (coverResult && coverResult.public_id) {
+        await cloudinary.uploader.destroy(coverResult.public_id);
       }
+      if (pdfResult && pdfResult.public_id) {
+        await cloudinary.uploader.destroy(pdfResult.public_id, { resource_type: 'raw' });
+      }
+      
+      res.status(500).json({ 
+        message: 'Error saving book to database. Files were uploaded but could not be saved.',
+        error: dbError.message
+      });
     }
-    
-    console.log(`PDF URL stored: ${book.pdfUrl}`);
-    console.log(`PDF ID stored: ${book.pdfId}`);
-    
-    res.status(201).json({
-      success: true,
-      message: 'Book uploaded successfully',
-      book: {
-        id: book._id,
-        title: book.title,
-        coverImage: book.coverImage,
-        pdfUrl: book.pdfUrl
-      }
-    });
   } catch (error) {
     console.error('Error uploading book:', error);
     res.status(500).json({ 
