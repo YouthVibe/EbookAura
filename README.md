@@ -51,6 +51,22 @@ The project consists of two main components:
    npm run dev
    ```
 
+## Deployment to Render.com
+
+This project includes fixes for common deployment issues on case-sensitive file systems like Render.com:
+
+1. Before deploying to Render.com, run:
+   ```
+   npm run pre-deploy
+   ```
+
+2. The deployment process includes automatic handling of case sensitivity issues with model files. A custom `prepareModels.js` script runs before the server starts to ensure all required model files are available regardless of case sensitivity.
+
+3. When setting up on Render.com, use the following start command:
+   ```
+   npm start
+   ```
+
 ## Environment Variables
 
 The application requires several environment variables to be set up:
