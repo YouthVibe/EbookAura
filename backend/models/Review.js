@@ -30,4 +30,6 @@ const reviewSchema = new mongoose.Schema({
 // Ensure a user can only review a book once
 reviewSchema.index({ user: 1, book: 1 }, { unique: true });
 
-module.exports = mongoose.model('Review', reviewSchema); 
+// Create the model and export it
+const Review = mongoose.model('Review', reviewSchema);
+module.exports = Review; 

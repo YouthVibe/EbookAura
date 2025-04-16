@@ -33,7 +33,10 @@ const tempUserSchema = new mongoose.Schema({
   emailVerificationToken: {
     type: String
   },
-  verificationExpires: Date,
+  verificationExpires: {
+    type: Date,
+    required: true
+  },
   emailVerificationExpires: Date,
   createdAt: {
     type: Date,
@@ -57,24 +60,34 @@ tempUserSchema.pre('save', async function(next) {
   }
 });
 
-// Generate 6-digit verification code
+// Generate verification code
 tempUserSchema.methods.generateVerificationCode = function() {
   // Generate a random 6-digit number
   const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
   
   // Hash the code for storage (for security)
-  this.verificationCode = crypto
+  const hashedCode = crypto
     .createHash('sha256')
     .update(verificationCode)
     .digest('hex');
-  
-  // Set both fields for compatibility
-  this.emailVerificationToken = this.verificationCode;
     
+  this.verificationCode = hashedCode;
   this.verificationExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
-  this.emailVerificationExpires = this.verificationExpires;
   
   return verificationCode;
+};
+
+// Verify the code
+tempUserSchema.methods.verifyCode = function(code) {
+  // Hash the provided code for comparison
+  const hashedCode = crypto
+    .createHash('sha256')
+    .update(code)
+    .digest('hex');
+    
+  // Check if code matches and has not expired
+  return hashedCode === this.verificationCode && 
+         this.verificationExpires > Date.now();
 };
 
 const TempUser = mongoose.model('TempUser', tempUserSchema);

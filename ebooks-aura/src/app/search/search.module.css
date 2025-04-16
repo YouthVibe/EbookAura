@@ -33,13 +33,21 @@
   border-radius: 0.5rem;
   font-size: 1rem;
   color: #111827;
+  background-color: #ffffff;
   transition: all 0.2s;
+  caret-color: #ef4444;
+}
+
+.searchInput::placeholder {
+  color: #9ca3af;
+  opacity: 0.8;
 }
 
 .searchInput:focus {
   outline: none;
   border-color: #ef4444;
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  color: #111827;
 }
 
 .categories {

@@ -5,7 +5,10 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "check-imports": "node utils/checkImports.js",
+    "prestart-prod": "node utils/checkImports.js",
+    "pre-deploy": "node utils/checkDeployment.js"
   },
   "dependencies": {
     "axios": "^1.6.5",

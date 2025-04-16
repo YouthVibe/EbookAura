@@ -6,6 +6,7 @@ import { FaDownload, FaEye, FaBook, FaArrowLeft, FaStar, FaCalendarAlt, FaFileAl
 import Link from 'next/link';
 import BookReview from '../../components/BookReview';
 import styles from './book.module.css';
+import { API_ENDPOINTS } from '../../utils/config';
 
 export default function BookPage() {
   const { id } = useParams();
@@ -26,7 +27,7 @@ export default function BookPage() {
         
         console.log('BookPage: Fetching details for book ID:', id);
         setLoading(true);
-        const response = await fetch(`/api/books/${id}`);
+        const response = await fetch(API_ENDPOINTS.BOOKS.DETAILS(id));
         
         if (!response.ok) {
           console.error(`Book fetch failed with status: ${response.status}`);
@@ -59,7 +60,7 @@ export default function BookPage() {
       console.log('Downloading book with ID:', id);
       
       // Increment download count via the API
-      await fetch(`/api/books/${id}/download`, {
+      await fetch(API_ENDPOINTS.BOOKS.DOWNLOAD(id), {
         method: 'POST',
       });
 
@@ -71,7 +72,7 @@ export default function BookPage() {
         console.log(`Fetching PDF content via backend proxy for book: ${book.title}`);
         
         // Fetch the PDF data from our proxy endpoint
-        const proxyUrl = `/api/books/${id}/pdf-content?download=true&counted=true`;
+        const proxyUrl = `${API_ENDPOINTS.BOOKS.PDF_CONTENT(id)}?download=true&counted=true`;
         const response = await fetch(proxyUrl);
         
         if (!response.ok) {
@@ -102,7 +103,7 @@ export default function BookPage() {
       } catch (directDownloadError) {
         console.warn('Direct download failed, using fallback:', directDownloadError);
         // Fallback to original backend endpoint if proxy fails
-        const fallbackUrl = `/api/books/${id}/pdf?download=true&counted=true`;
+        const fallbackUrl = `${API_ENDPOINTS.BOOKS.PDF(id)}?download=true&counted=true`;
         window.open(fallbackUrl, '_blank');
       }
       
@@ -132,7 +133,7 @@ export default function BookPage() {
       // Use the original URL which should work for viewing
       try {
         // Use the existing PDF endpoint which sets proper headers for viewing
-        const viewUrl = `/api/books/${id}/pdf?counted=true`;
+        const viewUrl = `${API_ENDPOINTS.BOOKS.PDF(id)}?counted=true`;
         console.log(`Opening PDF for viewing at: ${viewUrl}`);
         window.open(viewUrl, '_blank');
       } catch (viewError) {

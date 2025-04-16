@@ -117,3 +117,41 @@ To contribute to the development:
 3. Commit your changes (`git commit -m 'Add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request 
+
+## Deployment
+
+For detailed deployment instructions to Render.com, see the [RENDER-DEPLOYMENT.md](./RENDER-DEPLOYMENT.md) file.
+
+### Common Deployment Issues
+
+#### Case Sensitivity
+
+When deploying to Linux-based environments like Render.com, be aware that the filesystem is case-sensitive, unlike Windows. This means `Book.js` and `book.js` are treated as different files. Always ensure your imports match the exact case of the file names:
+
+```javascript
+// This MUST match the actual filename case
+const Book = require('../models/Book');
+```
+
+Run the included utility script to check for case-sensitivity issues before deployment:
+
+```
+npm run check-imports
+```
+
+#### Model Create vs Constructor Pattern
+
+To ensure maximum compatibility, this project supports both Mongoose model patterns:
+
+1. Static create method:
+   ```javascript
+   const book = await Book.create({...});
+   ```
+
+2. Constructor + save pattern:
+   ```javascript
+   const book = new Book({...});
+   await book.save();
+   ```
+
+The codebase includes fallbacks to handle both methods where needed. 

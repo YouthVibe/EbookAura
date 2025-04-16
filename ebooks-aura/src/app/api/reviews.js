@@ -1,6 +1,7 @@
 /**
  * API functions for handling book reviews
  */
+import { API_ENDPOINTS, API_BASE_URL } from '../utils/config';
 
 // Get all reviews for a specific book
 export const getBookReviews = async (bookId) => {
@@ -12,7 +13,7 @@ export const getBookReviews = async (bookId) => {
     const token = localStorage.getItem('token');
     const apiKey = localStorage.getItem('apiKey');
     
-    const response = await fetch(`/api/books/${bookId}/reviews`, {
+    const response = await fetch(API_ENDPOINTS.BOOKS.REVIEWS(bookId), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -41,7 +42,7 @@ export const getBookRating = async (bookId) => {
       throw new Error('Book ID is required');
     }
     
-    const response = await fetch(`/api/books/${bookId}/rating`);
+    const response = await fetch(API_ENDPOINTS.BOOKS.RATING(bookId));
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -80,7 +81,7 @@ export const submitBookReview = async (bookId, rating, comment = '') => {
       throw new Error('You must be logged in to submit a review');
     }
 
-    const response = await fetch(`/api/books/${bookId}/reviews`, {
+    const response = await fetch(API_ENDPOINTS.BOOKS.REVIEWS(bookId), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -116,7 +117,7 @@ export const getUserReviews = async () => {
       throw new Error('You must be logged in to view your reviews');
     }
 
-    const response = await fetch(`/api/reviews/user`, {
+    const response = await fetch(`${API_BASE_URL}/reviews/user`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -148,7 +149,7 @@ export const deleteReview = async (reviewId) => {
       throw new Error('You must be logged in to delete a review');
     }
 
-    const response = await fetch(`/api/reviews/${reviewId}`, {
+    const response = await fetch(`${API_BASE_URL}/reviews/${reviewId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaUser, FaBook, FaTrash, FaBan, FaUnlock, FaEye, FaDownload, FaStar, FaCalendarAlt, FaFilter, FaSearch } from 'react-icons/fa';
+import { FaUser, FaBook, FaTrash, FaBan, FaUnlock, FaEye, FaDownload, FaStar, FaCalendarAlt, FaFilter, FaSearch, FaPlusCircle, FaBookOpen, FaEdit } from 'react-icons/fa';
 import { getAllUsers, toggleUserBan, deleteUser, getAllBooks, deleteBook } from '../api/admin';
 import { useAuth } from '../context/AuthContext';
 import styles from './admin.module.css';
+import Link from 'next/link';
+import SearchInput from '../components/SearchInput';
 
 // Confirmation Modal Component
 const ConfirmationModal = ({ isOpen, title, message, onConfirm, onCancel, isDeleting }) => {
@@ -198,16 +200,12 @@ export default function AdminDashboard() {
       {activeTab === 'users' && (
         <div className={styles.tabContent}>
           <div className={styles.searchContainer}>
-            <div className={styles.search}>
-              <FaSearch className={styles.searchIcon} />
-              <input 
-                type="text"
-                placeholder="Search users by name or email..."
-                value={userSearch}
-                onChange={(e) => setUserSearch(e.target.value)}
-                className={styles.searchInput}
-              />
-            </div>
+            <SearchInput
+              placeholder="Search users by name or email..."
+              onSearch={setUserSearch}
+              initialValue={userSearch}
+              className={styles.searchBar}
+            />
           </div>
           
           {loading ? (
@@ -288,16 +286,12 @@ export default function AdminDashboard() {
       {activeTab === 'books' && (
         <div className={styles.tabContent}>
           <div className={styles.searchContainer}>
-            <div className={styles.search}>
-              <FaSearch className={styles.searchIcon} />
-              <input 
-                type="text"
-                placeholder="Search books by title, author, or category..."
-                value={bookSearch}
-                onChange={(e) => setBookSearch(e.target.value)}
-                className={styles.searchInput}
-              />
-            </div>
+            <SearchInput
+              placeholder="Search books by title, author, or category..."
+              onSearch={setBookSearch}
+              initialValue={bookSearch}
+              className={styles.searchBar}
+            />
           </div>
           
           {loading ? (

@@ -18,4 +18,6 @@ const bookmarkSchema = new mongoose.Schema({
 // Ensure a user can only bookmark a book once
 bookmarkSchema.index({ user: 1, book: 1 }, { unique: true });
 
-module.exports = mongoose.model('Bookmark', bookmarkSchema); 
+// Create the model and export it
+const Bookmark = mongoose.model('Bookmark', bookmarkSchema);
+module.exports = Bookmark; 

@@ -87,26 +87,52 @@ The download functionality has been implemented with a multi-step approach:
 
 ## API Integration
 
-The frontend communicates with the backend API using fetch requests. The main API endpoints used are:
+The frontend communicates with the backend API using fetch requests. All API endpoints are centralized in a config file:
 
-- `/api/books` - Get book listings and details
-- `/api/books/:id/pdf` - View PDF in browser
-- `/api/books/:id/pdf-content` - Download PDF file
-- `/api/auth/*` - Authentication endpoints
-- `/api/upload/*` - File upload endpoints (admin only)
+```javascript
+// src/app/utils/config.js
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+export const API_ENDPOINTS = {
+  BOOKS: {
+    ALL: `${API_BASE_URL}/books`,
+    DETAILS: (id) => `${API_BASE_URL}/books/${id}`,
+    PDF: (id) => `${API_BASE_URL}/books/${id}/pdf`,
+    // ... other endpoints
+  },
+  // ... other API categories
+};
+```
+
+This centralized approach ensures:
+- Consistent API URLs across the application
+- Easy updates if API endpoints change
+- Single source of truth for all endpoint definitions
+- Better maintainability
+
+Components and API functions import these endpoint definitions:
+
+```javascript
+import { API_ENDPOINTS } from '../utils/config';
+
+// Fetch book data
+const response = await fetch(API_ENDPOINTS.BOOKS.DETAILS(bookId));
+```
 
 ## Folder Structure
 
 ```
 src/
 ├── app/                # Next.js App Router
-│   ├── api/            # API routes
+│   ├── api/            # API functions for data fetching
 │   ├── books/          # Book-related pages
 │   ├── components/     # Shared React components
 │   ├── context/        # React context providers (e.g., AuthContext)
+│   ├── utils/          # Utility functions and configuration
+│   │   └── config.js   # Centralized API endpoints and app config
 │   ├── admin/          # Admin pages and components
 │   ├── profile/        # User profile pages
-│   └── utils/          # Utility functions
+│   └── ...
 ├── public/             # Static assets
 └── styles/             # Global styles
 ```

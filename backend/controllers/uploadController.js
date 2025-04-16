@@ -2,6 +2,7 @@ const { cloudinary } = require('../config/cloudinary');
 const fs = require('fs');
 const path = require('path');
 const Book = require('../models/Book');
+const mongoose = require('mongoose');
 
 // @desc    Upload a file to Cloudinary
 // @route   POST /api/upload
@@ -212,8 +213,8 @@ const uploadPdf = async (req, res) => {
     console.log('PDF URL saved to database:', pdfUrl);
     console.log('PDF ID saved to database:', pdfResult.public_id);
     
-    // Create new book in database
-    const book = await Book.create({
+    // Create new book document with all required data
+    const bookData = {
       title,
       author,
       description,
@@ -225,9 +226,45 @@ const uploadPdf = async (req, res) => {
       category,
       tags: req.body.tags ? req.body.tags.split(',').map(tag => tag.trim()) : [],
       uploadedBy: req.user._id
-    });
+    };
     
-    console.log(`Book created successfully with ID: ${book._id}`);
+    // Create new book in database using the most reliable method
+    let book;
+    try {
+      // Direct document creation with the model
+      book = await Book.create(bookData);
+      console.log(`Book created successfully with ID: ${book._id}`);
+    } catch (createError) {
+      console.error('Error using Book.create method:', createError);
+      
+      // If the first method fails, try an alternative approach
+      try {
+        // Try manual document insertion
+        const collection = mongoose.connection.collection('books');
+        const result = await collection.insertOne({
+          ...bookData,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+        
+        // Get the inserted document
+        book = await Book.findById(result.insertedId);
+        console.log(`Book created using alternative method with ID: ${book._id}`);
+      } catch (altError) {
+        console.error('Alternative book creation also failed:', altError);
+        
+        // Clean up Cloudinary resources if both book creation methods fail
+        if (coverResult && coverResult.public_id) {
+          await cloudinary.uploader.destroy(coverResult.public_id);
+        }
+        if (pdfResult && pdfResult.public_id) {
+          await cloudinary.uploader.destroy(pdfResult.public_id, { resource_type: 'raw' });
+        }
+        
+        throw new Error('Failed to create book in database after successful file uploads');
+      }
+    }
+    
     console.log(`PDF URL stored: ${book.pdfUrl}`);
     console.log(`PDF ID stored: ${book.pdfId}`);
     

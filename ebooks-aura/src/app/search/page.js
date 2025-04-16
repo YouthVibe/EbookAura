@@ -6,6 +6,7 @@ import Link from 'next/link';
 import styles from './search.module.css';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
+import SearchInput from '../components/SearchInput';
 
 // Add a simple toast notification component
 const Toast = ({ message, type, onClose }) => {
@@ -268,16 +269,12 @@ export default function SearchPage() {
         />
       )}
       <div className={styles.searchSection}>
-        <div className={styles.searchBar}>
-          <FaSearch className={styles.searchIcon} />
-          <input
-            type="text"
-            placeholder="Search by title, author, or description..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className={styles.searchInput}
-          />
-        </div>
+        <SearchInput
+          placeholder="Search for books by title, author or description..."
+          onSearch={setSearchQuery}
+          initialValue={searchQuery}
+          className={styles.searchBar}
+        />
 
         <div className={styles.categories}>
           <button
