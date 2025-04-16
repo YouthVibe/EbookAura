@@ -9,7 +9,9 @@ const {
   updateProfileImage,
   forgotPassword,
   resetPassword,
-  resendVerificationEmail
+  resendVerificationEmail,
+  forgotPasswordWithCode,
+  resetPasswordWithCode
 } = require('../controllers/userController');
 const { protect } = require('../middleware/auth');
 const fileUpload = require('express-fileupload');
@@ -20,7 +22,7 @@ const fileUploadOptions = {
   useTempFiles: true,
   tempFileDir: path.join(__dirname, '..', 'temp'),
   createParentPath: true,
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB max file size
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max file size
   abortOnLimit: true,
   safeFileNames: true,
   preserveExtension: true
@@ -31,6 +33,8 @@ router.post('/', registerUser);
 router.post('/verify-email', verifyEmail);
 router.post('/login', loginUser);
 router.post('/forgot-password', forgotPassword);
+router.post('/forgot-password-with-code', forgotPasswordWithCode);
+router.post('/reset-password-with-code', resetPasswordWithCode);
 router.post('/reset-password', resetPassword);
 router.post('/resend-verification', resendVerificationEmail);
 

@@ -12,6 +12,7 @@ const { createTransporter } = require('./config/email');
 const fileUpload = require('express-fileupload');
 const userRoutes = require('./routes/userRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const authRoutes = require('./routes/auth');
 const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
 
@@ -50,6 +51,7 @@ const fileUploadOptions = {
 // API routes
 // Apply normal middleware for user routes without file upload
 app.use('/api/users', userRoutes);
+app.use('/api/auth', authRoutes);
 
 // Apply file upload middleware only for routes that need it
 app.use('/api/upload', fileUpload(fileUploadOptions), uploadRoutes);

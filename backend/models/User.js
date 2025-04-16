@@ -59,6 +59,13 @@ const userSchema = new mongoose.Schema({
 
 // Password hashing middleware
 userSchema.pre('save', async function(next) {
+  // Skip password hashing if flag is set
+  if (this.$skipPasswordHashing) {
+    // Remove the flag to ensure future saves will hash the password
+    delete this.$skipPasswordHashing;
+    return next();
+  }
+  
   if (!this.isModified('password')) {
     return next();
   }

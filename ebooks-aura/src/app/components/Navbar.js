@@ -7,9 +7,30 @@ import { FaBars, FaTimes, FaChevronDown, FaSearch, FaBookmark, FaUser, FaSignInA
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isNavMenuOpen, setIsNavMenuOpen] = useState(false);
   const { user, logout } = useAuth();
+
+  // Close menus when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Close profile menu if clicking outside
+      if (isProfileMenuOpen && !event.target.closest(`.${styles.profileContainer}`)) {
+        setIsProfileMenuOpen(false);
+      }
+      
+      // Close nav menu if clicking outside
+      if (isNavMenuOpen && !event.target.closest(`.${styles.menuContainer}`)) {
+        setIsNavMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isProfileMenuOpen, isNavMenuOpen, styles]);
 
   const menuItems = [
     { name: 'Home', href: '/' },
@@ -36,20 +57,20 @@ export default function Navbar() {
 
           {user ? (
             <div className={styles.profileContainer}>
-              <button className={styles.profileButton} onClick={() => setIsMenuOpen(!isMenuOpen)}>
+              <button className={styles.profileButton} onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}>
                 <FaUser className={styles.profileIcon} />
                 <span className={styles.profileName}>{user.name}</span>
-                <FaChevronDown className={`${styles.menuIcon} ${isMenuOpen ? styles.rotate : ''}`} />
+                <FaChevronDown className={`${styles.menuIcon} ${isProfileMenuOpen ? styles.rotate : ''}`} />
               </button>
 
-              <div className={`${styles.profileMenu} ${isMenuOpen ? styles.show : ''}`}>
-                <Link href="/profile" className={styles.profileMenuItem}>
+              <div className={`${styles.profileMenu} ${isProfileMenuOpen ? styles.show : ''}`}>
+                <Link href="/profile" className={styles.profileMenuItem} onClick={() => setIsProfileMenuOpen(false)}>
                   My Profile
                 </Link>
-                <Link href="/settings" className={styles.profileMenuItem}>
+                <Link href="/settings" className={styles.profileMenuItem} onClick={() => setIsProfileMenuOpen(false)}>
                   Settings
                 </Link>
-                <button className={styles.profileMenuItem} onClick={logout}>
+                <button className={styles.profileMenuItem} onClick={() => { logout(); setIsProfileMenuOpen(false); }}>
                   Logout
                 </button>
               </div>
@@ -70,20 +91,20 @@ export default function Navbar() {
           <div className={styles.menuContainer}>
             <button 
               className={styles.menuButton}
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              onClick={() => setIsNavMenuOpen(!isNavMenuOpen)}
               aria-label="Toggle menu"
             >
               <span className={styles.menuText}>Menu</span>
-              <FaChevronDown className={`${styles.menuIcon} ${isMenuOpen ? styles.rotate : ''}`} />
+              <FaChevronDown className={`${styles.menuIcon} ${isNavMenuOpen ? styles.rotate : ''}`} />
             </button>
 
-            <div className={`${styles.dropdownMenu} ${isMenuOpen ? styles.show : ''}`}>
+            <div className={`${styles.dropdownMenu} ${isNavMenuOpen ? styles.show : ''}`}>
               {menuItems.map((item) => (
                 <Link 
                   key={item.name}
                   href={item.href}
                   className={styles.dropdownItem}
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={() => setIsNavMenuOpen(false)}
                 >
                   {item.name}
                 </Link>
@@ -94,13 +115,13 @@ export default function Navbar() {
 
         <button 
           className={styles.mobileMenuButton}
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           aria-label="Toggle mobile menu"
         >
-          {isOpen ? <FaTimes /> : <FaBars />}
+          {isMobileMenuOpen ? <FaTimes /> : <FaBars />}
         </button>
 
-        <div className={`${styles.mobileMenu} ${isOpen ? styles.open : ''}`}>
+        <div className={`${styles.mobileMenu} ${isMobileMenuOpen ? styles.open : ''}`}>
           <Link href="/search" className={styles.mobileMenuItem}>
             <FaSearch className={styles.mobileMenuIcon} />
             Search
@@ -141,7 +162,7 @@ export default function Navbar() {
               key={item.name}
               href={item.href}
               className={styles.mobileMenuItem}
-              onClick={() => setIsOpen(false)}
+              onClick={() => setIsMobileMenuOpen(false)}
             >
               {item.name}
             </Link>

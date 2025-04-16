@@ -168,13 +168,19 @@ const verifyEmail = async (req, res) => {
     }
     
     // Create a permanent user account
+    // Set the password directly without pre-save hook (it's already hashed in TempUser)
     const newUser = new User({
       name: tempUser.name,
       fullName: tempUser.fullName,
       email: tempUser.email,
-      password: tempUser.password, // Already hashed in the TempUser model
       isEmailVerified: true
     });
+    
+    // Set the password directly to avoid double hashing
+    newUser.password = tempUser.password;
+    
+    // Disable password hashing for this save only
+    newUser.$skipPasswordHashing = true;
     
     await newUser.save();
     
@@ -320,36 +326,87 @@ const updateProfileImage = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+
+    const file = req.files.image;
+    
+    // Check if file is an image
+    if (!file.mimetype.startsWith('image')) {
+      return res.status(400).json({ message: 'Please upload an image file' });
+    }
+
+    // Validate image type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.mimetype)) {
+      return res.status(400).json({ 
+        message: 'Invalid image type. Please upload a JPEG, PNG, GIF, or WebP image.' 
+      });
+    }
+    
+    // Check file size (limit to 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      return res.status(400).json({ message: 'File size should be less than 5MB' });
+    }
     
     // Delete previous profile image if it exists
     if (user.profileImageId) {
-      await cloudinary.uploader.destroy(user.profileImageId);
+      try {
+        await cloudinary.uploader.destroy(user.profileImageId);
+      } catch (cloudinaryError) {
+        console.error('Error deleting previous image from Cloudinary:', cloudinaryError);
+        // Continue with upload even if delete fails
+      }
     }
     
-    const file = req.files.image;
-    
     // Upload image to cloudinary
-    const result = await cloudinary.uploader.upload(file.tempFilePath, {
-      folder: 'ebook_aura/profile_images',
-      width: 500,
-      crop: 'scale'
-    });
-    
-    // Update user profile image
-    user.profileImage = result.secure_url;
-    user.profileImageId = result.public_id;
-    
-    await user.save();
-    
-    // Remove temp file
-    fs.unlinkSync(file.tempFilePath);
-    
-    res.status(200).json({ 
-      message: 'Profile image updated successfully',
-      profileImage: user.profileImage
-    });
+    try {
+      console.log('Attempting to upload file to Cloudinary:', {
+        tempFilePath: file.tempFilePath,
+        mimetype: file.mimetype,
+        size: file.size
+      });
+      
+      const result = await cloudinary.uploader.upload(file.tempFilePath, {
+        folder: 'ebook_aura/profile_images',
+        transformation: [
+          { width: 500, height: 500, crop: 'fill' },
+          { quality: 'auto' },
+          { fetch_format: 'auto' }
+        ]
+      });
+      
+      console.log('Cloudinary upload successful:', result);
+      
+      // Update user profile image
+      user.profileImage = result.secure_url;
+      user.profileImageId = result.public_id;
+      
+      await user.save();
+      
+      // Remove temp file
+      try {
+        fs.unlinkSync(file.tempFilePath);
+      } catch (unlinkError) {
+        console.error('Error removing temp file:', unlinkError);
+        // Don't fail the request if temp file cleanup fails
+      }
+      
+      res.status(200).json({ 
+        message: 'Profile image updated successfully',
+        profileImage: user.profileImage
+      });
+    } catch (cloudinaryError) {
+      console.error('Cloudinary upload error:', cloudinaryError);
+      res.status(500).json({ 
+        message: 'Error uploading image to cloud storage',
+        error: cloudinaryError.message
+      });
+    }
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Profile image update error:', error);
+    res.status(500).json({ 
+      message: 'Server error',
+      error: error.message
+    });
   }
 };
 
@@ -367,16 +424,17 @@ const forgotPassword = async (req, res) => {
     const user = await User.findOne({ email });
     
     if (!user) {
-      return res.status(404).json({ message: 'User not found with this email' });
+      return res.status(404).json({ message: 'No user found with this email address' });
     }
     
     // Generate reset password token
     const resetToken = user.generateResetPasswordToken();
     await user.save();
     
-    // Send email with reset link
-    const resetUrl = `${req.protocol}://${req.get('host')}/api/users/reset-password/${resetToken}`;
+    // Create reset URL
+    const resetUrl = `${req.protocol}://localhost:3000/reset-password?token=${resetToken}&email=${email}`;
     
+    // Send email with reset link
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: user.email,
@@ -386,12 +444,12 @@ const forgotPassword = async (req, res) => {
           <body style="font-family: Arial, sans-serif; margin: 0; padding: 0;">
             <div style="background-color: #f8f8f8; padding: 20px;">
               <h2 style="color: #333;">Hello ${user.fullName},</h2>
-              <p style="color: #555;">You have requested to reset your password. Please click the link below to reset your password:</p>
+              <p style="color: #555;">You have requested to reset your password. Please click the link below to set a new password:</p>
               <div style="margin: 20px 0;">
-                <a href="${resetUrl}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Reset Password</a>
+                <a href="${resetUrl}" style="background-color: #ff4444; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Reset Password</a>
               </div>
               <p style="color: #555;">This link will expire in 1 hour.</p>
-              <p style="color: #555; margin-top: 20px;">If you did not request a password reset, please ignore this email.</p>
+              <p style="color: #555; margin-top: 20px;">If you did not request a password reset, please ignore this email and your password will remain unchanged.</p>
               <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #777; font-size: 12px;">
                 <p>EbookAura - Your e-book platform</p>
               </div>
@@ -403,32 +461,32 @@ const forgotPassword = async (req, res) => {
     
     await transporter.sendMail(mailOptions);
     
-    res.status(200).json({ message: 'Password reset email sent' });
+    res.status(200).json({ message: 'Password reset link sent to your email' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
 // @desc    Reset password
-// @route   PUT /api/users/reset-password/:resetToken
+// @route   POST /api/users/reset-password
 // @access  Public
 const resetPassword = async (req, res) => {
   try {
-    const { password } = req.body;
-    const { resetToken } = req.params;
+    const { token, email, password } = req.body;
     
-    if (!password) {
-      return res.status(400).json({ message: 'Please provide a new password' });
+    if (!token || !email || !password) {
+      return res.status(400).json({ message: 'Please provide all required fields' });
     }
     
     // Hash the token from the URL
     const hashedToken = crypto
       .createHash('sha256')
-      .update(resetToken)
+      .update(token)
       .digest('hex');
-      
-    // Find user with the hashed token
+    
+    // Find user with the token
     const user = await User.findOne({
+      email,
       resetPasswordToken: hashedToken,
       resetPasswordExpires: { $gt: Date.now() }
     });
@@ -437,14 +495,16 @@ const resetPassword = async (req, res) => {
       return res.status(400).json({ message: 'Invalid or expired token' });
     }
     
-    // Set new password
+    // Set the new password
     user.password = password;
+    
+    // Clear reset token fields
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     
     await user.save();
     
-    res.status(200).json({ message: 'Password reset successful. You can now login with your new password.' });
+    res.status(200).json({ message: 'Password has been reset successfully. You can now login with your new password.' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -506,6 +566,117 @@ const resendVerificationEmail = async (req, res) => {
   }
 };
 
+// @desc    Forgot password with verification code
+// @route   POST /api/users/forgot-password
+// @access  Public
+const forgotPasswordWithCode = async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ message: 'Please provide an email address' });
+    }
+    
+    const user = await User.findOne({ email });
+    
+    if (!user) {
+      return res.status(404).json({ message: 'No user found with this email address' });
+    }
+    
+    // Generate 6-digit verification code
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Hash the code for storage (for security)
+    const hashedCode = crypto
+      .createHash('sha256')
+      .update(verificationCode)
+      .digest('hex');
+    
+    // Set the reset token and expiry
+    user.resetPasswordToken = hashedCode;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+    
+    await user.save();
+    
+    // Send email with verification code
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: user.email,
+      subject: 'Password Reset Code - EbookAura',
+      html: `
+        <html>
+          <body style="font-family: Arial, sans-serif; margin: 0; padding: 0;">
+            <div style="background-color: #f8f8f8; padding: 20px;">
+              <h2 style="color: #333;">Hello ${user.fullName},</h2>
+              <p style="color: #555;">You requested a password reset for your EbookAura account.</p>
+              <p style="color: #555;">Please use the verification code below to reset your password:</p>
+              <div style="background-color: #e9f7ef; border: 1px solid #c3e6cb; border-radius: 5px; padding: 15px; margin: 20px 0; text-align: center;">
+                <p style="color: #155724; font-size: 24px; font-weight: bold; letter-spacing: 5px;">${verificationCode}</p>
+              </div>
+              <p style="color: #555;">This code will expire in 1 hour.</p>
+              <p style="color: #555; margin-top: 20px;">If you did not request this reset, please ignore this email.</p>
+              <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #777; font-size: 12px;">
+                <p>EbookAura - Your e-book platform</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `
+    };
+    
+    await transporter.sendMail(mailOptions);
+    
+    res.status(200).json({ message: 'Password reset code sent to your email' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// @desc    Reset password with verification code
+// @route   POST /api/users/reset-password-with-code
+// @access  Public
+const resetPasswordWithCode = async (req, res) => {
+  try {
+    const { email, code, password } = req.body;
+    
+    if (!email || !code || !password) {
+      return res.status(400).json({ message: 'Please provide all required fields' });
+    }
+    
+    // Hash the code for comparison
+    const hashedCode = crypto
+      .createHash('sha256')
+      .update(code)
+      .digest('hex');
+    
+    // Find user with the verification code
+    const user = await User.findOne({
+      email,
+      resetPasswordToken: hashedCode,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+    
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired verification code' });
+    }
+    
+    // Set the new password
+    user.password = password;
+    
+    // Clear reset token fields
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    
+    await user.save();
+    
+    res.status(200).json({ message: 'Password has been reset successfully. You can now login with your new password.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = {
   registerUser,
   verifyEmail,
@@ -515,5 +686,7 @@ module.exports = {
   updateProfileImage,
   forgotPassword,
   resetPassword,
-  resendVerificationEmail
+  resendVerificationEmail,
+  forgotPasswordWithCode,
+  resetPasswordWithCode
 }; 

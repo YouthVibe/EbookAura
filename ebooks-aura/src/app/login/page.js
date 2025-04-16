@@ -22,17 +22,15 @@ export default function Login() {
     setIsLoading(true);
     
     try {
-      // Use URLSearchParams for form data
-      const formData = new URLSearchParams();
-      formData.append('email', email);
-      formData.append('password', password);
-      
       const response = await fetch('http://localhost:5000/api/users/login', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
         },
-        body: formData,
+        body: JSON.stringify({
+          email,
+          password,
+        }),
       });
 
       const data = await response.json();

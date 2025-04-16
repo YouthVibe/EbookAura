@@ -41,17 +41,15 @@ export default function VerifyEmail() {
     setIsLoading(true);
     
     try {
-      // Use URLSearchParams for form data
-      const formData = new URLSearchParams();
-      formData.append('email', email);
-      formData.append('code', verificationCode);
-      
       const response = await fetch('http://localhost:5000/api/users/verify-email', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
         },
-        body: formData,
+        body: JSON.stringify({
+          email,
+          code: verificationCode,
+        }),
       });
       
       const data = await response.json();
@@ -87,16 +85,12 @@ export default function VerifyEmail() {
     setError('');
     
     try {
-      // Use URLSearchParams for form data
-      const formData = new URLSearchParams();
-      formData.append('email', email);
-      
       const response = await fetch('http://localhost:5000/api/users/resend-verification', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
         },
-        body: formData,
+        body: JSON.stringify({ email }),
       });
       
       const data = await response.json();

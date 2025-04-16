@@ -41,20 +41,17 @@ export default function Register() {
     setIsLoading(true);
     
     try {
-      // Use URLSearchParams to send the data as application/x-www-form-urlencoded
-      // which won't trigger the express-fileupload middleware
-      const formData = new URLSearchParams();
-      formData.append('name', name);
-      formData.append('fullName', fullName);
-      formData.append('email', email);
-      formData.append('password', password);
-      
       const response = await fetch('http://localhost:5000/api/users', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
         },
-        body: formData,
+        body: JSON.stringify({
+          name,
+          fullName,
+          email,
+          password,
+        }),
       });
 
       const data = await response.json();

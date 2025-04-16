@@ -21,7 +21,11 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`} style={{ backgroundColor: '#ffffff' }}>
+      <body 
+        className={`${geistSans.variable} ${geistMono.variable}`} 
+        style={{ backgroundColor: '#ffffff' }}
+        suppressHydrationWarning
+      >
         <AuthProvider>
           <Navbar />
           <main style={{ paddingTop: '60px', minHeight: 'calc(100vh - 60px)' }}>

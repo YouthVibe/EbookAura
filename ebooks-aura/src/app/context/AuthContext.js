@@ -9,10 +9,12 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
-  // Load user data from localStorage on initial render
+  // Only run on client-side
   useEffect(() => {
+    setMounted(true);
     const userInfo = localStorage.getItem('userInfo');
     if (userInfo) {
       try {
@@ -28,15 +30,28 @@ export const AuthProvider = ({ children }) => {
   // Login function
   const login = (userData) => {
     setUser(userData);
-    localStorage.setItem('userInfo', JSON.stringify(userData));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('userInfo', JSON.stringify(userData));
+    }
   };
 
   // Logout function
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('userInfo');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('userInfo');
+    }
     router.push('/login');
   };
+
+  // Return a loading state during SSR to avoid hydration mismatch
+  if (!mounted) {
+    return (
+      <AuthContext.Provider value={{ user: null, loading: true, login, logout }}>
+        {children}
+      </AuthContext.Provider>
+    );
+  }
 
   return (
     <AuthContext.Provider value={{ user, loading, login, logout }}>
