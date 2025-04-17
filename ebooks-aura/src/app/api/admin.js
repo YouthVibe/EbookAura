@@ -1,6 +1,7 @@
 /**
  * API functions for admin operations
  */
+import { getAPI, putAPI, deleteAPI } from './apiUtils';
 
 // Get all users
 export const getAllUsers = async () => {
@@ -12,22 +13,12 @@ export const getAllUsers = async () => {
       throw new Error('Authentication required');
     }
     
-    const response = await fetch('/api/admin/users', {
-      method: 'GET',
+    return await getAPI('/admin/users', {
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
         'X-API-Key': apiKey
       }
     });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to fetch users');
-    }
-    
-    const data = await response.json();
-    return data;
   } catch (error) {
     console.error('Error fetching users:', error);
     throw error;
@@ -44,22 +35,12 @@ export const toggleUserBan = async (userId) => {
       throw new Error('Authentication required');
     }
     
-    const response = await fetch(`/api/admin/users/${userId}/ban`, {
-      method: 'PUT',
+    return await putAPI(`/admin/users/${userId}/ban`, {}, {
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
         'X-API-Key': apiKey
       }
     });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to toggle user ban status');
-    }
-    
-    const data = await response.json();
-    return data;
   } catch (error) {
     console.error('Error toggling user ban status:', error);
     throw error;
@@ -76,22 +57,12 @@ export const deleteUser = async (userId) => {
       throw new Error('Authentication required');
     }
     
-    const response = await fetch(`/api/admin/users/${userId}`, {
-      method: 'DELETE',
+    return await deleteAPI(`/admin/users/${userId}`, {
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
         'X-API-Key': apiKey
       }
     });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to delete user');
-    }
-    
-    const data = await response.json();
-    return data;
   } catch (error) {
     console.error('Error deleting user:', error);
     throw error;
@@ -108,22 +79,12 @@ export const getAllBooks = async () => {
       throw new Error('Authentication required');
     }
     
-    const response = await fetch('/api/admin/books', {
-      method: 'GET',
+    return await getAPI('/admin/books', {
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
         'X-API-Key': apiKey
       }
     });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to fetch books');
-    }
-    
-    const data = await response.json();
-    return data;
   } catch (error) {
     console.error('Error fetching books:', error);
     throw error;
@@ -140,22 +101,12 @@ export const deleteBook = async (bookId) => {
       throw new Error('Authentication required');
     }
     
-    const response = await fetch(`/api/admin/books/${bookId}`, {
-      method: 'DELETE',
+    return await deleteAPI(`/admin/books/${bookId}`, {
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
         'X-API-Key': apiKey
       }
     });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to delete book');
-    }
-    
-    const data = await response.json();
-    return data;
   } catch (error) {
     console.error('Error deleting book:', error);
     throw error;

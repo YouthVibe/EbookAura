@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from './bookmarks.module.css';
 import { useAuth } from '../context/AuthContext';
+import { getAPI, deleteAPI } from '../api/apiUtils';
 
 export default function BookmarksPage() {
   const [bookmarkedBooks, setBookmarkedBooks] = useState([]);
@@ -23,31 +24,38 @@ export default function BookmarksPage() {
         const apiKey = getApiKey();
         
         if (!token || !apiKey) {
+          console.log('No token or API key found, redirecting to login');
           router.push('/login');
           return;
         }
 
-        // Call our new validation endpoint
-        const response = await fetch('/api/auth/validate', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'X-API-Key': apiKey
-          }
-        });
+        // Use getAPI instead of fetch
+        try {
+          console.log('Verifying authentication...');
+          const data = await getAPI('/auth/check', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'X-API-Key': apiKey
+            }
+          });
 
-        if (!response.ok) {
-          const data = await response.json();
-          console.error('Auth validation failed:', data);
+          console.log('Auth response:', data);
           
-          // Clear invalid credentials and redirect to login
+          if (data && data.isAuthenticated) {
+            console.log('Authentication verified');
+            setAuthVerified(true);
+          } else {
+            console.error('Auth validation failed:', data);
+            localStorage.removeItem('token');
+            setError('Authentication failed. Please login again.');
+            setTimeout(() => router.push('/login'), 2000);
+          }
+        } catch (error) {
+          console.error('API auth verification error:', error);
           localStorage.removeItem('token');
-          setError('Authentication failed. Please login again.');
+          setError('Authentication verification failed. Please login again.');
           setTimeout(() => router.push('/login'), 2000);
-          return;
         }
-
-        // Authentication verified, proceed
-        setAuthVerified(true);
       } catch (error) {
         console.error('Auth verification error:', error);
         setError('Authentication verification failed. Please login again.');
@@ -61,25 +69,43 @@ export default function BookmarksPage() {
   // Fetch bookmarks only after auth is verified
   useEffect(() => {
     const fetchBookmarks = async () => {
-      if (!authVerified) return;
+      if (!authVerified) {
+        console.log('Auth not verified yet, skipping bookmark fetch');
+        return;
+      }
       
       try {
         const token = getToken();
         const apiKey = getApiKey();
 
-        const response = await fetch('/api/users/bookmarks', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'X-API-Key': apiKey
+        console.log('Fetching bookmarks...');
+        
+        try {
+          const data = await getAPI('/users/bookmarks', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'X-API-Key': apiKey
+            }
+          });
+
+          console.log('Bookmark data received:', data);
+          
+          // Handle different response formats
+          if (data && data.books && Array.isArray(data.books)) {
+            console.log(`Found ${data.books.length} bookmarks`);
+            setBookmarkedBooks(data.books);
+          } else if (data && Array.isArray(data)) {
+            console.log(`Found ${data.length} bookmarks (array format)`);
+            setBookmarkedBooks(data);
+          } else {
+            console.warn('Unexpected bookmark data format:', data);
+            setBookmarkedBooks([]);
           }
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch bookmarks');
+        } catch (apiError) {
+          console.error('API error fetching bookmarks:', apiError);
+          setError('Failed to load bookmarks. Please try again later.');
         }
-
-        const data = await response.json();
-        setBookmarkedBooks(data.books || []);
+        
         setLoading(false);
       } catch (error) {
         console.error('Error fetching bookmarks:', error);
@@ -96,24 +122,25 @@ export default function BookmarksPage() {
       const token = getToken();
       const apiKey = getApiKey();
       
-      const response = await fetch('/api/users/bookmarks', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'X-API-Key': apiKey
-        },
-        body: JSON.stringify({ bookId })
-      });
+      console.log(`Removing bookmark for book ID: ${bookId}`);
+      
+      try {
+        await deleteAPI(`/users/bookmarks/${bookId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'X-API-Key': apiKey
+          }
+        });
 
-      if (response.ok) {
-        setBookmarkedBooks(bookmarkedBooks.filter(book => book._id !== bookId));
-      } else {
-        const data = await response.json();
-        console.error('Failed to remove bookmark:', data);
+        console.log('Bookmark removed successfully');
+        setBookmarkedBooks(prevBooks => prevBooks.filter(book => book._id !== bookId));
+      } catch (apiError) {
+        console.error('API error removing bookmark:', apiError);
+        alert('Failed to remove bookmark. Please try again.');
       }
     } catch (error) {
       console.error('Error removing bookmark:', error);
+      alert('An error occurred. Please try again.');
     }
   };
 
@@ -169,10 +196,10 @@ export default function BookmarksPage() {
                   <p className={styles.bookCategory}>{book.category}</p>
                   <div className={styles.bookStats}>
                     <span className={styles.stat}>
-                      <FaEye /> {book.views}
+                      <FaEye /> {book.views || 0}
                     </span>
                     <span className={styles.stat}>
-                      <FaDownload /> {book.downloads}
+                      <FaDownload /> {book.downloads || 0}
                     </span>
                     {book.averageRating > 0 && (
                       <span className={styles.stat}>

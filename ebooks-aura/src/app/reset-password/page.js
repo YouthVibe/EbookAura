@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { FaArrowLeft } from 'react-icons/fa';
 import styles from './reset-password.module.css';
+import { postAPI } from '../api/apiUtils';
 
 export default function ResetPassword() {
   const [email, setEmail] = useState('');
@@ -22,23 +23,12 @@ export default function ResetPassword() {
     setIsLoading(true);
 
     try {
-      // Replace with your actual API endpoint
-      const response = await fetch('http://localhost:5000/api/auth/request-reset', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setSuccess('Reset link sent to your email address. Please check your inbox.');
-        setStep(2);
-      } else {
-        setError(data.message || 'Failed to send reset email');
-      }
+      const data = await postAPI('/auth/request-reset', { email });
+      
+      setSuccess('Reset link sent to your email address. Please check your inbox.');
+      setStep(2);
     } catch (err) {
-      setError('An error occurred. Please try again later.');
+      setError(err.message || 'An error occurred. Please try again later.');
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -58,26 +48,15 @@ export default function ResetPassword() {
     }
 
     try {
-      // Replace with your actual API endpoint
-      const response = await fetch('http://localhost:5000/api/auth/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          token,
-          password: newPassword
-        })
+      const data = await postAPI('/auth/reset-password', {
+        email,
+        token,
+        password: newPassword
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setSuccess('Password reset successfully! You can now login with your new password.');
-      } else {
-        setError(data.message || 'Failed to reset password');
-      }
+      setSuccess('Password reset successfully! You can now login with your new password.');
     } catch (err) {
-      setError('An error occurred. Please try again later.');
+      setError(err.message || 'An error occurred. Please try again later.');
       console.error(err);
     } finally {
       setIsLoading(false);

@@ -1,3 +1,5 @@
+import { getAPI, postAPI, putAPI, deleteAPI } from '../api/apiUtils';
+
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
@@ -74,21 +76,15 @@ export default function ForgotPassword() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/users/forgot-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      });
+      const data = await postAPI("/users/forgot-password", { email });
 
-      const data = await response.json();
+      
 
-      if (response.ok) {
+      
         setSuccess('Verification code sent to your email. Please check your inbox.');
         setStep(2);
         setResendTimer(120); // 2 minute countdown
-      } else {
-        setError(data.message || 'Failed to send verification code');
-      }
+      
     } catch (err) {
       setError('An error occurred. Please try again later.');
       console.error(err);
@@ -104,20 +100,14 @@ export default function ForgotPassword() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/users/forgot-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      });
+      const data = await postAPI("/users/forgot-password", { email });
 
-      const data = await response.json();
+      
 
-      if (response.ok) {
+      
         setSuccess('New verification code sent to your email.');
         setResendTimer(120); // 2 minute countdown
-      } else {
-        setError(data.message || 'Failed to resend verification code');
-      }
+      
     } catch (err) {
       setError('An error occurred. Please try again later.');
       console.error(err);
@@ -149,26 +139,20 @@ export default function ForgotPassword() {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/users/reset-password-with-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const data = await postAPI("/users/reset-password-with-code", {
           email,
           code,
           password
-        })
-      });
+        });
 
-      const data = await response.json();
+      
 
-      if (response.ok) {
+      
         setSuccess('Password reset successfully! Redirecting to login...');
         setTimeout(() => {
           router.push('/login');
         }, 2000);
-      } else {
-        setError(data.message || 'Failed to reset password');
-      }
+      
     } catch (err) {
       setError('An error occurred. Please try again later.');
       console.error(err);

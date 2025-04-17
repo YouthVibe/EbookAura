@@ -7,6 +7,7 @@ import styles from './search.module.css';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import SearchInput from '../components/SearchInput';
+import { getAPI, postAPI } from '../api/apiUtils';
 
 // Add a simple toast notification component
 const Toast = ({ message, type, onClose }) => {
@@ -62,13 +63,44 @@ export default function SearchPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch('/api/books/categories');
-        if (!response.ok) throw new Error('Failed to fetch categories');
-        const data = await response.json();
-        setCategories(data);
+        const data = await getAPI('/books/categories');
+        
+        // Check if data.categories exists and is an array
+        if (data && data.categories && Array.isArray(data.categories)) {
+          setCategories(['All', ...data.categories]);
+        } else if (data && Array.isArray(data)) {
+          // If data is directly an array
+          setCategories(['All', ...data]);
+        } else if (data && typeof data === 'object') {
+          // If categories might be in another format
+          const extractedCategories = [];
+          
+          // If it's an object with category keys
+          if (Object.keys(data).length > 0) {
+            Object.keys(data).forEach(key => {
+              if (Array.isArray(data[key])) {
+                extractedCategories.push(...data[key]);
+              } else if (typeof data[key] === 'string') {
+                extractedCategories.push(data[key]);
+              }
+            });
+          }
+          
+          if (extractedCategories.length > 0) {
+            setCategories(['All', ...extractedCategories]);
+          } else {
+            // Fallback to default categories if extraction fails
+            setCategories(['All', 'Fiction', 'Non-Fiction', 'Science', 'History', 'Biography', 'Technology']);
+          }
+        } else {
+          // Fallback to default categories if data format is unexpected
+          setCategories(['All', 'Fiction', 'Non-Fiction', 'Science', 'History', 'Biography', 'Technology']);
+        }
       } catch (err) {
         setError('Failed to load categories');
         console.error('Error fetching categories:', err);
+        // Fallback to default categories on error
+        setCategories(['All', 'Fiction', 'Non-Fiction', 'Science', 'History', 'Biography', 'Technology']);
       }
     };
 
@@ -80,22 +112,32 @@ export default function SearchPage() {
       try {
         const token = getToken();
         if (!token) {
+          console.log('No authentication token found, user is not logged in');
           setIsLoggedIn(false);
           return;
         }
 
-        const response = await fetch('/api/auth/check', {
-          headers: {
-            'Authorization': `Bearer ${token}`
+        try {
+          const data = await getAPI('/auth/check', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (data && typeof data.isAuthenticated === 'boolean') {
+            setIsLoggedIn(data.isAuthenticated);
+            console.log('Auth check successful, user is', data.isAuthenticated ? 'authenticated' : 'not authenticated');
+            
+            if (data.isAuthenticated) {
+              // Fetch user's bookmarks
+              fetchUserBookmarks();
+            }
+          } else {
+            console.warn('Unexpected auth check response format:', data);
+            setIsLoggedIn(false);
           }
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          setIsLoggedIn(data.isAuthenticated);
-          // Fetch user's bookmarks
-          fetchUserBookmarks();
-        } else {
+        } catch (error) {
+          console.error('Auth check API error:', error.message);
           setIsLoggedIn(false);
           localStorage.removeItem('token');
         }
@@ -112,28 +154,40 @@ export default function SearchPage() {
   const fetchUserBookmarks = async () => {
     try {
       const token = getToken();
-      if (!token) return;
+      if (!token) {
+        console.log('No token available for fetching bookmarks');
+        return;
+      }
       
-      const response = await fetch('/api/users/bookmarks', {
+      console.log('Fetching user bookmarks...');
+      const data = await getAPI('/users/bookmarks', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'X-API-Key': getApiKey()
         }
       });
       
-      if (response.ok) {
-        const data = await response.json();
-        // Handle different possible response formats
-        let bookmarkIds = [];
-        if (data.bookmarks) {
-          bookmarkIds = data.bookmarks;
-        } else if (data.books && Array.isArray(data.books)) {
-          bookmarkIds = data.books.map(book => book._id);
-        }
-        setBookmarkedBooks(new Set(bookmarkIds));
+      // Handle different possible response formats
+      let bookmarkIds = [];
+      
+      if (data && data.bookmarks && Array.isArray(data.bookmarks)) {
+        console.log('Received bookmarks array from API');
+        bookmarkIds = data.bookmarks;
+      } else if (data && data.books && Array.isArray(data.books)) {
+        console.log('Received books array from API');
+        bookmarkIds = data.books.map(book => book._id);
+      } else if (data && Array.isArray(data)) {
+        console.log('Received direct array from API');
+        // If data is directly an array of IDs or book objects
+        bookmarkIds = data.map(item => item._id || item);
+      } else {
+        console.warn('Unexpected bookmark data format:', data);
       }
+      
+      console.log(`Found ${bookmarkIds.length} bookmarks`);
+      setBookmarkedBooks(new Set(bookmarkIds));
     } catch (error) {
-      console.error('Error fetching bookmarks:', error);
+      console.error('Error fetching bookmarks:', error.message);
     }
   };
 
@@ -160,32 +214,22 @@ export default function SearchPage() {
     
     try {
       const token = getToken();
-      const response = await fetch('/api/users/bookmarks', {
-        method: 'POST',
+      
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+      
+      await postAPI('/users/bookmarks', { bookId }, {
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
           'X-API-Key': getApiKey()
-        },
-        body: JSON.stringify({ bookId })
+        }
       });
 
-      if (response.ok) {
-        // Show success toast
-        showToast(wasBookmarked 
-          ? `Removed "${bookTitle}" from bookmarks` 
-          : `Added "${bookTitle}" to bookmarks`, 'success');
-      } else {
-        // Revert changes if the API call fails
-        if (wasBookmarked) {
-          newBookmarkedBooks.add(bookId);
-        } else {
-          newBookmarkedBooks.delete(bookId);
-        }
-        setBookmarkedBooks(newBookmarkedBooks);
-        console.error('Bookmark operation failed');
-        showToast('Failed to update bookmark', 'error');
-      }
+      // Show success toast
+      showToast(wasBookmarked 
+        ? `Removed "${bookTitle}" from bookmarks` 
+        : `Added "${bookTitle}" to bookmarks`, 'success');
     } catch (error) {
       // Revert changes on error
       if (wasBookmarked) {
@@ -194,8 +238,21 @@ export default function SearchPage() {
         newBookmarkedBooks.delete(bookId);
       }
       setBookmarkedBooks(newBookmarkedBooks);
+      
+      // Provide more detailed error messaging
+      let errorMessage = 'Error updating bookmark';
+      
+      if (error.message) {
+        console.error('Bookmark error details:', error.message);
+        if (error.message.includes('Authentication') || error.message.includes('token')) {
+          errorMessage = 'Authentication error. Please log in again.';
+          // Redirect to login on auth errors
+          setTimeout(() => router.push('/login'), 2000);
+        }
+      }
+      
       console.error('Error toggling bookmark:', error);
-      showToast('Error updating bookmark', 'error');
+      showToast(errorMessage, 'error');
     }
   };
 
@@ -206,16 +263,40 @@ export default function SearchPage() {
       try {
         const params = new URLSearchParams({
           search: searchQuery,
-          category: selectedCategory,
+          category: selectedCategory === 'All' ? '' : selectedCategory,
           sort: sortBy
-        });
-        const response = await fetch(`/api/books?${params}`);
-        if (!response.ok) throw new Error('Failed to fetch books');
-        const data = await response.json();
-        setBooks(data);
+        }).toString();
+        
+        const data = await getAPI(`/books?${params}`);
+        
+        if (data && Array.isArray(data)) {
+          setBooks(data);
+        } else if (data && data.books && Array.isArray(data.books)) {
+          // Handle case where API returns { books: [...] }
+          setBooks(data.books);
+        } else if (data && typeof data === 'object') {
+          // If the data is not in the expected format, try to extract books
+          const extractedBooks = [];
+          Object.keys(data).forEach(key => {
+            if (Array.isArray(data[key])) {
+              extractedBooks.push(...data[key]);
+            }
+          });
+          
+          if (extractedBooks.length > 0) {
+            setBooks(extractedBooks);
+          } else {
+            setBooks([]);
+            console.warn('Received unexpected data format for books:', data);
+          }
+        } else {
+          setBooks([]);
+          console.warn('Received unexpected data type for books:', typeof data);
+        }
       } catch (err) {
         setError('Failed to load books');
         console.error('Error fetching books:', err);
+        setBooks([]);
       } finally {
         setLoading(false);
       }

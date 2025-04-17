@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from './register.module.css';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { postAPI } from '../api/apiUtils';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -41,24 +42,12 @@ export default function Register() {
     setIsLoading(true);
     
     try {
-      const response = await fetch('http://localhost:5000/api/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name,
-          fullName,
-          email,
-          password,
-        }),
+      await postAPI('/users', {
+        name,
+        fullName,
+        email,
+        password,
       });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Something went wrong');
-      }
       
       // Redirect to verify-email page with email as a parameter
       router.push(`/verify-email?email=${encodeURIComponent(email)}`);

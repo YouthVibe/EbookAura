@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import styles from './verify-email.module.css';
 import { useAuth } from '../context/AuthContext';
+import { postAPI } from '../api/apiUtils';
 
 export default function VerifyEmail() {
   const router = useRouter();
@@ -41,22 +42,10 @@ export default function VerifyEmail() {
     setIsLoading(true);
     
     try {
-      const response = await fetch('http://localhost:5000/api/users/verify-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          code: verificationCode,
-        }),
+      const data = await postAPI('/users/verify-email', {
+        email,
+        code: verificationCode,
       });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Verification failed');
-      }
       
       setSuccess(true);
       
@@ -85,19 +74,7 @@ export default function VerifyEmail() {
     setError('');
     
     try {
-      const response = await fetch('http://localhost:5000/api/users/resend-verification', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to resend verification code');
-      }
+      await postAPI('/users/resend-verification', { email });
       
       // Show message that code was sent
       setError('');

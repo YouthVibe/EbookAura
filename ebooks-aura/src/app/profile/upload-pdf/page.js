@@ -1,5 +1,6 @@
 'use client';
 
+import { getAPI, postAPI, putAPI, deleteAPI } from '../../api/apiUtils';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -133,19 +134,11 @@ export default function UploadPdf() {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch('http://localhost:5000/api/users/profile', {
-        method: 'GET',
+      const data = await getAPI('/users/profile', {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+          'Authorization': `Bearer ${token}`
+        }
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch profile data');
-      }
 
       setProfileData(data);
       
@@ -295,7 +288,6 @@ export default function UploadPdf() {
       setFilteredTags(filtered);
       setShowTagSuggestions(true);
     } else {
-      setFilteredTags([]);
       setShowTagSuggestions(false);
     }
   }, [tagInput, selectedTags]);
@@ -355,7 +347,6 @@ export default function UploadPdf() {
       setFilteredCategories(filtered);
       setShowCategorySuggestions(true);
     } else {
-      setFilteredCategories([]);
       setShowCategorySuggestions(false);
     }
   }, [categoryInput, category]);
@@ -415,49 +406,23 @@ export default function UploadPdf() {
         throw new Error('No authentication token found');
       }
 
-      // Check file size again before upload
-      if (pdfFile.size > 20 * 1024 * 1024) {
-        throw new Error('PDF file size should be less than 20MB for reliable uploads');
-      }
-
-      setSuccess('Uploading your book... This may take a few minutes for larger files.');
-      
+      // Create form data for multipart form upload
       const formData = new FormData();
       formData.append('pdf', pdfFile);
-      formData.append('coverImage', coverFile);
+      formData.append('cover', coverFile);
       formData.append('title', title);
       formData.append('author', author);
       formData.append('description', description);
       formData.append('pageSize', pageSize);
       formData.append('category', category);
-      if (selectedTags.length > 0) {
-        formData.append('tags', selectedTags.join(','));
-      }
+      formData.append('tags', selectedTags.join(','));
 
-      // Set up a timeout handler
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000); // 5 minute timeout
-
-      const response = await fetch('http://localhost:5000/api/upload/pdf', {
-        method: 'POST',
+      // Use FormData with postAPI
+      const data = await postAPI('/upload/pdf', formData, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: formData,
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (data.error && (data.error.includes('Invalid') || data.error.includes('format'))) {
-          throw new Error('There was an issue with the file format. Please ensure your PDF is valid.');
-        } else {
-          throw new Error(data.message || 'Failed to upload book');
+          'Authorization': `Bearer ${token}`
         }
-      }
+      });
 
       setSuccess('Book uploaded successfully!');
       // Reset form

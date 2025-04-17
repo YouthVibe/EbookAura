@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { FaArrowLeft, FaTrash, FaBookmark, FaStar, FaMoon, FaSun, FaExclamationTriangle } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import styles from './settings.module.css';
+import { API_BASE_URL } from '../utils/config';
 
 export default function Settings() {
   const { user, logout, getToken } = useAuth();
@@ -48,7 +49,7 @@ export default function Settings() {
       }
 
       // Fetch user reviews
-      const reviewsResponse = await fetch('http://localhost:5000/api/reviews/user', {
+      const reviewsResponse = await fetch(`${API_BASE_URL}/reviews/user`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -64,7 +65,7 @@ export default function Settings() {
       setReviews(reviewsData);
 
       // Fetch user bookmarks
-      const bookmarksResponse = await fetch('http://localhost:5000/api/bookmarks', {
+      const bookmarksResponse = await fetch(`${API_BASE_URL}/bookmarks`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -97,7 +98,7 @@ export default function Settings() {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`http://localhost:5000/api/reviews/${reviewId}`, {
+      const response = await fetch(`${API_BASE_URL}/reviews/${reviewId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -134,7 +135,7 @@ export default function Settings() {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch('http://localhost:5000/api/reviews/user/all', {
+      const response = await fetch(`${API_BASE_URL}/reviews/user/all`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -168,7 +169,7 @@ export default function Settings() {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`http://localhost:5000/api/bookmarks/${bookmarkId}`, {
+      const response = await fetch(`${API_BASE_URL}/bookmarks/${bookmarkId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -205,7 +206,7 @@ export default function Settings() {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch('http://localhost:5000/api/bookmarks/all', {
+      const response = await fetch(`${API_BASE_URL}/bookmarks/all`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -244,7 +245,7 @@ export default function Settings() {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch('http://localhost:5000/api/users/profile', {
+      const response = await fetch(`${API_BASE_URL}/users/profile`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -2,6 +2,7 @@
 
 import { createContext, useState, useContext, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { getAPI, postAPI } from '../api/apiUtils';
 
 // Create context
 const AuthContext = createContext();
@@ -30,6 +31,22 @@ export const AuthProvider = ({ children }) => {
     if (userInfo && token) {
       try {
         setUser(JSON.parse(userInfo));
+        
+        // Validate token with the server
+        const validateToken = async () => {
+          try {
+            await getAPI('/auth/check', {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+          } catch (error) {
+            console.error('Token validation failed:', error);
+            logout();
+          }
+        };
+        
+        validateToken();
       } catch (error) {
         console.error('Failed to parse user info:', error);
         localStorage.removeItem('userInfo');
@@ -42,21 +59,43 @@ export const AuthProvider = ({ children }) => {
 
   // Login function
   const login = (userData) => {
-    // Store user data without the token
-    const { token, ...userDataWithoutToken } = userData;
-    setUser(userDataWithoutToken);
+    console.log('Processing login data');
     
-    // Store data in localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('userInfo', JSON.stringify(userDataWithoutToken));
-      localStorage.setItem('token', token);
-      
-      // Generate and store API key if not exists
-      let apiKey = localStorage.getItem('apiKey');
-      if (!apiKey) {
-        apiKey = generateApiKey();
-        localStorage.setItem('apiKey', apiKey);
+    if (!userData) {
+      console.error('No user data received for login');
+      return;
+    }
+    
+    try {
+      // Check if we have a token
+      if (!userData.token) {
+        console.error('No token in login data');
+        return;
       }
+      
+      // Store user data without the token
+      const { token, ...userDataWithoutToken } = userData;
+      
+      console.log('Setting user data:', userDataWithoutToken);
+      setUser(userDataWithoutToken);
+      
+      // Store data in localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('userInfo', JSON.stringify(userDataWithoutToken));
+        localStorage.setItem('token', token);
+        
+        // Generate and store API key if not exists
+        let apiKey = localStorage.getItem('apiKey');
+        if (!apiKey) {
+          console.log('Generating new API key');
+          apiKey = generateApiKey();
+          localStorage.setItem('apiKey', apiKey);
+        }
+        
+        console.log('Authentication data stored in localStorage');
+      }
+    } catch (error) {
+      console.error('Error processing login:', error);
     }
   };
 

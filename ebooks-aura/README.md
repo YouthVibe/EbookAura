@@ -91,7 +91,10 @@ The frontend communicates with the backend API using fetch requests. All API end
 
 ```javascript
 // src/app/utils/config.js
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+// For development
+// export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+// For production
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://ebookaura.onrender.com/api';
 
 export const API_ENDPOINTS = {
   BOOKS: {
@@ -118,6 +121,92 @@ import { API_ENDPOINTS } from '../utils/config';
 // Fetch book data
 const response = await fetch(API_ENDPOINTS.BOOKS.DETAILS(bookId));
 ```
+
+## Deployment
+
+### Static Site Generation
+
+EbookAura can be built as a static site, which provides several advantages:
+
+1. **Better Performance**: Static sites load faster since there's no server-side rendering at request time
+2. **Cheaper Hosting**: Can be hosted on any static file hosting service (GitHub Pages, Netlify, Vercel, etc.)
+3. **Better Security**: No server-side code execution means reduced attack surface
+4. **Improved Reliability**: Static assets are easily cached and distributed via CDNs
+
+To build the site as a static export:
+
+```bash
+# Build with development API URL
+npm run build:static
+
+# Build with production API URL
+npm run build:static:prod
+```
+
+The static site will be generated in the `out` directory. To test it locally:
+
+```bash
+npm run serve
+```
+
+This will start a local server to serve the static files from the `out` directory.
+
+### Hosting the Static Site
+
+#### Netlify/Vercel
+Simply connect your repository and set the build command to:
+```
+npm run build:static:prod
+```
+
+And set the output directory to `out`.
+
+#### GitHub Pages
+1. Push the `out` directory to the `gh-pages` branch
+2. Configure GitHub Pages to serve from this branch
+
+#### Any Static Host
+Upload the contents of the `out` directory to any static file host.
+
+### Production API
+
+This application is configured to use the production API at `https://ebookaura.onrender.com/api`. 
+
+To switch between development and production environments:
+
+1. In `src/app/utils/config.js`, comment/uncomment the appropriate API_BASE_URL line:
+   ```javascript
+   // For local development
+   // export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+   
+   // For production deployment
+   export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://ebookaura.onrender.com/api';
+   ```
+
+2. For environment-based configuration, use the `.env.local` file:
+   ```
+   # Set to your backend URL
+   NEXT_PUBLIC_API_URL=https://ebookaura.onrender.com/api
+   ```
+
+### Deploying to Vercel
+
+The frontend can be easily deployed to Vercel:
+
+1. Connect your GitHub repository to Vercel
+2. Configure the environment variables
+3. Deploy with default settings
+
+### Deploying to Other Platforms
+
+For other platforms (Netlify, etc.):
+
+1. Build the application:
+   ```
+   npm run build
+   ```
+   
+2. Deploy the `.next` directory according to the platform's documentation
 
 ## Folder Structure
 

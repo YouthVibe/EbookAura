@@ -1,3 +1,5 @@
+import { getAPI, postAPI, putAPI, deleteAPI } from '../../api/apiUtils';
+
 'use client';
 
 import { useState, useRef } from 'react';
@@ -98,11 +100,9 @@ export default function UploadProfileImage() {
         body: formData,
       });
       
-      const data = await response.json();
       
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to upload image');
-      }
+      
+      
       
       // Update user context with new profile image
       login({

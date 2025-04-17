@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import styles from './login.module.css';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
+import { postAPI } from '../api/apiUtils';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -22,30 +23,46 @@ export default function Login() {
     setIsLoading(true);
     
     try {
-      const response = await fetch('http://localhost:5000/api/users/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      console.log('Attempting login for:', email);
+      
+      try {
+        const data = await postAPI('/auth/login', {
           email,
           password,
-        }),
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Invalid email or password');
+        });
+        
+        console.log('Login successful, received data:', { ...data, token: data.token ? '***TOKEN_REDACTED***' : 'no token' });
+        
+        if (!data.token) {
+          console.error('No token received in login response');
+          setError('Authentication error: No token received');
+          setIsLoading(false);
+          return;
+        }
+        
+        // Use the login function from context with the complete data (including token)
+        login(data);
+        
+        console.log('Redirecting to home page...');
+        // Redirect to homepage
+        router.push('/');
+      } catch (apiError) {
+        console.error('API login error:', apiError);
+        
+        // Provide more user-friendly error messages
+        if (apiError.message.includes('404') || apiError.message.includes('not found')) {
+          setError('Login failed: The service is currently unavailable. Please try again later.');
+        } else if (apiError.message.includes('401') || apiError.message.includes('unauthorized')) {
+          setError('Invalid email or password. Please check your credentials.');
+        } else {
+          setError(apiError.message || 'Login failed. Please try again.');
+        }
+        
+        setIsLoading(false);
       }
-      
-      // Use the login function from context with the complete data (including token)
-      login(data);
-      
-      // Redirect to homepage
-      router.push('/');
     } catch (err) {
-      setError(err.message);
+      console.error('Unexpected login error:', err);
+      setError('An unexpected error occurred. Please try again later.');
       setIsLoading(false);
     }
   };

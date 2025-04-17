@@ -5,8 +5,13 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:prod": "NEXT_PUBLIC_API_URL=https://ebookaura.onrender.com/api next build",
+    "build:static": "cross-env STATIC_EXPORT=true next build",
+    "build:static:prod": "cross-env STATIC_EXPORT=true NEXT_PUBLIC_API_URL=https://ebookaura.onrender.com/api next build",
     "start": "next start",
-    "lint": "next lint"
+    "serve": "npx serve out",
+    "lint": "next lint",
+    "clean": "rimraf .next out"
   },
   "dependencies": {
     "next": "15.3.0",
@@ -17,7 +22,10 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "cross-env": "^7.0.3",
     "eslint": "^9",
-    "eslint-config-next": "15.3.0"
+    "eslint-config-next": "15.3.0",
+    "rimraf": "^5.0.10",
+    "serve": "^14.2.1"
   }
 }

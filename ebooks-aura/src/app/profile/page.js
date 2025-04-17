@@ -1,5 +1,6 @@
 'use client';
 
+import { getAPI, postAPI, putAPI, deleteAPI } from '../api/apiUtils';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -38,19 +39,11 @@ export default function Profile() {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch('http://localhost:5000/api/users/profile', {
-        method: 'GET',
+      const data = await getAPI('/users/profile', {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+          'Authorization': `Bearer ${token}`
+        }
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch profile data');
-      }
 
       setProfileData(data);
     } catch (err) {
