@@ -13,7 +13,9 @@
     "test-models": "node utils/testModels.js",
     "prestart": "node utils/prepareModels.js && node utils/prepareStaticFiles.js",
     "copy-static": "node copy-static-files.js",
-    "prepare-static": "cross-env FORCE_STATIC_GENERATION=true node utils/prepareStaticFiles.js"
+    "prepare-static": "cross-env FORCE_STATIC_GENERATION=true node utils/prepareStaticFiles.js",
+    "prepare-models": "node utils/prepareModels.js",
+    "deploy:render": "npm run prepare-models && npm run prepare-static && npm run start:render"
   },
   "dependencies": {
     "axios": "^1.6.5",
