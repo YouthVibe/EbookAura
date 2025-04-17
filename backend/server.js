@@ -88,6 +88,47 @@ app.use('/api/bookmarks', bookmarkRoutes);
 app.use('/api/books', bookRoutes);
 app.use('/api/admin', adminRoutes);
 
+// Serve static files from the Next.js out directory
+const outDir = path.join(__dirname, 'out');
+if (fs.existsSync(outDir)) {
+  console.log('📂 Static site found in out directory. Serving files...');
+  
+  // Serve static assets (images, JS, CSS files)
+  app.use(express.static(outDir, {
+    maxAge: '1y',  // Set cache time for static assets to 1 year
+    etag: true
+  }));
+
+  // Handle client-side routing - serve index.html for any request not found
+  app.get('*', (req, res, next) => {
+    // Skip API routes
+    if (req.path.startsWith('/api/')) {
+      return next();
+    }
+    
+    // Check if the specific file exists
+    const filePath = path.join(outDir, req.path);
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      return res.sendFile(filePath);
+    }
+    
+    // For any route that doesn't have an extension or isn't a direct file,
+    // serve the appropriate HTML file or fallback to index.html
+    const htmlPath = path.join(outDir, req.path, 'index.html');
+    if (fs.existsSync(htmlPath)) {
+      return res.sendFile(htmlPath);
+    }
+    
+    // Fallback to index.html for client-side routing
+    res.sendFile(path.join(outDir, 'index.html'));
+  });
+  
+  console.log('🌐 Static site is now being served along with the API');
+} else {
+  console.warn('⚠️ Out directory not found. Static site will not be served.');
+  console.warn('  Create the static site by running: npm run build');
+}
+
 // Apply error handler middleware
 app.use(errorHandler);
 
@@ -119,4 +160,10 @@ process.on('SIGTERM', cleanupAndExit);
 
 // Server initialization
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`)); 
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📡 API available at http://localhost:${PORT}/api`);
+  if (fs.existsSync(outDir)) {
+    console.log(`🌐 Website available at http://localhost:${PORT}`);
+  }
+}); 

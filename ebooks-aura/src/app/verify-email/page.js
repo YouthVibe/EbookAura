@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import styles from './verify-email.module.css';
 import { useAuth } from '../context/AuthContext';
 import { postAPI } from '../api/apiUtils';
 
-export default function VerifyEmail() {
+// Client component that safely uses the useSearchParams hook
+function VerifyEmailForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
@@ -176,5 +177,32 @@ export default function VerifyEmail() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Loading fallback for Suspense
+function VerifyEmailLoading() {
+  return (
+    <div className={styles.container}>
+      <div className={styles.verifyBox}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>
+            <span className={styles.titleEbook}>Ebook</span>
+            <span className={styles.titleAura}>Aura</span>
+          </h1>
+          <p className={styles.subtitle}>Verify Your Email</p>
+        </div>
+        <div className={styles.loading}>Loading verification form...</div>
+      </div>
+    </div>
+  );
+}
+
+// Main component that exports the Suspense-wrapped form
+export default function VerifyEmail() {
+  return (
+    <Suspense fallback={<VerifyEmailLoading />}>
+      <VerifyEmailForm />
+    </Suspense>
   );
 } 
