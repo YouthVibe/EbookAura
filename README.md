@@ -1,96 +1,157 @@
 # EbookAura
 
-EbookAura is a full-stack e-book management platform that allows users to explore, view, and download PDF e-books. The application provides a seamless reading experience with features for user authentication, book categorization, and personal libraries.
+EbookAura is a full-stack web application for discovering, managing, and reading ebooks. The platform offers a user-friendly interface for browsing books, creating bookmarks, and downloading content.
 
 ## Project Structure
 
-The project consists of two main components:
+This repository contains both the frontend and backend components of the EbookAura application:
 
-- **Backend**: A Node.js/Express API that manages books, user authentication, and Cloudinary integration for PDF storage
-- **Frontend**: A Next.js application that provides a modern, responsive UI for browsing and reading books
-
-## Features
-
-- 📚 Browse and search for books by title, author, category, or tags
-- 👤 User authentication and profile management
-- 📖 View PDF books directly in the browser
-- 📥 Download books for offline reading
-- ⭐ Rate and review books
-- 📝 Admin dashboard for managing the book collection
-- 📱 Responsive design for mobile and desktop
+- **frontend (ebooks-aura/)**: Next.js application with React components
+- **backend/**: Express.js REST API connected to MongoDB
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js (v14 or higher)
-- MongoDB
-- Cloudinary account (for PDF and image storage)
+- Node.js (v14.x or higher)
+- MongoDB (local instance or MongoDB Atlas account)
+- Cloudinary account (for file storage)
 
-### Installation
+### Setting Up the Backend
 
-1. Clone the repository:
-   ```
-   git clone https://github.com/yourusername/EbookAura.git
-   cd EbookAura
-   ```
-
-2. Set up the backend:
+1. Navigate to the backend directory:
    ```
    cd backend
+   ```
+
+2. Install dependencies:
+   ```
    npm install
-   cp .env.example .env
-   # Edit .env with your configuration
+   ```
+
+3. Create a `.env` file in the backend directory with the following variables:
+   ```
+   MONGODB_URI=your_mongodb_connection_string
+   JWT_SECRET=your_jwt_secret
+   PORT=5000
+   CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+   CLOUDINARY_API_KEY=your_cloudinary_api_key
+   CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+   ```
+
+4. Start the server:
+   - **Windows**: Run the batch file
+     ```
+     start-server.bat
+     ```
+   - **Unix/Mac**: 
+     ```
+     node start-server.js
+     ```
+
+The backend server will start on http://localhost:5000 (or the port specified in your .env file).
+
+### Setting Up the Frontend
+
+1. Navigate to the frontend directory:
+   ```
+   cd ebooks-aura
+   ```
+
+2. Install dependencies:
+   ```
+   npm install
+   ```
+
+3. Create a `.env` file in the frontend directory with:
+   ```
+   NEXT_PUBLIC_API_URL=http://localhost:5000/api
+   ```
+
+4. Run the development server:
+   ```
    npm run dev
    ```
 
-3. Set up the frontend:
-   ```
-   cd ../ebooks-aura
-   npm install
-   npm run dev
-   ```
+The frontend will be available at http://localhost:3000.
 
-## Deployment to Render.com
+### Building for Production
 
-This project includes fixes for common deployment issues on case-sensitive file systems like Render.com:
+#### Static Site Generation
 
-1. Before deploying to Render.com, run:
+To build a static version of the frontend:
+
+1. Navigate to the frontend directory:
    ```
-   npm run pre-deploy
+   cd ebooks-aura
    ```
 
-2. The deployment process includes automatic handling of case sensitivity issues with model files. A custom `prepareModels.js` script runs before the server starts to ensure all required model files are available regardless of case sensitivity.
-
-3. When setting up on Render.com, use the following start command:
+2. Create a `.env` file with:
    ```
-   npm start
+   NEXT_PUBLIC_API_URL=https://ebookaura.onrender.com/api
+   STATIC_EXPORT=true
    ```
 
-## Environment Variables
+3. Run the build command:
+   ```
+   npx next build
+   ```
 
-The application requires several environment variables to be set up:
+4. The static site will be generated in the `out` directory.
+
+#### Windows Users
+
+Windows users can use the provided batch file to simplify the static build process:
+
+```
+cd ebooks-aura
+build-static-windows.bat
+```
+
+## Available Scripts
 
 ### Backend
-- `PORT`: The port on which the server will run
-- `MONGO_URI`: MongoDB connection string
-- `JWT_SECRET`: Secret for JWT token generation
-- `JWT_EXPIRE`: JWT token expiration time
-- `CLOUDINARY_CLOUD_NAME`: Your Cloudinary cloud name
-- `CLOUDINARY_API_KEY`: Your Cloudinary API key
-- `CLOUDINARY_API_SECRET`: Your Cloudinary API secret
+
+- `npm start`: Start the server
+- `npm run dev`: Start the server with nodemon for development
 
 ### Frontend
-- Set up in `.env.local` for the Next.js app
-- API URLs are automatically managed by Next.js API routes
 
-## Documentation
+- `npm run dev`: Start the development server
+- `npm run build`: Build the application for production
+- `npm start`: Start the production server
+- `npm run lint`: Run ESLint to check code quality
 
-For detailed documentation about each component, please refer to:
+## API Endpoints
 
-- [Backend Documentation](./backend/README.md)
-- [Frontend Documentation](./ebooks-aura/README.md)
+The backend provides the following API endpoints:
+
+- **Authentication**
+  - `POST /api/auth/register`: Register a new user
+  - `POST /api/auth/login`: Log in an existing user
+  - `GET /api/auth/profile`: Get the current user's profile
+
+- **Books**
+  - `GET /api/books`: Get all books
+  - `GET /api/books/:id`: Get a specific book
+  - `POST /api/books`: Add a new book (admin only)
+  - `PUT /api/books/:id`: Update a book (admin only)
+  - `DELETE /api/books/:id`: Delete a book (admin only)
+
+- **Bookmarks**
+  - `GET /api/users/bookmarks`: Get the current user's bookmarks
+  - `POST /api/users/bookmarks/:bookId`: Add a bookmark
+  - `DELETE /api/users/bookmarks/:bookId`: Remove a bookmark
+
+- **File Upload**
+  - `POST /api/upload/image`: Upload an image
+  - `POST /api/upload/pdf`: Upload a PDF file
+  - `DELETE /api/upload/:id`: Delete a file
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the MIT License. 
