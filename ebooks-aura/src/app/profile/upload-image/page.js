@@ -1,7 +1,6 @@
-import { getAPI, postAPI, putAPI, deleteAPI } from '../../api/apiUtils';
-
 'use client';
 
+import { getAPI, postAPI, putAPI, deleteAPI } from '../../api/apiUtils';
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -92,7 +91,8 @@ export default function UploadProfileImage() {
       const formData = new FormData();
       formData.append('image', selectedFile);
       
-      const response = await fetch('http://localhost:5000/api/users/profile/image', {
+      // Use the production API URL instead of localhost
+      const response = await fetch('https://ebookaura.onrender.com/api/users/profile/image', {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -100,9 +100,22 @@ export default function UploadProfileImage() {
         body: formData,
       });
       
+      if (!response.ok) {
+        const contentType = response.headers.get('content-type');
+        let errorMessage = 'Failed to upload profile image';
+        
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          errorMessage = errorData.message || `Upload failed: ${response.status}`;
+        } else {
+          errorMessage = `Upload failed: ${response.statusText || response.status}`;
+        }
+        
+        throw new Error(errorMessage);
+      }
       
-      
-      
+      const data = await response.json();
+      console.log('Profile image updated:', data);
       
       // Update user context with new profile image
       login({

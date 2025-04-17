@@ -260,9 +260,8 @@ export default function UploadPdf() {
       return false;
     }
     
-    // Both files are required by the backend
     if (!pdfFile) {
-      setError('Please select a PDF file to upload - both PDF and cover image are required');
+      setError('Please select a PDF file to upload');
       return false;
     }
     
@@ -272,12 +271,7 @@ export default function UploadPdf() {
     }
     
     if (!coverFile) {
-      setError('Please select a cover image - both PDF and cover image are required');
-      return false;
-    }
-    
-    if (coverFile.size > 5 * 1024 * 1024) {
-      setError('Cover image size should be less than 5MB');
+      setError('Please select a cover image');
       return false;
     }
     
@@ -414,61 +408,21 @@ export default function UploadPdf() {
 
       // Create form data for multipart form upload
       const formData = new FormData();
-      
-      // Ensure files are properly appended with the exact field names expected by the backend
-      if (pdfFile) formData.append('pdf', pdfFile);
-      if (coverFile) formData.append('coverImage', coverFile);
-      
-      // Append all other required fields
-      formData.append('title', title.trim());
-      formData.append('author', author.trim());
-      formData.append('description', description.trim());
+      formData.append('pdf', pdfFile);
+      formData.append('cover', coverFile);
+      formData.append('title', title);
+      formData.append('author', author);
+      formData.append('description', description);
       formData.append('pageSize', pageSize);
       formData.append('category', category);
-      
-      // Join tags with comma
-      if (selectedTags.length > 0) {
-        formData.append('tags', selectedTags.join(','));
-      } else {
-        formData.append('tags', ''); // Send empty string if no tags
-      }
+      formData.append('tags', selectedTags.join(','));
 
-      console.log('Uploading files with:', {
-        title: title.trim(),
-        author: author.trim(),
-        description: description.trim(),
-        pageSize,
-        category,
-        pdfFileName: pdfFile ? pdfFile.name : null,
-        coverFileName: coverFile ? coverFile.name : null,
-        tags: selectedTags.join(',')
-      });
-
-      // Use direct fetch with FormData instead of postAPI
-      const response = await fetch('https://ebookaura.onrender.com/api/upload/pdf', {
-        method: 'POST',
+      // Use FormData with postAPI
+      const data = await postAPI('/upload/pdf', formData, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const contentType = response.headers.get('content-type');
-        let errorMessage = 'Failed to upload book';
-        
-        if (contentType && contentType.includes('application/json')) {
-          const errorData = await response.json();
-          errorMessage = errorData.message || `Upload failed: ${response.status}`;
-        } else {
-          errorMessage = `Upload failed: ${response.statusText || response.status}`;
+          'Authorization': `Bearer ${token}`
         }
-        
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
-      console.log('Upload successful:', data);
+      });
 
       setSuccess('Book uploaded successfully!');
       // Reset form
@@ -499,7 +453,7 @@ export default function UploadPdf() {
       } else if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
         errorMessage = 'Upload timed out. Please try a smaller file or check your internet connection.';
       } else if (errorMessage.includes('Invalid image') || errorMessage.includes('format')) {
-        errorMessage = 'There was an issue with the file format. Please ensure your PDF and image are valid.';
+        errorMessage = 'There was an issue with the file format. Please ensure your PDF is valid and try again.';
       }
       
       setError(errorMessage);

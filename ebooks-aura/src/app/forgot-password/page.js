@@ -1,7 +1,6 @@
-import { getAPI, postAPI, putAPI, deleteAPI } from '../api/apiUtils';
-
 "use client";
 
+import { getAPI, postAPI, putAPI, deleteAPI } from '../api/apiUtils';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -77,13 +76,10 @@ export default function ForgotPassword() {
 
     try {
       const data = await postAPI("/users/forgot-password", { email });
-
       
-
-      
-        setSuccess('Verification code sent to your email. Please check your inbox.');
-        setStep(2);
-        setResendTimer(120); // 2 minute countdown
+      setSuccess('Verification code sent to your email. Please check your inbox.');
+      setStep(2);
+      setResendTimer(120); // 2 minute countdown
       
     } catch (err) {
       setError('An error occurred. Please try again later.');
@@ -101,12 +97,9 @@ export default function ForgotPassword() {
 
     try {
       const data = await postAPI("/users/forgot-password", { email });
-
       
-
-      
-        setSuccess('New verification code sent to your email.');
-        setResendTimer(120); // 2 minute countdown
+      setSuccess('New verification code sent to your email.');
+      setResendTimer(120); // 2 minute countdown
       
     } catch (err) {
       setError('An error occurred. Please try again later.');
@@ -144,14 +137,11 @@ export default function ForgotPassword() {
           code,
           password
         });
-
       
-
-      
-        setSuccess('Password reset successfully! Redirecting to login...');
-        setTimeout(() => {
-          router.push('/login');
-        }, 2000);
+      setSuccess('Password reset successfully! Redirecting to login...');
+      setTimeout(() => {
+        router.push('/login');
+      }, 2000);
       
     } catch (err) {
       setError('An error occurred. Please try again later.');

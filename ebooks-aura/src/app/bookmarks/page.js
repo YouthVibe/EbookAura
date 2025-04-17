@@ -7,9 +7,11 @@ import { useRouter } from 'next/navigation';
 import styles from './bookmarks.module.css';
 import { useAuth } from '../context/AuthContext';
 import { getAPI, deleteAPI } from '../api/apiUtils';
+import SearchInput from '../components/SearchInput';
 
 export default function BookmarksPage() {
   const [bookmarkedBooks, setBookmarkedBooks] = useState([]);
+  const [filteredBooks, setFilteredBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [authVerified, setAuthVerified] = useState(false);
@@ -117,6 +119,28 @@ export default function BookmarksPage() {
     fetchBookmarks();
   }, [authVerified, getToken, getApiKey]);
 
+  useEffect(() => {
+    // Initialize filtered books when bookmarked books are loaded
+    setFilteredBooks(bookmarkedBooks);
+  }, [bookmarkedBooks]);
+
+  const handleSearch = (searchTerm) => {
+    if (!searchTerm.trim()) {
+      setFilteredBooks(bookmarkedBooks);
+      return;
+    }
+    
+    const lowercasedSearch = searchTerm.toLowerCase();
+    const results = bookmarkedBooks.filter(book => 
+      book.title.toLowerCase().includes(lowercasedSearch) || 
+      book.author.toLowerCase().includes(lowercasedSearch) || 
+      (book.category && book.category.toLowerCase().includes(lowercasedSearch)) ||
+      (book.description && book.description.toLowerCase().includes(lowercasedSearch))
+    );
+    
+    setFilteredBooks(results);
+  };
+
   const handleRemoveBookmark = async (bookId) => {
     try {
       const token = getToken();
@@ -177,48 +201,65 @@ export default function BookmarksPage() {
           </Link>
         </div>
       ) : (
-        <div className={styles.bookGrid}>
-          {bookmarkedBooks.map((book) => (
-            <div key={book._id} className={styles.bookCard}>
-              <Link href={`/books/${book._id}`} className={styles.bookLink}>
-                <div className={styles.bookCover}>
-                  {book.coverImage ? (
-                    <img src={book.coverImage} alt={book.title} />
-                  ) : (
-                    <div className={styles.placeholderCover}>
-                      <FaBook />
-                    </div>
-                  )}
-                </div>
-                <div className={styles.bookInfo}>
-                  <h3 className={styles.bookTitle}>{book.title}</h3>
-                  <p className={styles.bookAuthor}>by {book.author}</p>
-                  <p className={styles.bookCategory}>{book.category}</p>
-                  <div className={styles.bookStats}>
-                    <span className={styles.stat}>
-                      <FaEye /> {book.views || 0}
-                    </span>
-                    <span className={styles.stat}>
-                      <FaDownload /> {book.downloads || 0}
-                    </span>
-                    {book.averageRating > 0 && (
-                      <span className={styles.stat}>
-                        <FaStar /> {book.averageRating.toFixed(1)}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </Link>
-              <button 
-                className={styles.removeBookmarkButton}
-                onClick={() => handleRemoveBookmark(book._id)}
-                title="Remove from bookmarks"
-              >
-                <FaBookmark />
-              </button>
+        <>
+          <div className={styles.searchContainer}>
+            <SearchInput 
+              placeholder="Search your bookmarks..." 
+              onSearch={handleSearch}
+              initialValue=""
+              className={styles.bookmarkSearch}
+            />
+          </div>
+          
+          {filteredBooks.length === 0 ? (
+            <div className={styles.noResults}>
+              <p>No bookmarks match your search.</p>
             </div>
-          ))}
-        </div>
+          ) : (
+            <div className={styles.bookGrid}>
+              {filteredBooks.map((book) => (
+                <div key={book._id} className={styles.bookCard}>
+                  <Link href={`/books/${book._id}`} className={styles.bookLink}>
+                    <div className={styles.bookCover}>
+                      {book.coverImage ? (
+                        <img src={book.coverImage} alt={book.title} />
+                      ) : (
+                        <div className={styles.placeholderCover}>
+                          <FaBook />
+                        </div>
+                      )}
+                    </div>
+                    <div className={styles.bookInfo}>
+                      <h3 className={styles.bookTitle}>{book.title}</h3>
+                      <p className={styles.bookAuthor}>by {book.author}</p>
+                      <p className={styles.bookCategory}>{book.category}</p>
+                      <div className={styles.bookStats}>
+                        <span className={styles.stat}>
+                          <FaEye /> {book.views || 0}
+                        </span>
+                        <span className={styles.stat}>
+                          <FaDownload /> {book.downloads || 0}
+                        </span>
+                        {book.averageRating > 0 && (
+                          <span className={styles.stat}>
+                            <FaStar /> {book.averageRating.toFixed(1)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                  <button 
+                    className={styles.removeBookmarkButton}
+                    onClick={() => handleRemoveBookmark(book._id)}
+                    title="Remove from bookmarks"
+                  >
+                    <FaBookmark />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

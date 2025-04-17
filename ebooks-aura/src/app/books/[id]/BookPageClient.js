@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { FaDownload, FaEye, FaBook, FaArrowLeft, FaStar, FaCalendarAlt, FaFileAlt } from 'react-icons/fa';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import BookReview from '../../components/BookReview';
 import styles from './book.module.css';
 import { API_ENDPOINTS } from '../../utils/config';
@@ -13,52 +14,71 @@ export default function BookPageClient({ id }) {
   const [error, setError] = useState(null);
   const [downloading, setDownloading] = useState(false);
   const [viewing, setViewing] = useState(false);
+  const router = useRouter();
   
+  // Static export safeguard - ensure ID is available
   useEffect(() => {
-    const fetchBook = async () => {
-      try {
-        if (!id) {
-          setError('Book ID is missing');
-          setLoading(false);
-          return;
-        }
-        
-        console.log('BookPage: Fetching details for book ID:', id);
-        setLoading(true);
-        const response = await fetch(API_ENDPOINTS.BOOKS.DETAILS(id));
-        
-        if (!response.ok) {
-          console.error(`Book fetch failed with status: ${response.status}`);
-          throw new Error('Book not found');
-        }
-        
-        const bookData = await response.json();
-        console.log('Book data received:', bookData);
-        setBook(bookData);
-        setError(null);
-      } catch (err) {
-        console.error('Error in fetchBook:', err);
-        setError('Error loading book details. Please try again later.');
-      } finally {
+    if (!id && typeof window !== 'undefined') {
+      // Get ID from URL path if not provided as prop
+      const pathParts = window.location.pathname.split('/');
+      const pathId = pathParts[pathParts.length - 1];
+      
+      if (pathId) {
+        console.log('Using ID from URL path:', pathId);
+        fetchBookDetails(pathId);
+      } else {
+        setError('Book ID is missing');
         setLoading(false);
       }
-    };
-
-    fetchBook();
+    } else if (id) {
+      fetchBookDetails(id);
+    } else {
+      setError('Book ID is missing');
+      setLoading(false);
+    }
   }, [id]);
+  
+  // Extracted fetch logic into a separate function
+  const fetchBookDetails = async (bookId) => {
+    try {
+      console.log('BookPage: Fetching details for book ID:', bookId);
+      setLoading(true);
+      
+      const response = await fetch(API_ENDPOINTS.BOOKS.DETAILS(bookId));
+      
+      if (!response.ok) {
+        console.error(`Book fetch failed with status: ${response.status}`);
+        throw new Error('Book not found');
+      }
+      
+      const bookData = await response.json();
+      console.log('Book data received:', bookData);
+      setBook(bookData);
+      setError(null);
+    } catch (err) {
+      console.error('Error in fetchBook:', err);
+      setError('Error loading book details. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDownload = async () => {
+    // Use proper ID (from props or extracted from URL)
+    const bookId = id || (typeof window !== 'undefined' ? 
+      window.location.pathname.split('/').pop() : null);
+      
     try {
-      if (!id) {
+      if (!bookId) {
         console.error('Cannot download: Book ID is missing');
         return;
       }
       
       setDownloading(true);
-      console.log('Downloading book with ID:', id);
+      console.log('Downloading book with ID:', bookId);
       
       // Increment download count via the API
-      await fetch(API_ENDPOINTS.BOOKS.DOWNLOAD(id), {
+      await fetch(API_ENDPOINTS.BOOKS.DOWNLOAD(bookId), {
         method: 'POST',
       });
 
@@ -70,7 +90,7 @@ export default function BookPageClient({ id }) {
         console.log(`Fetching PDF content via backend proxy for book: ${book.title}`);
         
         // Fetch the PDF data from our proxy endpoint
-        const proxyUrl = `${API_ENDPOINTS.BOOKS.PDF_CONTENT(id)}?download=true&counted=true`;
+        const proxyUrl = `${API_ENDPOINTS.BOOKS.PDF_CONTENT(bookId)}?download=true&counted=true`;
         const response = await fetch(proxyUrl);
         
         if (!response.ok) {
@@ -101,7 +121,7 @@ export default function BookPageClient({ id }) {
       } catch (directDownloadError) {
         console.warn('Direct download failed, using fallback:', directDownloadError);
         // Fallback to original backend endpoint if proxy fails
-        const fallbackUrl = `${API_ENDPOINTS.BOOKS.PDF(id)}?download=true&counted=true`;
+        const fallbackUrl = `${API_ENDPOINTS.BOOKS.PDF(bookId)}?download=true&counted=true`;
         window.open(fallbackUrl, '_blank');
       }
       
@@ -118,20 +138,24 @@ export default function BookPageClient({ id }) {
   };
 
   const handleViewPdf = async () => {
+    // Use proper ID (from props or extracted from URL)
+    const bookId = id || (typeof window !== 'undefined' ? 
+      window.location.pathname.split('/').pop() : null);
+      
     try {
-      if (!id) {
+      if (!bookId) {
         console.error('Cannot view PDF: Book ID is missing');
         return;
       }
       
       setViewing(true);
-      console.log('Viewing PDF for book ID:', id);
+      console.log('Viewing PDF for book ID:', bookId);
       
       // For viewing, we'll open the PDF directly in a new tab
       // Use the original URL which should work for viewing
       try {
         // Use the existing PDF endpoint which sets proper headers for viewing
-        const viewUrl = `${API_ENDPOINTS.BOOKS.PDF(id)}?counted=true`;
+        const viewUrl = `${API_ENDPOINTS.BOOKS.PDF(bookId)}?counted=true`;
         console.log(`Opening PDF for viewing at: ${viewUrl}`);
         window.open(viewUrl, '_blank');
       } catch (viewError) {
