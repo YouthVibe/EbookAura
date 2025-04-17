@@ -34,8 +34,6 @@ export default function Navbar() {
 
   const menuItems = [
     { name: 'Home', href: '/' },
-    { name: 'Books', href: '/books' },
-    { name: 'Categories', href: '/categories' },
     { name: 'About', href: '/about' },
   ];
 

@@ -207,6 +207,7 @@ export default function BookmarksPage() {
               placeholder="Search your bookmarks..." 
               onSearch={handleSearch}
               initialValue=""
+              debounceTime={500}
               className={styles.bookmarkSearch}
             />
           </div>

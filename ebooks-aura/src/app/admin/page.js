@@ -204,6 +204,7 @@ export default function AdminDashboard() {
               placeholder="Search users by name or email..."
               onSearch={setUserSearch}
               initialValue={userSearch}
+              debounceTime={500}
               className={styles.searchBar}
             />
           </div>
@@ -290,6 +291,7 @@ export default function AdminDashboard() {
               placeholder="Search books by title, author, or category..."
               onSearch={setBookSearch}
               initialValue={bookSearch}
+              debounceTime={500}
               className={styles.searchBar}
             />
           </div>

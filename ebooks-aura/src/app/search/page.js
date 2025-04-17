@@ -302,7 +302,7 @@ export default function SearchPage() {
       }
     };
 
-    const timeoutId = setTimeout(fetchBooks, 300);
+    const timeoutId = setTimeout(fetchBooks, 500);
     return () => clearTimeout(timeoutId);
   }, [searchQuery, selectedCategory, sortBy]);
 
@@ -354,6 +354,7 @@ export default function SearchPage() {
           placeholder="Search for books by title, author or description..."
           onSearch={setSearchQuery}
           initialValue={searchQuery}
+          debounceTime={500}
           className={styles.searchBar}
         />
 
