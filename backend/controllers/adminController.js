@@ -111,7 +111,7 @@ const getAllBooks = async (req, res) => {
   try {
     const books = await Book.find({})
       .sort({ createdAt: -1 })
-      .populate('uploadedBy', 'name email');
+      .populate('uploadedBy', 'name email', null, { strictPopulate: false });
     
     res.status(200).json(books);
   } catch (error) {

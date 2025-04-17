@@ -161,6 +161,57 @@ async function checkServerFile() {
   }
 }
 
+async function checkApiRoutes() {
+  console.log(`${colors.cyan}Checking API routes...${colors.reset}`);
+  
+  try {
+    // Get all route files
+    const routeFiles = fs.readdirSync(path.join(__dirname, 'routes'))
+      .filter(file => file.endsWith('.js'));
+    
+    console.log(`${colors.bright}Found route files:${colors.reset}`);
+    routeFiles.forEach(file => {
+      console.log(`- ${file}`);
+    });
+    
+    // Check auth routes specifically
+    if (routeFiles.includes('auth.js') && routeFiles.includes('authRoutes.js')) {
+      console.log(`${colors.yellow}Warning: Both auth.js and authRoutes.js exist. This could cause conflicts.${colors.reset}`);
+      
+      try {
+        const authRoutes = require('./routes/auth');
+        const authRoutesStack = authRoutes.stack || [];
+        console.log(`${colors.green}Routes in auth.js: ${authRoutesStack.length}${colors.reset}`);
+        
+        const authRoutesModule = require('./routes/authRoutes');
+        console.log(`${colors.green}authRoutes.js exports: ${typeof authRoutesModule}${colors.reset}`);
+      } catch (error) {
+        console.log(`${colors.red}Error checking auth routes: ${error.message}${colors.reset}`);
+      }
+    }
+    
+    // Check for login route specifically
+    try {
+      const authRoutes = require('./routes/auth');
+      const hasLoginRoute = (authRoutes.stack || []).some(layer => 
+        layer.route && 
+        layer.route.path === '/login' && 
+        Object.keys(layer.route.methods).includes('post')
+      );
+      
+      if (hasLoginRoute) {
+        console.log(`${colors.green}✓ Login route found in auth.js${colors.reset}`);
+      } else {
+        console.log(`${colors.red}✗ Login route NOT found in auth.js${colors.reset}`);
+      }
+    } catch (error) {
+      console.log(`${colors.red}Error checking login route: ${error.message}${colors.reset}`);
+    }
+  } catch (error) {
+    console.error(`${colors.red}Error checking API routes:${colors.reset}`, error);
+  }
+}
+
 async function run() {
   console.log(`\n${colors.bright}${colors.blue}====== RENDER.COM DEPLOYMENT FIX SCRIPT ======${colors.reset}\n`);
   
@@ -174,6 +225,9 @@ async function run() {
     
     // Check and update server.js
     await checkServerFile();
+    
+    // Check API routes
+    await checkApiRoutes();
     
     // Check database connection
     await checkDatabaseConnection();

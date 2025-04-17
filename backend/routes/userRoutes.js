@@ -37,7 +37,6 @@ const fileUploadOptions = {
 // Public routes
 router.post('/', registerUser);
 router.post('/verify-email', verifyEmail);
-router.post('/login', loginUser);
 router.post('/forgot-password', forgotPassword);
 router.post('/forgot-password-with-code', forgotPasswordWithCode);
 router.post('/reset-password-with-code', resetPasswordWithCode);

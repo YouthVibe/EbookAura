@@ -5,6 +5,10 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const { createTransporter } = require('../config/email');
 const { protect, validateAuth } = require('../middleware/auth');
+const { loginUser } = require('../controllers/userController');
+
+// Add login endpoint
+router.post('/login', loginUser);
 
 // Auth check route - returns 200 if authenticated, 401 if not
 router.get('/check', protect, (req, res) => {
