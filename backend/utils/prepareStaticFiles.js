@@ -12,6 +12,12 @@ console.log('🔍 Checking for static files...');
 
 // Check if we're on render.com or similar environment
 const isRenderEnvironment = process.env.RENDER || process.env.RENDER_EXTERNAL_URL;
+console.log(`Environment detection: ${isRenderEnvironment ? 'Render.com detected ✓' : 'Local environment'}`);
+
+// Allow override of the detection
+if (process.env.FORCE_STATIC_GENERATION === 'true') {
+  console.log('Force static generation enabled ✓');
+}
 
 // Possible locations where static files might be
 const possibleLocations = [
@@ -52,77 +58,156 @@ for (const location of possibleLocations) {
     staticDir = location.path;
     console.log(`✅ Found static files in ${location.label}: ${location.path}`);
     break;
+  } else {
+    console.log(`❌ No static files found in ${location.label}`);
   }
 }
 
 // Handle the case where no static directory was found
-if (!staticDir) {
-  console.warn('⚠️ No static files directory found!');
+if (!staticDir || process.env.FORCE_STATIC_GENERATION === 'true') {
+  console.warn('⚠️ No static files directory found or force regeneration enabled!');
   
-  // Create an empty static directory if in Render environment
-  if (isRenderEnvironment) {
+  // Create an empty static directory if in Render environment or forced
+  if (isRenderEnvironment || process.env.FORCE_STATIC_GENERATION === 'true') {
     const outDir = path.join(__dirname, '..', 'out');
     try {
       if (!fs.existsSync(outDir)) {
         fs.mkdirSync(outDir, { recursive: true });
-        console.log(`📁 Created empty out directory at: ${outDir}`);
+        console.log(`📁 Created out directory at: ${outDir}`);
+      } else {
+        console.log(`📁 Out directory already exists at: ${outDir}`);
       }
       
       // Create a basic index.html if it doesn't exist
       const indexPath = path.join(outDir, 'index.html');
-      if (!fs.existsSync(indexPath)) {
-        // Create a basic index.html
-        const indexContent = `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
+      
+      // Using a dynamic timestamp that will update on each server start
+      const currentDate = new Date();
+      const formattedDate = currentDate.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit' 
+      });
+      const formattedTime = currentDate.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+      
+      // Create a more polished maintenance page
+      const indexContent = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>EbookAura Maintenance</title>
+          <title>EbookAura - Maintenance</title>
           <style>
-            body { 
-              font-family: -apple-system, system-ui, sans-serif; 
-              max-width: 800px; 
-              margin: 0 auto; 
-              padding: 20px; 
-              text-align: center;
-              line-height: 1.6;
-            }
-            h1 { color: #ef4444; margin-top: 2rem; }
-            .message { 
-              background: #f9fafb; 
-              padding: 20px; 
-              border-radius: 8px;
-              margin-top: 2rem;
-            }
-            .logo {
-              font-size: 2.5rem;
-              font-weight: 700;
-            }
-            .logo-ebook {
-              color: #111827;
-            }
-            .logo-aura {
-              color: #ef4444;
-            }
+              body {
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+                  margin: 0;
+                  padding: 0;
+                  background-color: #f9fafb;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  justify-content: center;
+                  min-height: 100vh;
+                  text-align: center;
+                  color: #111827;
+              }
+              .container {
+                  max-width: 600px;
+                  padding: 2rem;
+                  background-color: white;
+                  border-radius: 1rem;
+                  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+                  margin: 1rem;
+              }
+              .logo {
+                  font-size: 2.5rem;
+                  font-weight: 700;
+                  margin-bottom: 1rem;
+              }
+              .logo-ebook {
+                  color: #111827;
+              }
+              .logo-aura {
+                  color: #ef4444;
+              }
+              h1 {
+                  font-size: 1.8rem;
+                  margin-bottom: 1.5rem;
+                  color: #111827;
+              }
+              p {
+                  font-size: 1.1rem;
+                  line-height: 1.6;
+                  color: #4b5563;
+                  margin-bottom: 1.5rem;
+              }
+              .progress {
+                  width: 100%;
+                  height: 8px;
+                  background-color: #e5e7eb;
+                  border-radius: 4px;
+                  overflow: hidden;
+                  margin: 2rem 0;
+              }
+              .progress-bar {
+                  height: 100%;
+                  width: 75%;
+                  background-color: #ef4444;
+                  border-radius: 4px;
+                  animation: progress 1.5s ease-in-out infinite;
+              }
+              @keyframes progress {
+                  0% { width: 25%; }
+                  50% { width: 75%; }
+                  100% { width: 25%; }
+              }
+              .cta {
+                  display: inline-block;
+                  margin-top: 1rem;
+                  padding: 0.75rem 1.5rem;
+                  background-color: #ef4444;
+                  color: white;
+                  text-decoration: none;
+                  border-radius: 0.5rem;
+                  font-weight: 500;
+                  transition: background-color 0.2s;
+              }
+              .cta:hover {
+                  background-color: #dc2626;
+              }
           </style>
-        </head>
-        <body>
-          <div class="logo">
-            <span class="logo-ebook">Ebook</span><span class="logo-aura">Aura</span>
+          <meta http-equiv="refresh" content="60">
+      </head>
+      <body>
+          <div class="container">
+              <div class="logo">
+                  <span class="logo-ebook">Ebook</span><span class="logo-aura">Aura</span>
+              </div>
+              <h1>Site Maintenance</h1>
+              <p>Our website is currently undergoing scheduled maintenance.</p>
+              
+              <div class="progress">
+                  <div class="progress-bar"></div>
+              </div>
+              
+              <p>Please check back soon. The API remains fully operational.</p>
+              
+              <p>Server Time: ${formattedDate}, ${formattedTime}</p>
+              
+              <a href="/" class="cta">Refresh Page</a>
           </div>
-          <h1>Site Maintenance</h1>
-          <div class="message">
-            <p>Our website is currently undergoing scheduled maintenance.</p>
-            <p>Please check back soon. The API remains fully operational.</p>
-            <p>Server Time: ${new Date().toLocaleString()}</p>
-          </div>
-        </body>
-        </html>
-        `;
-        fs.writeFileSync(indexPath, indexContent.trim());
-        console.log(`📄 Created basic index.html at: ${indexPath}`);
-      }
+      </body>
+      </html>
+      `;
+      
+      fs.writeFileSync(indexPath, indexContent.trim());
+      console.log(`📄 Created maintenance page at: ${indexPath}`);
       
       // Set this as our static directory
       staticDir = outDir;

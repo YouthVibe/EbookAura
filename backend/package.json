@@ -5,13 +5,15 @@
   "main": "server.js",
   "scripts": {
     "start": "cross-env NODE_ENV=production node server.js",
+    "start:render": "cross-env NODE_ENV=production RENDER=true FORCE_STATIC_GENERATION=true node server.js",
     "dev": "nodemon server.js",
     "check-imports": "node utils/checkImports.js",
     "prestart-prod": "node utils/checkImports.js",
     "pre-deploy": "node utils/checkDeployment.js",
     "test-models": "node utils/testModels.js",
     "prestart": "node utils/prepareModels.js && node utils/prepareStaticFiles.js",
-    "copy-static": "node copy-static-files.js"
+    "copy-static": "node copy-static-files.js",
+    "prepare-static": "cross-env FORCE_STATIC_GENERATION=true node utils/prepareStaticFiles.js"
   },
   "dependencies": {
     "axios": "^1.6.5",

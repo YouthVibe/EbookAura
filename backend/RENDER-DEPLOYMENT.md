@@ -1,107 +1,173 @@
-# Deploying to Render.com
+# Deploying to Render.com with Static File Serving
 
-This document provides instructions for deploying the EbookAura backend to Render.com and avoiding common deployment issues.
+This document provides updated instructions for deploying the EbookAura application to Render.com, ensuring the backend serves both the API and static frontend files.
 
-## Pre-Deployment Checks
+## Deployment Options
 
-Before deploying, run the pre-deployment check script to identify potential issues:
+You have two deployment options:
 
-```bash
-npm run pre-deploy
+1. **Combined Deployment**: Backend serves both API and static files (recommended)
+2. **Separate Deployments**: Backend API and frontend deployed separately
+
+This guide focuses on the combined deployment option.
+
+## Combined Deployment Steps
+
+### 1. Prepare Your Repository
+
+Ensure your repository contains both the backend and frontend code:
+
+```
+/
+├── backend/             # Backend code
+├── ebooks-aura/         # Frontend code
+└── ...
 ```
 
-This script checks for:
-- Case sensitivity issues in imports
-- Proper model exports
-- Error handling in controllers
-- Required environment variables
+### 2. Update Environment Variables
 
-Resolve any issues identified before proceeding with deployment.
+In your backend `.env` file, verify these variables are set:
 
-## Setting Up a Web Service on Render
-
-1. Create a new Web Service on Render.com
-2. Connect your GitHub repository
-3. Configure the service:
-   - **Name**: `ebook-aura-backend` (or your preferred name)
-   - **Runtime**: Node
-   - **Build Command**: `npm install`
-   - **Start Command**: `npm run prestart-prod && npm start`
-   - **Branch**: main (or your deployment branch)
-
-## Environment Variables
-
-Add the following environment variables in the Render dashboard:
-
-- `PORT`: Typically Render assigns this, so you can leave it out
-- `MONGO_URI`: Your MongoDB connection string
-- `JWT_SECRET`: Secret for JWT token generation
-- `JWT_EXPIRE`: JWT token expiration time (e.g., 30d)
-- `CLOUDINARY_CLOUD_NAME`: Your Cloudinary cloud name
-- `CLOUDINARY_API_KEY`: Your Cloudinary API key
-- `CLOUDINARY_API_SECRET`: Your Cloudinary API secret
-- `EMAIL_SERVICE`: Your email service
-- `EMAIL_USERNAME`: Your email username
-- `EMAIL_PASSWORD`: Your email password
-- `EMAIL_FROM`: Your email from address
-- `NODE_VERSION`: Set to 18.x or higher
-
-## Common Deployment Issues
-
-### Case Sensitivity in Filenames
-
-One common issue when deploying to Render.com is case sensitivity in filenames. Windows and macOS file systems are case-insensitive by default, while Linux (which Render uses) is case-sensitive.
-
-For example, if your code imports:
-```javascript
-const Book = require('../models/Book');
+```
+NODE_ENV=production
+RENDER=true
+FORCE_STATIC_GENERATION=true
 ```
 
-But your file is named `book.js` (lowercase), it will work locally on Windows but fail on Render.
+### 3. Set Up Web Service on Render.com
 
-### Solutions for Case Sensitivity Issues
+1. Log in to your [Render.com dashboard](https://dashboard.render.com/)
+2. Click "New" and select "Web Service"
+3. Connect to your GitHub repository
+4. Configure the service:
 
-1. **Use consistent naming**: Always use the same case in filenames and imports
-2. **Run pre-deployment checks**: Use the provided script to check for case issues:
+   - **Name**: `ebookaura` (or your preferred name)
+   - **Root Directory**: `/` (root of repository)
+   - **Environment**: `Node`
+   - **Branch**: `main` (or your deployment branch)
+   - **Build Command**: `cd backend && npm install`
+   - **Start Command**: `cd backend && npm run start:render`
+   - **Plan**: Free or paid based on your needs
+
+5. Click "Advanced" and add these environment variables:
+   - `NODE_ENV`: `production`
+   - `MONGO_URI`: Your MongoDB connection string
+   - `JWT_SECRET`: Your JWT secret key
+   - `CLOUDINARY_CLOUD_NAME`: Your Cloudinary cloud name
+   - `CLOUDINARY_API_KEY`: Your Cloudinary API key
+   - `CLOUDINARY_API_SECRET`: Your Cloudinary secret
+   - `RENDER`: `true`
+   - `FORCE_STATIC_GENERATION`: `true`
+
+6. Click "Create Web Service"
+
+### 4. Monitor Deployment
+
+After deployment starts:
+
+1. Watch the logs for any errors
+2. Verify the build and start process complete successfully
+
+### 5. Verify Deployment
+
+Once deployed:
+
+1. Visit your Render URL (e.g., `https://ebookaura.onrender.com`)
+2. During initial setup, you may see a maintenance page - this is expected
+3. The server will automatically create the necessary static files directory
+4. You should see the maintenance page with a loading animation and dynamic timestamp
+
+### 6. Copy Static Files (Optional)
+
+To serve your actual frontend instead of the maintenance page:
+
+1. Build your frontend locally:
    ```
-   npm run check-imports
+   cd ebooks-aura
+   npm run build:static:prod
    ```
-3. **Fix mismatched cases**: Either rename your files or update your imports to match
 
-### Model Export Patterns
+2. Copy the static files to your backend's out directory in one of two ways:
 
-We use a specific pattern for exporting Mongoose models to ensure compatibility:
+   **Option A: Upload via Render.com Shell**
+   1. Navigate to your Web Service in the Render.com dashboard
+   2. Click on the "Shell" tab
+   3. Use commands to prepare directory:
+      ```
+      cd backend
+      mkdir -p out
+      ```
+   4. Use Render's file upload feature to upload your local `out` directory contents
 
-```javascript
-// Recommended pattern
-const ModelName = mongoose.model('ModelName', modelSchema);
-module.exports = ModelName;
+   **Option B: Push to Repository**
+   1. Copy your frontend build to backend/out
+   2. Commit and push changes
+   3. Render will automatically redeploy
 
-// Instead of the direct export
-module.exports = mongoose.model('ModelName', modelSchema);
-```
+### 7. Debugging Static File Issues
 
-The pre-deployment script checks for this pattern in all model files.
+If you're having trouble with static file serving:
 
-### Other Common Issues
+1. **Check Directory Structure**:
+   Run these commands in Render Shell:
+   ```
+   cd backend
+   ls -la
+   ls -la out
+   ```
 
-1. **Port configuration**: Render assigns a PORT environment variable, so ensure your server listens on `process.env.PORT`
-2. **MongoDB connection**: Ensure your MongoDB instance is accessible from Render (whitelist IP or use MongoDB Atlas)
-3. **Node version**: Specify the Node.js version in your environment variables if needed
+2. **Force Static Generation**:
+   ```
+   cd backend
+   npm run prepare-static
+   ```
+
+3. **Verify Environment**:
+   ```
+   cd backend
+   echo $RENDER
+   echo $FORCE_STATIC_GENERATION
+   ```
+
+4. **View Logs**:
+   Check Render.com logs for any errors in static file detection or serving
+
+## Updating the Application
+
+To update your application:
+
+1. Make changes to your code
+2. For backend changes, commit and push to your repository
+3. For frontend changes:
+   - Build the frontend: `npm run build:static:prod`
+   - Copy the build to your backend/out directory
+   - Commit and push changes
+4. Render will automatically redeploy your application
 
 ## Troubleshooting
 
-If your deployment fails, check the following:
+### Maintenance Page Showing Instead of Frontend
 
-1. **Render logs**: Review the build and runtime logs in the Render dashboard
-2. **Case sensitivity**: Run the import check script to find file naming issues
-3. **Dependencies**: Ensure all dependencies are properly listed in package.json
-4. **Environment variables**: Verify all required environment variables are set
-5. **File paths**: Double-check file paths in your code, especially for imports
+This means the server cannot find your static files. Solutions:
 
-## Useful Commands
+1. Verify the `out` directory exists in backend
+2. Make sure it contains an `index.html` file
+3. Use the Render Shell to manually check the directory structure
+4. Run the `prepare-static` script to create the necessary files
 
-- Full pre-deployment check: `npm run pre-deploy`
-- Check for case-sensitivity issues: `npm run check-imports`
-- Prepare for production start: `npm run prestart-prod`
-- Start with pre-checks: `npm run prestart-prod && npm start` 
+### API Endpoints Not Working
+
+Check the following:
+
+1. Ensure all API endpoints are prefixed with `/api`
+2. Verify your routes are registered before the static file handler
+3. Check server logs for any routing errors
+
+### Persistent Issues
+
+If problems persist:
+
+1. In the Render.com dashboard, click on your service
+2. Go to the "Settings" tab
+3. Under "General", find "Clear Build Cache" and click it
+4. Then redeploy your service 
