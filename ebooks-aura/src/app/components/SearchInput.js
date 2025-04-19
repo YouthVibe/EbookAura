@@ -23,6 +23,11 @@ export default function SearchInput({
 }) {
   const [searchValue, setSearchValue] = useState(initialValue);
   
+  // Update searchValue when initialValue changes externally
+  useEffect(() => {
+    setSearchValue(initialValue);
+  }, [initialValue]);
+  
   // Handle input change with debounce
   useEffect(() => {
     const timer = setTimeout(() => {

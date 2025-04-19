@@ -15,6 +15,7 @@ export default function BookmarksPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [authVerified, setAuthVerified] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
   const { getToken, getApiKey } = useAuth();
 
@@ -124,21 +125,41 @@ export default function BookmarksPage() {
     setFilteredBooks(bookmarkedBooks);
   }, [bookmarkedBooks]);
 
+  /**
+   * Enhanced search functionality that searches across multiple book fields
+   * including title, author, category, and description.
+   */
   const handleSearch = (searchTerm) => {
+    setSearchQuery(searchTerm);
+    
     if (!searchTerm.trim()) {
       setFilteredBooks(bookmarkedBooks);
       return;
     }
     
     const lowercasedSearch = searchTerm.toLowerCase();
-    const results = bookmarkedBooks.filter(book => 
-      book.title.toLowerCase().includes(lowercasedSearch) || 
-      book.author.toLowerCase().includes(lowercasedSearch) || 
-      (book.category && book.category.toLowerCase().includes(lowercasedSearch)) ||
-      (book.description && book.description.toLowerCase().includes(lowercasedSearch))
-    );
+    const searchTerms = lowercasedSearch.split(' ').filter(term => term.length > 0);
+    
+    // More sophisticated search that matches any of the search terms
+    // across all searchable fields
+    const results = bookmarkedBooks.filter(book => {
+      // If any search term matches any field, include the book
+      return searchTerms.some(term => 
+        (book.title && book.title.toLowerCase().includes(term)) || 
+        (book.author && book.author.toLowerCase().includes(term)) || 
+        (book.category && book.category.toLowerCase().includes(term)) ||
+        (book.description && book.description.toLowerCase().includes(term)) ||
+        (book.tags && Array.isArray(book.tags) && 
+          book.tags.some(tag => tag.toLowerCase().includes(term)))
+      );
+    });
     
     setFilteredBooks(results);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setFilteredBooks(bookmarkedBooks);
   };
 
   const handleRemoveBookmark = async (bookId) => {
@@ -206,7 +227,7 @@ export default function BookmarksPage() {
             <SearchInput 
               placeholder="Search your bookmarks..." 
               onSearch={handleSearch}
-              initialValue=""
+              initialValue={searchQuery}
               debounceTime={500}
               className={styles.bookmarkSearch}
             />
@@ -215,6 +236,12 @@ export default function BookmarksPage() {
           {filteredBooks.length === 0 ? (
             <div className={styles.noResults}>
               <p>No bookmarks match your search.</p>
+              <button 
+                onClick={clearSearch}
+                className={styles.clearSearchButton}
+              >
+                Clear search and show all bookmarks
+              </button>
             </div>
           ) : (
             <div className={styles.bookGrid}>
