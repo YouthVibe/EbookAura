@@ -16,6 +16,7 @@ const path = require('path');
 const { promisify } = require('util');
 const { prepareModels } = require('./utils/prepareModels');
 const mongoose = require('mongoose');
+const { fixBookSchemaIssue } = require('./utils/fix-book-schema');
 
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
@@ -212,6 +213,20 @@ async function checkApiRoutes() {
   }
 }
 
+async function fixBookSchema() {
+  try {
+    console.log(`${colors.cyan}Checking Book model schema consistency...${colors.reset}`);
+    
+    // Call our fix function
+    await fixBookSchemaIssue();
+    
+    return true;
+  } catch (error) {
+    console.error(`${colors.red}Error fixing Book schema:${colors.reset}`, error);
+    return false;
+  }
+}
+
 async function run() {
   console.log(`\n${colors.bright}${colors.blue}====== RENDER.COM DEPLOYMENT FIX SCRIPT ======${colors.reset}\n`);
   
@@ -228,6 +243,9 @@ async function run() {
     
     // Check API routes
     await checkApiRoutes();
+    
+    // Fix Book schema issues
+    await fixBookSchema();
     
     // Check database connection
     await checkDatabaseConnection();

@@ -18,74 +18,74 @@ const stat = promisify(fs.stat);
 const MODEL_DEFINITIONS = {
   'Book.js': `const mongoose = require('mongoose');
 
-const BookSchema = new mongoose.Schema({
+// Define the schema
+const bookSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true,
-    trim: true,
+    maxlength: 100 // Title should be under 100 characters
   },
   author: {
     type: String,
-    required: true,
-    trim: true,
+    required: true
   },
   description: {
     type: String,
-    trim: true,
-  },
-  category: {
-    type: String,
-    trim: true,
-  },
-  pdfUrl: {
-    type: String,
     required: true,
+    maxlength: 200 // Description should be under 200 characters
   },
   coverImage: {
     type: String,
-    required: true,
+    required: true
   },
-  publicId: {
+  coverImageId: {
     type: String,
+    required: true
   },
-  coverPublicId: {
+  pdfUrl: {
     type: String,
+    required: true
   },
-  fileSize: {
+  pdfId: {
+    type: String,
+    required: true
+  },
+  pageSize: {
     type: Number,
+    required: true
   },
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
+  category: {
+    type: String,
+    required: true
   },
   tags: [{
-    type: String,
-    trim: true,
+    type: String
   }],
-  language: {
-    type: String,
-    trim: true,
+  averageRating: {
+    type: Number,
+    default: 0
   },
-  isPublic: {
-    type: Boolean,
-    default: true,
+  views: {
+    type: Number,
+    default: 0
   },
+  downloads: {
+    type: Number,
+    default: 0
+  },
+  uploadedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  }
+}, {
+  timestamps: true
 });
 
-// Create text index for search functionality
-BookSchema.index({ title: 'text', author: 'text', description: 'text', tags: 'text' });
+// Create the model from the schema
+const Book = mongoose.model('Book', bookSchema);
 
-const Book = mongoose.model('Book', BookSchema);
-
+// Export the model
 module.exports = Book;`,
 
   'User.js': `const mongoose = require('mongoose');

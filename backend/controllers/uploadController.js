@@ -85,9 +85,20 @@ const uploadPdf = async (req, res) => {
     }
 
     // Check if the user is an admin
-    if (!req.user.isAdmin) {
+    if (!req.user || !req.user.isAdmin) {
       return res.status(403).json({ message: 'Not authorized. Admin access required' });
     }
+
+    // Check if user ID is available
+    if (!req.user._id) {
+      return res.status(401).json({ message: 'User authentication failed. Please log in again.' });
+    }
+
+    console.log('User data:', { 
+      userId: req.user._id,
+      name: req.user.name, 
+      isAdmin: req.user.isAdmin 
+    });
 
     // Check if all required fields are present
     const { title, author, description, category, pageSize } = req.body;
@@ -225,8 +236,11 @@ const uploadPdf = async (req, res) => {
       pageSize: parseInt(pageSize, 10),
       category,
       tags: req.body.tags ? req.body.tags.split(',').map(tag => tag.trim()) : [],
-      uploadedBy: req.user._id
+      uploadedBy: req.user._id  // Make sure this is set correctly
     };
+    
+    console.log('Creating book with user ID:', req.user._id);
+    console.log('Book data being saved:', { ...bookData, uploadedBy: req.user._id.toString() });
     
     // Create new book in database
     try {
@@ -235,6 +249,7 @@ const uploadPdf = async (req, res) => {
       console.log(`Book created successfully with ID: ${book._id}`);
       console.log(`PDF URL stored: ${book.pdfUrl}`);
       console.log(`PDF ID stored: ${book.pdfId}`);
+      console.log(`Book uploaded by user: ${book.uploadedBy}`);
       
       res.status(201).json({
         success: true,
@@ -243,7 +258,8 @@ const uploadPdf = async (req, res) => {
           id: book._id,
           title: book.title,
           coverImage: book.coverImage,
-          pdfUrl: book.pdfUrl
+          pdfUrl: book.pdfUrl,
+          uploadedBy: book.uploadedBy
         }
       });
     } catch (dbError) {
