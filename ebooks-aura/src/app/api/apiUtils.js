@@ -1,10 +1,10 @@
 /**
  * API Utilities for consistent API access across the application
- * This file centralizes API call functions and ensures they all use the production API URL
+ * This file centralizes API call functions and ensures they all use the configured API URL
  */
 
-// Production API URL
-const API_BASE_URL = 'https://ebookaura.onrender.com/api';
+// Use the API URL from environment variables with fallback
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 /**
  * Make a fetch request to the API with appropriate headers and error handling
@@ -15,7 +15,7 @@ const API_BASE_URL = 'https://ebookaura.onrender.com/api';
  */
 export async function fetchAPI(endpoint, options = {}) {
   try {
-    const url = `${API_BASE_URL}${endpoint}`;
+    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
     
     console.log(`API Request: ${options.method || 'GET'} ${url}`);
     

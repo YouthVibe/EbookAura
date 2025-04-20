@@ -698,16 +698,60 @@ const deleteAccount = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
     
-    // Delete all user data
+    // Delete user profile image from Cloudinary if exists
+    if (user.profileImageId) {
+      try {
+        await cloudinary.uploader.destroy(user.profileImageId);
+        console.log(`Deleted profile image with ID ${user.profileImageId} from Cloudinary`);
+      } catch (cloudinaryError) {
+        console.error('Error deleting profile image from Cloudinary:', cloudinaryError);
+        // Continue with account deletion even if image deletion fails
+      }
+    }
+    
+    // Delete all user reviews
     await Review.deleteMany({ user: user._id });
+    
+    // Delete all user bookmarks
     await Bookmark.deleteMany({ user: user._id });
     
     // Delete the user account
-    await user.remove();
+    await User.findByIdAndDelete(user._id);
     
     res.status(200).json({ message: 'Account deleted successfully' });
   } catch (error) {
     console.error('Error deleting account:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// @desc    Verify user password
+// @route   POST /api/users/verify-password
+// @access  Private
+const verifyPassword = async (req, res) => {
+  try {
+    const { password } = req.body;
+    
+    if (!password) {
+      return res.status(400).json({ message: 'Password is required' });
+    }
+    
+    const user = await User.findById(req.user._id);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Check if password matches
+    const isMatch = await user.matchPassword(password);
+    
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid password' });
+    }
+    
+    res.status(200).json({ message: 'Password verified' });
+  } catch (error) {
+    console.error('Error verifying password:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -724,5 +768,6 @@ module.exports = {
   resendVerificationEmail,
   forgotPasswordWithCode,
   resetPasswordWithCode,
-  deleteAccount
+  deleteAccount,
+  verifyPassword
 }; 

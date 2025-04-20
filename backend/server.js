@@ -64,7 +64,7 @@ const fileUploadOptions = {
   useTempFiles: true,
   tempFileDir: path.join(__dirname, 'temp'),
   createParentPath: true,
-  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB max file size
+  limits: { fileSize: 300 * 1024 * 1024 }, // 300MB max file size
   abortOnLimit: true,
   safeFileNames: true,
   preserveExtension: true,

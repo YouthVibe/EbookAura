@@ -7,6 +7,7 @@ import { FaArrowLeft, FaTrash, FaBookmark, FaStar, FaMoon, FaSun, FaExclamationT
 import { useAuth } from '../context/AuthContext';
 import styles from './settings.module.css';
 import { API_BASE_URL } from '../utils/config';
+import { deleteAPI, postAPI } from '../api/apiUtils';
 
 export default function Settings() {
   const { user, logout, getToken } = useAuth();
@@ -21,6 +22,8 @@ export default function Settings() {
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
   const [showDeleteReviewsModal, setShowDeleteReviewsModal] = useState(false);
   const [showDeleteBookmarksModal, setShowDeleteBookmarksModal] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
 
   useEffect(() => {
     // Redirect if not logged in
@@ -230,10 +233,17 @@ export default function Settings() {
   };
 
   const handleDeleteAccount = () => {
+    setConfirmPassword('');
+    setConfirmPasswordError('');
     setShowDeleteAccountModal(true);
   };
 
   const confirmDeleteAccount = async () => {
+    if (!confirmPassword) {
+      setConfirmPasswordError('Please enter your password to confirm account deletion');
+      return;
+    }
+
     setShowDeleteAccountModal(false);
     setLoading(true);
     setError('');
@@ -245,22 +255,34 @@ export default function Settings() {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`${API_BASE_URL}/users/profile`, {
-        method: 'DELETE',
+      // First, verify the password
+      try {
+        await postAPI('/users/verify-password', { password: confirmPassword }, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+      } catch (passwordError) {
+        setLoading(false);
+        setError('Password verification failed. Account deletion aborted.');
+        return;
+      }
+
+      // If password verification succeeded, proceed with account deletion
+      await deleteAPI('/users/profile', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to delete account');
-      }
-
       setSuccess('Account deleted successfully');
       logout();
-      router.push('/');
+      // Redirect to home page after successful account deletion
+      setTimeout(() => {
+        router.push('/');
+      }, 1500);
     } catch (err) {
       console.error('Error deleting account:', err);
       setError(err.message || 'An error occurred while deleting your account');
@@ -451,7 +473,27 @@ export default function Settings() {
             </div>
             <div className={styles.modalContent}>
               <p>Are you sure you want to delete your account? This action cannot be undone.</p>
-              <p>All your data, including reviews, bookmarks, and profile information will be permanently deleted.</p>
+              <p>The following will be permanently deleted:</p>
+              <ul className={styles.deletionList}>
+                <li>Your user profile and personal information</li>
+                <li>All your reviews and ratings</li>
+                <li>All your bookmarks</li>
+                <li>Your profile picture</li>
+              </ul>
+              <div className={styles.passwordConfirmation}>
+                <label htmlFor="confirmPassword">Enter your password to confirm deletion:</label>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className={styles.passwordInput}
+                  placeholder="Your current password"
+                />
+                {confirmPasswordError && (
+                  <p className={styles.passwordError}>{confirmPasswordError}</p>
+                )}
+              </div>
             </div>
             <div className={styles.modalActions}>
               <button 
@@ -464,7 +506,7 @@ export default function Settings() {
                 className={styles.confirmDeleteButton}
                 onClick={confirmDeleteAccount}
               >
-                Delete Account
+                Delete My Account
               </button>
             </div>
           </div>

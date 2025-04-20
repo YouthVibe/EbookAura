@@ -4,12 +4,17 @@
  * and delegates rendering to the client component
  */
 
+import { Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import BookPageClient from './BookClientWrapper';
 
-// Server Component - simple pass-through to client component
+// Server Component using proper params handling for Next.js 13+
 export default function BookPage({ params }) {
-  // Simply pass the ID from params to client component
-  return <BookPageClient id={params.id} />;
+  return (
+    <Suspense fallback={<div className="loading">Loading book...</div>}>
+      <BookPageClient params={params} />
+    </Suspense>
+  );
 }
 
 // Generate static paths at build time for static export
@@ -17,8 +22,8 @@ export async function generateStaticParams() {
   try {
     console.log('Generating static book pages...');
     
-    // Get the API URL
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ebookaura.onrender.com/api';
+    // Get the API URL with localhost fallback
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
     
     // Fetch books
     const response = await fetch(`${apiUrl}/books`);
@@ -43,8 +48,7 @@ export async function generateStaticParams() {
     console.error('Error generating static book paths:', error);
     // Return at least some IDs for static generation
     return [
-      { id: '650f5a5c5e5b4a50015c5e5b4' },
-      { id: '650f5a5c5e5b4a50015c5e5b5' }
+      { id: '6803d0c8cd7950184b1e8cf3' }
     ];
   }
 } 

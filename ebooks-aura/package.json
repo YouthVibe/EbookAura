@@ -5,8 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:prod": "NEXT_PUBLIC_API_URL=https://ebookaura.onrender.com/api next build",
+    "build:dev": "cross-env NEXT_PUBLIC_API_URL=http://localhost:5000/api next build",
+    "build:prod": "cross-env NEXT_PUBLIC_API_URL=https://ebookaura.onrender.com/api next build",
     "build:static": "cross-env STATIC_EXPORT=true next build",
+    "build:static:dev": "cross-env STATIC_EXPORT=true NEXT_PUBLIC_API_URL=http://localhost:5000/api next build",
     "build:static:prod": "cross-env STATIC_EXPORT=true NEXT_PUBLIC_API_URL=https://ebookaura.onrender.com/api next build",
     "start": "next start",
     "serve": "npx serve out",
@@ -14,17 +16,21 @@
     "clean": "rimraf .next out"
   },
   "dependencies": {
+    "@react-pdf-viewer/core": "^3.12.0",
+    "@react-pdf-viewer/default-layout": "^3.12.0",
     "next": "15.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-icons": "^5.5.0",
-    "react-pdf": "^9.2.1"
+    "react-pdf": "^9.2.1",
+    "react-pdf-viewer": "^0.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "cross-env": "^7.0.3",
     "eslint": "^9",
     "eslint-config-next": "15.3.0",
+    "raw-loader": "^4.0.2",
     "rimraf": "^5.0.10",
     "serve": "^14.2.1"
   }

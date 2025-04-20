@@ -150,31 +150,39 @@
   font-style: italic;
 }
 
-.buttonGroup {
+.actions {
   display: flex;
+  flex-direction: row;
   gap: 1rem;
-  margin-top: 1rem;
+  margin-top: 1.5rem;
+  width: 100%;
 }
 
-.viewButton {
+.viewButton, .downloadButton {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  background: #4b5563;
-  color: white;
   border: none;
   border-radius: 0.5rem;
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
   flex: 1;
+  min-width: 150px;
+}
+
+.viewButton {
+  background: #4b5563;
+  color: white;
 }
 
 .viewButton:hover:not(:disabled) {
   background: #374151;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .viewButton:disabled {
@@ -183,24 +191,14 @@
 }
 
 .downloadButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
   background: #ef4444;
   color: white;
-  border: none;
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  flex: 1;
 }
 
 .downloadButton:hover:not(:disabled) {
   background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .downloadButton:disabled {
@@ -260,4 +258,37 @@
   .buttonGroup {
     flex-direction: column;
   }
+  
+  .actions {
+    flex-direction: column;
+  }
+  
+  .viewButton, .downloadButton {
+    width: 100%;
+  }
+}
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  padding: 2rem;
+  text-align: center;
+}
+
+.loadingSpinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(239, 68, 68, 0.2);
+  border-radius: 50%;
+  border-top-color: #ef4444;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 } 

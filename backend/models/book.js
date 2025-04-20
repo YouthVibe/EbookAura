@@ -36,6 +36,10 @@ const bookSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  fileSizeMB: {
+    type: Number,
+    default: 0 // Default to 0 if not provided
+  },
   category: {
     type: String,
     required: true

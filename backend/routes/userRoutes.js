@@ -11,7 +11,9 @@ const {
   resetPassword,
   resendVerificationEmail,
   forgotPasswordWithCode,
-  resetPasswordWithCode
+  resetPasswordWithCode,
+  deleteAccount,
+  verifyPassword
 } = require('../controllers/userController');
 const { 
   getUserBookmarks, 
@@ -46,6 +48,8 @@ router.post('/resend-verification', resendVerificationEmail);
 // Protected routes
 router.get('/profile', protect, getUserProfile);
 router.put('/profile', protect, updateUserProfile);
+router.delete('/profile', protect, deleteAccount);
+router.post('/verify-password', protect, verifyPassword);
 
 // Apply fileUpload middleware only for the image upload route
 router.put('/profile/image', protect, fileUpload(fileUploadOptions), updateProfileImage);

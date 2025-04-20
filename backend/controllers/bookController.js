@@ -57,7 +57,7 @@ const getBooks = asyncHandler(async (req, res) => {
   
   const books = await Book.find(query)
     .sort(sortOptions)
-    .select('title author description category tags views downloads createdAt coverImage averageRating');
+    .select('title author description category tags views downloads createdAt coverImage pageSize fileSizeMB averageRating');
     
   res.json(books);
 });
@@ -83,7 +83,7 @@ const getTags = asyncHandler(async (req, res) => {
 // @access  Public
 const getBook = asyncHandler(async (req, res) => {
   const book = await Book.findById(req.params.id)
-    .select('title author description category tags views downloads createdAt fileUrl coverImage averageRating');
+    .select('title author description category tags views downloads createdAt pdfUrl pdfId coverImage pageSize fileSizeMB averageRating');
     
   if (!book) {
     res.status(404);

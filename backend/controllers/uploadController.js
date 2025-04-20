@@ -129,15 +129,20 @@ const uploadPdf = async (req, res) => {
       return res.status(400).json({ message: 'Please upload a PDF file (application/pdf MIME type)' });
     }
     
+    // Calculate PDF file size in MB
+    const fileSizeMB = parseFloat((pdfFile.size / (1024 * 1024)).toFixed(2));
+    
+    console.log(`PDF file size: ${fileSizeMB} MB`);
+    
     // Check file extension
     const pdfExt = path.extname(pdfFile.name).toLowerCase();
     if (pdfExt !== '.pdf') {
       return res.status(400).json({ message: 'Please upload a file with .pdf extension' });
     }
     
-    // Check PDF file size (limit to 20MB now to account for larger books)
-    if (pdfFile.size > 20 * 1024 * 1024) {
-      return res.status(400).json({ message: 'PDF file size should be less than 20MB' });
+    // Check PDF file size (limit to 300MB now to account for larger books)
+    if (pdfFile.size > 300 * 1024 * 1024) {
+      return res.status(400).json({ message: 'PDF file size should be less than 300MB' });
     }
     
     // Check if cover is an image
@@ -178,7 +183,7 @@ const uploadPdf = async (req, res) => {
     // Upload PDF to Cloudinary with increased timeout
     let pdfResult;
     try {
-      console.log(`Attempting to upload PDF: ${pdfFile.name}, Size: ${(pdfFile.size / (1024 * 1024)).toFixed(2)}MB, MIME: ${pdfFile.mimetype}`);
+      console.log(`Attempting to upload PDF: ${pdfFile.name}, Size: ${fileSizeMB}MB, MIME: ${pdfFile.mimetype}`);
       
       // Generate a more readable public ID
       const timestamp = Date.now();
@@ -194,7 +199,7 @@ const uploadPdf = async (req, res) => {
         type: 'upload',
         tags: ['pdf', 'ebook'],
         use_filename: true,
-        timeout: 300000 // 5 minute timeout for PDF upload
+        timeout: 900000 // 15 minute timeout for PDF upload to handle files up to 300MB
       });
       
       console.log(`PDF upload successful, URL: ${pdfResult.secure_url}`);
@@ -224,8 +229,8 @@ const uploadPdf = async (req, res) => {
     console.log('PDF URL saved to database:', pdfUrl);
     console.log('PDF ID saved to database:', pdfResult.public_id);
     
-    // Create book document data
-    const bookData = {
+    // Create a new book document with the uploaded files
+    const newBook = new Book({
       title,
       author,
       description,
@@ -234,17 +239,18 @@ const uploadPdf = async (req, res) => {
       pdfUrl: pdfUrl,
       pdfId: pdfResult.public_id,
       pageSize: parseInt(pageSize, 10),
+      fileSizeMB: fileSizeMB, // Save the calculated file size
       category,
       tags: req.body.tags ? req.body.tags.split(',').map(tag => tag.trim()) : [],
-      uploadedBy: req.user._id  // Make sure this is set correctly
-    };
+      uploadedBy: req.user._id
+    });
     
     console.log('Creating book with user ID:', req.user._id);
-    console.log('Book data being saved:', { ...bookData, uploadedBy: req.user._id.toString() });
+    console.log('Book data being saved:', { ...newBook, uploadedBy: req.user._id.toString() });
     
     // Create new book in database
     try {
-      const book = await Book.create(bookData);
+      const book = await newBook.save();
       
       console.log(`Book created successfully with ID: ${book._id}`);
       console.log(`PDF URL stored: ${book.pdfUrl}`);

@@ -202,15 +202,18 @@
 
 .bookStats {
   display: flex;
-  gap: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   font-size: 0.75rem;
   color: #6b7280;
+  margin-top: 0.5rem;
 }
 
 .stat {
   display: flex;
   align-items: center;
   gap: 0.25rem;
+  white-space: nowrap;
 }
 
 .loading {

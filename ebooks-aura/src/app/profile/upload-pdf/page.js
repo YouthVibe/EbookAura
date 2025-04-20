@@ -20,6 +20,7 @@ import {
 } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import styles from '../profile.module.css';
+import { API_BASE_URL, API_ENDPOINTS } from '../../utils/config';
 
 // Comprehensive list of book categories
 const PREDEFINED_CATEGORIES = [
@@ -164,8 +165,8 @@ export default function UploadPdf() {
         return;
       }
 
-      if (selectedFile.size > 20 * 1024 * 1024) {
-        setError('PDF file size should be less than 20MB');
+      if (selectedFile.size > 300 * 1024 * 1024) {
+        setError('PDF file size should be less than 300MB');
         setPdfFile(null);
         setPdfFileName('No PDF selected');
         return;
@@ -266,8 +267,8 @@ export default function UploadPdf() {
       return false;
     }
     
-    if (pdfFile.size > 20 * 1024 * 1024) {
-      setError('PDF file size should be less than 20MB');
+    if (pdfFile.size > 300 * 1024 * 1024) {
+      setError('PDF file size should be less than 300MB');
       return false;
     }
     
@@ -445,7 +446,7 @@ export default function UploadPdf() {
       });
 
       // Use direct fetch with FormData instead of postAPI
-      const response = await fetch('https://ebookaura.onrender.com/api/upload/pdf', {
+      const response = await fetch(`${API_BASE_URL}/upload/pdf`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

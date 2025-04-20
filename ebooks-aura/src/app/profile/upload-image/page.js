@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { FaArrowLeft, FaUpload } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import styles from './upload-image.module.css';
+import { API_BASE_URL, API_ENDPOINTS } from '../../utils/config';
 
 export default function UploadProfileImage() {
   const { user, login, getToken } = useAuth();
@@ -91,8 +92,8 @@ export default function UploadProfileImage() {
       const formData = new FormData();
       formData.append('image', selectedFile);
       
-      // Use the production API URL instead of localhost
-      const response = await fetch('https://ebookaura.onrender.com/api/users/profile/image', {
+      // Use the API configuration instead of hardcoded URL
+      const response = await fetch(`${API_BASE_URL}/users/profile/image`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

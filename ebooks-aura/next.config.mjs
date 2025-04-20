@@ -17,14 +17,46 @@ const nextConfig = {
       ignoreBuildErrors: true,
     },
     trailingSlash: true,
+    webpack: (config) => {
+      // Handle PDFjs worker
+      config.resolve.alias.canvas = false;
+      config.resolve.alias.encoding = false;
+      
+      // Add specific rules for PDF.js worker files
+      config.module.rules.push({
+        test: /pdf\.worker\.(min\.)?js/,
+        type: 'asset/resource',
+        generator: {
+          filename: 'static/chunks/[name].[hash][ext]',
+        },
+      });
+      
+      return config;
+    },
   } : {
     // Development configuration
     images: {
       domains: ['res.cloudinary.com'],
     },
+    webpack: (config) => {
+      // Handle PDFjs worker
+      config.resolve.alias.canvas = false;
+      config.resolve.alias.encoding = false;
+      
+      // Add specific rules for PDF.js worker files
+      config.module.rules.push({
+        test: /pdf\.worker\.(min\.)?js/,
+        type: 'asset/resource',
+        generator: {
+          filename: 'static/chunks/[name].[hash][ext]',
+        },
+      });
+      
+      return config;
+    },
     async rewrites() {
-      // Always use production API URL
-      const apiBaseUrl = 'https://ebookaura.onrender.com/api';
+      // Use the API URL from environment variable or fallback to localhost
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
       
       return [
         {

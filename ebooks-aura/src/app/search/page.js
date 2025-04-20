@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FaSearch, FaSort, FaEye, FaDownload, FaBook, FaStar, FaRegStar, FaBookmark, FaRegBookmark, FaStarHalfAlt } from 'react-icons/fa';
+import { FaSearch, FaSort, FaEye, FaDownload, FaBook, FaStar, FaRegStar, FaBookmark, FaRegBookmark, FaStarHalfAlt, FaFileAlt, FaFile } from 'react-icons/fa';
 import Link from 'next/link';
 import styles from './search.module.css';
 import { useRouter } from 'next/navigation';
@@ -434,6 +434,16 @@ export default function SearchPage() {
                       <span className={styles.stat}>
                         <FaDownload /> {book.downloads || 0}
                       </span>
+                      {book.pageSize > 0 && (
+                        <span className={styles.stat}>
+                          <FaFileAlt /> {book.pageSize}p
+                        </span>
+                      )}
+                      {book.fileSizeMB > 0 && (
+                        <span className={styles.stat}>
+                          <FaFile /> {book.fileSizeMB}MB
+                        </span>
+                      )}
                     </div>
                   </div>
                 </Link>
