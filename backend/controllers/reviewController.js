@@ -14,11 +14,54 @@ const getBookReviews = async (req, res) => {
       return res.status(404).json({ message: 'Book ID is required' });
     }
     
-    const reviews = await Review.find({ book: bookId })
+    // Get sort, filter, and pagination parameters from query
+    const { 
+      sort = 'newest', 
+      rating, 
+      page = 1, 
+      limit = 4 
+    } = req.query;
+    
+    // Convert string parameters to numbers
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 4;
+    
+    // Calculate skip value for pagination
+    const skip = (pageNum - 1) * limitNum;
+    
+    console.log(`Sort by: ${sort}, Filter by rating: ${rating}, Page: ${pageNum}, Limit: ${limitNum}`);
+    
+    // Build the query
+    const query = { book: bookId };
+    
+    // Add rating filter if specified
+    if (rating && !isNaN(parseInt(rating))) {
+      query.rating = parseInt(rating);
+    }
+    
+    // Determine sort order
+    let sortOrder = {};
+    if (sort === 'oldest') {
+      sortOrder = { createdAt: 1 };
+    } else {
+      // Default to newest first
+      sortOrder = { createdAt: -1 };
+    }
+    
+    // Get total count of matching reviews for pagination
+    const totalReviews = await Review.countDocuments(query);
+    
+    // Calculate total pages
+    const totalPages = Math.ceil(totalReviews / limitNum);
+    
+    // Fetch reviews with pagination
+    const reviews = await Review.find(query)
       .populate('user', 'username name profileImage')
-      .sort({ createdAt: -1 });
+      .sort(sortOrder)
+      .skip(skip)
+      .limit(limitNum);
 
-    console.log(`Found ${reviews.length} reviews`);
+    console.log(`Found ${reviews.length} reviews with applied filters (page ${pageNum} of ${totalPages})`);
 
     // Format the response to include necessary information
     const formattedReviews = reviews.map(review => ({
@@ -30,7 +73,18 @@ const getBookReviews = async (req, res) => {
       userImage: review.user ? review.user.profileImage : null
     }));
 
-    res.status(200).json(formattedReviews);
+    // Send response with pagination metadata
+    res.status(200).json({
+      reviews: formattedReviews,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        totalReviews,
+        totalPages,
+        hasNextPage: pageNum < totalPages,
+        hasPrevPage: pageNum > 1
+      }
+    });
   } catch (error) {
     console.error('Error fetching book reviews:', error);
     res.status(500).json({ message: 'Server error', error: error.message });

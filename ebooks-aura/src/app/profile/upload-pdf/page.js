@@ -21,6 +21,8 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import styles from '../profile.module.css';
 import { API_BASE_URL, API_ENDPOINTS } from '../../utils/config';
+import ProgressBar from '../../components/ProgressBar';
+import Alert from '../../components/Alert';
 
 // Comprehensive list of book categories
 const PREDEFINED_CATEGORIES = [
@@ -97,8 +99,9 @@ export default function UploadPdf() {
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   
-  // Character counters
+  // Updated character counters
   const [titleChars, setTitleChars] = useState(0);
+  const [authorChars, setAuthorChars] = useState(0);
   const [descChars, setDescChars] = useState(0);
 
   // New state variables for tag management
@@ -113,6 +116,18 @@ export default function UploadPdf() {
   const [showCategorySuggestions, setShowCategorySuggestions] = useState(false);
   const [filteredCategories, setFilteredCategories] = useState([]);
   const categoryContainerRef = useRef(null);
+
+  // New state variables for upload progress
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState('Preparing upload...');
+  
+  // New state variables for notifications
+  const [notification, setNotification] = useState({
+    show: false,
+    type: 'info',
+    message: ''
+  });
 
   useEffect(() => {
     // Redirect if not logged in
@@ -155,6 +170,68 @@ export default function UploadPdf() {
     }
   };
 
+  const handleAuthorChange = (e) => {
+    const value = e.target.value;
+    setAuthor(value);
+    setAuthorChars(value.length);
+    
+    if (value.length > 100) {
+      setError('Author name must be under 100 characters');
+    } else {
+      setError('');
+    }
+  };
+
+  const handleDescriptionChange = (e) => {
+    const value = e.target.value;
+    setDescription(value);
+    setDescChars(value.length);
+    
+    if (value.length > 1000) {
+      setError('Description must be under 1000 characters');
+    } else {
+      setError('');
+    }
+  };
+
+  // Enhance the checkImageDimensions function to validate 500x700px dimensions
+  const checkImageDimensions = (file) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(img.src);
+        
+        // Get image dimensions
+        const width = img.width;
+        const height = img.height;
+        
+        // Check if dimensions match 500x700 pixels
+        if (width === 500 && height === 700) {
+          resolve({ 
+            valid: true, 
+            width, 
+            height,
+            message: `Image dimensions are correct: ${width}x${height} pixels`
+          });
+        } else {
+          resolve({ 
+            valid: false, 
+            width, 
+            height,
+            message: `Image must be exactly 500x700 pixels, but got ${width}x${height} pixels`
+          });
+        }
+      };
+      
+      img.onerror = () => {
+        URL.revokeObjectURL(img.src);
+        reject(new Error('Failed to load the image. Please try another file.'));
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const handlePdfChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
@@ -165,8 +242,9 @@ export default function UploadPdf() {
         return;
       }
 
-      if (selectedFile.size > 300 * 1024 * 1024) {
-        setError('PDF file size should be less than 300MB');
+      // Update size limit to 10MB
+      if (selectedFile.size > 10 * 1024 * 1024) {
+        setError('PDF file size should be less than 10MB');
         setPdfFile(null);
         setPdfFileName('No PDF selected');
         return;
@@ -178,7 +256,7 @@ export default function UploadPdf() {
     }
   };
 
-  const handleCoverChange = (e) => {
+  const handleCoverChange = async (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
       if (!selectedFile.type.startsWith('image/')) {
@@ -188,16 +266,32 @@ export default function UploadPdf() {
         return;
       }
 
-      if (selectedFile.size > 5 * 1024 * 1024) {
-        setError('Cover image size should be less than 5MB');
+      // Update size limit to 1MB
+      if (selectedFile.size > 1 * 1024 * 1024) {
+        setError('Cover image size should be less than 1MB');
         setCoverFile(null);
         setCoverFileName('No cover image selected');
         return;
       }
 
-      setCoverFile(selectedFile);
-      setCoverFileName(selectedFile.name);
-      setError('');
+      try {
+        // Check image dimensions (500x700px)
+        const dimensionCheck = await checkImageDimensions(selectedFile);
+        
+        if (dimensionCheck.valid) {
+          setCoverFile(selectedFile);
+          setCoverFileName(`${selectedFile.name} (${dimensionCheck.width}x${dimensionCheck.height}px)`);
+          setError('');
+        } else {
+          setError(dimensionCheck.message);
+          setCoverFile(null);
+          setCoverFileName('No cover image selected');
+        }
+      } catch (err) {
+        setError(err.message);
+        setCoverFile(null);
+        setCoverFileName('No cover image selected');
+      }
     }
   };
 
@@ -208,18 +302,6 @@ export default function UploadPdf() {
     
     if (value.length > 100) {
       setError('Title must be under 100 characters');
-    } else {
-      setError('');
-    }
-  };
-
-  const handleDescriptionChange = (e) => {
-    const value = e.target.value;
-    setDescription(value);
-    setDescChars(value.length);
-    
-    if (value.length > 200) {
-      setError('Description must be under 200 characters');
     } else {
       setError('');
     }
@@ -241,13 +323,18 @@ export default function UploadPdf() {
       return false;
     }
     
+    if (author.length > 100) {
+      setError('Author name must be under 100 characters');
+      return false;
+    }
+    
     if (!description.trim()) {
       setError('Description is required');
       return false;
     }
     
-    if (description.length > 200) {
-      setError('Description must be under 200 characters');
+    if (description.length > 1000) {
+      setError('Description must be under 1000 characters');
       return false;
     }
     
@@ -261,24 +348,38 @@ export default function UploadPdf() {
       return false;
     }
     
-    // Both files are required by the backend
-    if (!pdfFile) {
-      setError('Please select a PDF file to upload - both PDF and cover image are required');
+    // Check min 1 tag requirement
+    if (selectedTags.length < 1) {
+      setError('Please add at least 1 tag');
       return false;
     }
     
-    if (pdfFile.size > 300 * 1024 * 1024) {
-      setError('PDF file size should be less than 300MB');
+    // Check max 10 tags limit
+    if (selectedTags.length > 10) {
+      setError('Maximum 10 tags allowed');
+      return false;
+    }
+    
+    // Both files are required by the backend
+    if (!pdfFile) {
+      setError('Please select a PDF file to upload');
+      return false;
+    }
+    
+    // Update size limit to 10MB
+    if (pdfFile.size > 10 * 1024 * 1024) {
+      setError('PDF file size should be less than 10MB');
       return false;
     }
     
     if (!coverFile) {
-      setError('Please select a cover image - both PDF and cover image are required');
+      setError('Please select a cover image');
       return false;
     }
     
-    if (coverFile.size > 5 * 1024 * 1024) {
-      setError('Cover image size should be less than 5MB');
+    // Update size limit to 1MB
+    if (coverFile.size > 1 * 1024 * 1024) {
+      setError('Cover image size should be less than 1MB');
       return false;
     }
     
@@ -312,6 +413,12 @@ export default function UploadPdf() {
   }, []);
 
   const handleTagSelect = (tag) => {
+    // Check max 10 tags limit
+    if (selectedTags.length >= 10) {
+      setError('Maximum 10 tags allowed');
+      return;
+    }
+    
     if (!selectedTags.includes(tag)) {
       setSelectedTags([...selectedTags, tag]);
     }
@@ -321,6 +428,12 @@ export default function UploadPdf() {
 
   const handleAddCustomTag = () => {
     const customTag = tagInput.trim();
+    // Check max 10 tags limit
+    if (selectedTags.length >= 10) {
+      setError('Maximum 10 tags allowed');
+      return;
+    }
+    
     if (customTag && !selectedTags.includes(customTag)) {
       setSelectedTags([...selectedTags, customTag]);
       setTagInput('');
@@ -396,14 +509,34 @@ export default function UploadPdf() {
     }
   };
 
+  // Add function to handle notifications
+  const showNotification = (message, type = 'info') => {
+    setNotification({
+      show: true,
+      type,
+      message
+    });
+  };
+
+  const hideNotification = () => {
+    setNotification(prev => ({
+      ...prev,
+      show: false
+    }));
+  };
+
   const handleUpload = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) {
+      // Scroll to top to show error
+      window.scrollTo(0, 0);
       return;
     }
-
-    setUploading(true);
+    
+    setIsUploading(true);
+    setUploadProgress(0);
+    setUploadStatus('Preparing files...');
     setError('');
     setSuccess('');
     
@@ -412,20 +545,43 @@ export default function UploadPdf() {
       if (!token) {
         throw new Error('No authentication token found');
       }
-
+      
       // Create form data for multipart form upload
       const formData = new FormData();
       
+      // Update status for PDF
+      setUploadStatus('Uploading PDF file...');
+      setUploadProgress(10);
+      
       // Ensure files are properly appended with the exact field names expected by the backend
       if (pdfFile) formData.append('pdf', pdfFile);
+      
+      // Progress increment for PDF (40% of total)
+      setTimeout(() => {
+        setUploadProgress(30);
+        setUploadStatus('Processing PDF file...');
+      }, 800);
+      
+      setTimeout(() => {
+        setUploadProgress(50);
+        setUploadStatus('Uploading cover image...');
+      }, 1500);
+      
+      // Add cover image if available
       if (coverFile) formData.append('coverImage', coverFile);
       
       // Append all other required fields
       formData.append('title', title.trim());
       formData.append('author', author.trim());
       formData.append('description', description.trim());
-      formData.append('pageSize', pageSize);
-      formData.append('category', category);
+      
+      if (pageSize) {
+        formData.append('pageSize', pageSize);
+      }
+      
+      if (category) {
+        formData.append('category', category);
+      }
       
       // Join tags with comma
       if (selectedTags.length > 0) {
@@ -433,19 +589,13 @@ export default function UploadPdf() {
       } else {
         formData.append('tags', ''); // Send empty string if no tags
       }
-
-      console.log('Uploading files with:', {
-        title: title.trim(),
-        author: author.trim(),
-        description: description.trim(),
-        pageSize,
-        category,
-        pdfFileName: pdfFile ? pdfFile.name : null,
-        coverFileName: coverFile ? coverFile.name : null,
-        tags: selectedTags.join(',')
-      });
-
-      // Use direct fetch with FormData instead of postAPI
+      
+      setTimeout(() => {
+        setUploadProgress(70);
+        setUploadStatus('Finalizing upload...');
+      }, 2000);
+      
+      // Use direct fetch with FormData instead of postAPI for better progress tracking
       const response = await fetch(`${API_BASE_URL}/upload/pdf`, {
         method: 'POST',
         headers: {
@@ -453,10 +603,10 @@ export default function UploadPdf() {
         },
         body: formData,
       });
-
+      
       if (!response.ok) {
         const contentType = response.headers.get('content-type');
-        let errorMessage = 'Failed to upload book';
+        let errorMessage = 'Failed to upload e-book';
         
         if (contentType && contentType.includes('application/json')) {
           const errorData = await response.json();
@@ -467,11 +617,16 @@ export default function UploadPdf() {
         
         throw new Error(errorMessage);
       }
-
+      
       const data = await response.json();
-      console.log('Upload successful:', data);
-
-      setSuccess('Book uploaded successfully!');
+      
+      // Upload completed
+      setUploadProgress(100);
+      setUploadStatus('Upload complete!');
+      
+      // Show success notification
+      showNotification('E-book successfully uploaded!', 'success');
+      
       // Reset form
       setPdfFile(null);
       setCoverFile(null);
@@ -486,11 +641,27 @@ export default function UploadPdf() {
       setSelectedTags([]);
       setTagInput('');
       setTitleChars(0);
+      setAuthorChars(0);
       setDescChars(0);
-    } catch (err) {
-      console.error('Error uploading book:', err);
       
-      let errorMessage = err.message || 'An error occurred while uploading the book';
+      // Set success message
+      setSuccess('E-book successfully uploaded!');
+      
+      // Simulate a delay before resetting the upload progress
+      setTimeout(() => {
+        setIsUploading(false);
+        setUploadProgress(0);
+      }, 2000);
+      
+    } catch (err) {
+      console.error('Error uploading e-book:', err);
+      
+      // Set upload progress to error state
+      setUploadProgress(100);
+      setUploadStatus('Upload failed');
+      setIsUploading(false);
+      
+      let errorMessage = err.message || 'An error occurred while uploading the e-book';
       
       // Provide more helpful message for specific error types
       if (err.name === 'AbortError') {
@@ -503,11 +674,31 @@ export default function UploadPdf() {
         errorMessage = 'There was an issue with the file format. Please ensure your PDF and image are valid.';
       }
       
+      // Show error notification
+      showNotification(errorMessage, 'error');
+      
+      // Set error message
       setError(errorMessage);
-      setSuccess('');
-    } finally {
-      setUploading(false);
     }
+  };
+
+  // Helper function to get character count className based on current length and max length
+  const getCharCountClassName = (current, max) => {
+    const percentage = (current / max) * 100;
+    if (percentage >= 100) {
+      return `${styles.charCount} ${styles.charCountError}`;
+    } else if (percentage >= 80) {
+      return `${styles.charCount} ${styles.charCountWarning}`;
+    }
+    return styles.charCount;
+  };
+
+  // Helper function to get file input container className based on validation state
+  const getFileContainerClassName = (file, isValid) => {
+    if (!file) return styles.fileInputContainer;
+    if (isValid === false) return `${styles.fileInputContainer} ${styles.error}`;
+    if (isValid === true) return `${styles.fileInputContainer} ${styles.success}`;
+    return styles.fileInputContainer;
   };
 
   if (loading) {
@@ -543,25 +734,65 @@ export default function UploadPdf() {
           </p>
         </div>
 
-        {error && (
+        {/* Notification Alert */}
+        {notification.show && (
+          <Alert
+            type={notification.type}
+            message={notification.message}
+            show={notification.show}
+            onClose={hideNotification}
+            autoCloseTime={5000} // Auto close after 5 seconds
+            className={styles.notificationAlert}
+          />
+        )}
+
+        {error && !notification.show && (
           <div className={styles.errorMessage}>
-            <FaInfoCircle style={{ marginRight: '10px' }} />
-            {error}
+            <span style={{ display: 'flex', alignItems: 'center' }}>
+              <FaInfoCircle style={{ marginRight: '10px' }} />
+              {error}
+            </span>
+            <button 
+              onClick={() => setError('')} 
+              className={styles.closeErrorButton}
+              aria-label="Close error message"
+            >
+              <FaTimes />
+            </button>
           </div>
         )}
         
-        {success && (
+        {success && !notification.show && (
           <div className={styles.successMessage}>
-            <FaCheck style={{ marginRight: '10px' }} />
-            {success}
+            <span style={{ display: 'flex', alignItems: 'center' }}>
+              <FaCheck style={{ marginRight: '10px' }} />
+              {success}
+            </span>
+            <button 
+              onClick={() => setSuccess('')} 
+              className={styles.closeSuccessButton}
+              aria-label="Close success message"
+            >
+              <FaTimes />
+            </button>
           </div>
+        )}
+
+        {/* Upload Progress Bar */}
+        {isUploading && (
+          <ProgressBar
+            progress={uploadProgress}
+            status={uploadStatus}
+            showPercentage={true}
+            className={uploadProgress === 100 ? styles.completed : ''}
+          />
         )}
 
         <form onSubmit={handleUpload} className={styles.uploadForm}>
           <div className={styles.formGroup}>
             <label htmlFor="title">
               <FaBook style={{ marginRight: '8px' }} />
-              Title <span className={styles.charCount}>{titleChars}/100</span>
+              Title <span className={getCharCountClassName(titleChars, 100)}>{titleChars}/100</span>
             </label>
             <input
               type="text"
@@ -577,13 +808,14 @@ export default function UploadPdf() {
           <div className={styles.formGroup}>
             <label htmlFor="author">
               <FaUser style={{ marginRight: '8px' }} />
-              Author
+              Author <span className={getCharCountClassName(authorChars, 100)}>{authorChars}/100</span>
             </label>
             <input
               type="text"
               id="author"
               value={author}
-              onChange={(e) => setAuthor(e.target.value)}
+              onChange={handleAuthorChange}
+              maxLength={100}
               placeholder="Enter author name"
               className={styles.textInput}
             />
@@ -592,16 +824,16 @@ export default function UploadPdf() {
           <div className={styles.formGroup}>
             <label htmlFor="description">
               <FaInfoCircle style={{ marginRight: '8px' }} />
-              Description <span className={styles.charCount}>{descChars}/200</span>
+              Description <span className={getCharCountClassName(descChars, 1000)}>{descChars}/1000</span>
             </label>
             <textarea
               id="description"
               value={description}
               onChange={handleDescriptionChange}
-              maxLength={200}
-              placeholder="Enter a brief description"
+              maxLength={1000}
+              placeholder="Enter a description (up to 1000 characters)"
               className={styles.textArea}
-              rows={3}
+              rows={5}
             />
           </div>
 
@@ -681,7 +913,10 @@ export default function UploadPdf() {
           <div className={styles.formGroup} ref={tagContainerRef}>
             <label htmlFor="tags">
               <FaHashtag style={{ marginRight: '8px' }} />
-              Tags
+              Tags <span className={styles.tagLimitInfo}>(min 1, max 10)</span>
+              <span className={selectedTags.length > 9 ? `${styles.tagCount} ${styles.charCountError}` : styles.tagCount}>
+                {selectedTags.length}/10
+              </span>
             </label>
             <div className={styles.tagInputContainer}>
               <div className={styles.selectedTags}>
@@ -733,7 +968,7 @@ export default function UploadPdf() {
             </div>
           </div>
 
-          <div className={styles.fileInputContainer}>
+          <div className={getFileContainerClassName(pdfFile, pdfFile && pdfFile.size <= 10 * 1024 * 1024)}>
             <input
               type="file"
               accept="application/pdf"
@@ -743,12 +978,17 @@ export default function UploadPdf() {
             />
             <label htmlFor="pdf-upload" className={styles.fileInputLabel}>
               <FaFileUpload className={styles.uploadIcon} />
-              Choose PDF
+              Choose PDF (max 10MB)
             </label>
             <span className={styles.fileName}>{pdfFileName}</span>
+            {pdfFile && pdfFile.size > 0 && (
+              <span className={styles.fileSize}>
+                {(pdfFile.size / (1024 * 1024)).toFixed(2)} MB
+              </span>
+            )}
           </div>
 
-          <div className={styles.fileInputContainer}>
+          <div className={getFileContainerClassName(coverFile, coverFile && coverFile.size <= 1 * 1024 * 1024)}>
             <input
               type="file"
               accept="image/*"
@@ -758,25 +998,31 @@ export default function UploadPdf() {
             />
             <label htmlFor="cover-upload" className={styles.fileInputLabel}>
               <FaImage className={styles.uploadIcon} />
-              Choose Cover Image
+              Choose Cover Image (500x700px, max 1MB)
             </label>
             <span className={styles.fileName}>{coverFileName}</span>
+            {coverFile && coverFile.size > 0 && (
+              <span className={styles.fileSize}>
+                {(coverFile.size / (1024 * 1024)).toFixed(2)} MB
+              </span>
+            )}
+            <span className={styles.fileRequirements}>Cover image must be exactly 500x700 pixels and less than 1MB</span>
           </div>
 
           <button
             type="submit"
             className={styles.uploadButton}
-            disabled={uploading}
+            disabled={isUploading || !pdfFile}
           >
-            {uploading ? (
+            {isUploading ? (
               <>
                 <div className={styles.spinner}></div>
-                <span>Uploading... Please wait</span>
+                Uploading...
               </>
             ) : (
               <>
-                <FaFileUpload className={styles.buttonIcon} />
-                Upload Book
+                <FaFileUpload className={styles.uploadIcon} />
+                Upload E-Book
               </>
             )}
           </button>

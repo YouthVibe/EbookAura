@@ -5,7 +5,14 @@ const asyncHandler = require('express-async-handler');
 // @route   GET /api/books
 // @access  Public
 const getBooks = asyncHandler(async (req, res) => {
-  const { category, tag, search, sort } = req.query;
+  const { category, tag, search, sort, page = 1, limit = 10 } = req.query;
+  
+  // Convert pagination parameters to numbers
+  const pageNum = parseInt(page) || 1;
+  const limitNum = parseInt(limit) || 10;
+  
+  // Calculate skip value for pagination
+  const skip = (pageNum - 1) * limitNum;
   
   // Build query
   let query = {};
@@ -55,11 +62,31 @@ const getBooks = asyncHandler(async (req, res) => {
     sortOptions.createdAt = -1; // Default sort by newest
   }
   
+  // Get total count of matching books for pagination
+  const totalBooks = await Book.countDocuments(query);
+  
+  // Calculate total pages
+  const totalPages = Math.ceil(totalBooks / limitNum);
+  
+  // Fetch books with pagination
   const books = await Book.find(query)
     .sort(sortOptions)
-    .select('title author description category tags views downloads createdAt coverImage pageSize fileSizeMB averageRating');
+    .select('title author description category tags views downloads createdAt coverImage pageSize fileSizeMB averageRating')
+    .skip(skip)
+    .limit(limitNum);
     
-  res.json(books);
+  // Send response with pagination metadata
+  res.json({
+    books,
+    pagination: {
+      page: pageNum,
+      limit: limitNum,
+      totalBooks,
+      totalPages,
+      hasNextPage: pageNum < totalPages,
+      hasPrevPage: pageNum > 1
+    }
+  });
 });
 
 // @desc    Get book categories

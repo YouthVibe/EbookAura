@@ -4,7 +4,7 @@
 import { API_ENDPOINTS, API_BASE_URL } from '../utils/config';
 
 // Get all reviews for a specific book
-export const getBookReviews = async (bookId) => {
+export const getBookReviews = async (bookId, sort = 'newest', ratingFilter = null, page = 1, limit = 4) => {
   try {
     if (!bookId) {
       throw new Error('Book ID is required');
@@ -13,7 +13,28 @@ export const getBookReviews = async (bookId) => {
     const token = localStorage.getItem('token');
     const apiKey = localStorage.getItem('apiKey');
     
-    const response = await fetch(API_ENDPOINTS.BOOKS.REVIEWS(bookId), {
+    // Build query parameters
+    const queryParams = new URLSearchParams();
+    
+    // Pass sort parameter to backend
+    // Note: 'my-reviews' is handled client-side in the component
+    if (sort && sort !== 'my-reviews') {
+      queryParams.append('sort', sort);
+    } else if (sort === 'my-reviews') {
+      // For my-reviews, we still want to get newest first from the API
+      queryParams.append('sort', 'newest');
+    }
+    
+    if (ratingFilter) queryParams.append('rating', ratingFilter);
+    
+    // Add pagination parameters
+    queryParams.append('page', page.toString());
+    queryParams.append('limit', limit.toString());
+    
+    // Build URL with query parameters
+    const url = `${API_ENDPOINTS.BOOKS.REVIEWS(bookId)}${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

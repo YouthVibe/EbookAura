@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaUser, FaBook, FaTrash, FaBan, FaUnlock, FaEye, FaDownload, FaStar, FaCalendarAlt, FaFilter, FaSearch, FaPlusCircle, FaBookOpen, FaEdit } from 'react-icons/fa';
-import { getAllUsers, toggleUserBan, deleteUser, getAllBooks, deleteBook } from '../api/admin';
+import { FaUser, FaBook, FaTrash, FaBan, FaUnlock, FaEye, FaDownload, FaStar, FaCalendarAlt, FaFilter, FaSearch, FaPlusCircle, FaBookOpen, FaEdit, FaCloudUploadAlt, FaBroom } from 'react-icons/fa';
+import { getAllUsers, toggleUserBan, deleteUser, getAllBooks, deleteBook, cleanupCloudinaryResources } from '../api/admin';
 import { useAuth } from '../context/AuthContext';
 import styles from './admin.module.css';
 import Link from 'next/link';
 import SearchInput from '../components/SearchInput';
+import { FiTrash2, FiX, FiCheckCircle, FiUserX, FiUserCheck, FiCloudRain } from 'react-icons/fi';
 
 // Confirmation Modal Component
 const ConfirmationModal = ({ isOpen, title, message, onConfirm, onCancel, isDeleting }) => {
@@ -49,6 +50,10 @@ export default function AdminDashboard() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [userSearch, setUserSearch] = useState('');
   const [bookSearch, setBookSearch] = useState('');
+  const [isCleaningUp, setIsCleaningUp] = useState(false);
+  const [cleanupResult, setCleanupResult] = useState(null);
+  const [isCleanupLoading, setIsCleanupLoading] = useState(false);
+  const [cleanupResults, setCleanupResults] = useState(null);
   const router = useRouter();
   const { user } = useAuth();
   
@@ -165,6 +170,23 @@ export default function AdminDashboard() {
     );
   });
   
+  // Handle Cloudinary cleanup
+  const handleCloudinaryCleanup = async () => {
+    try {
+      setIsCleanupLoading(true);
+      const results = await cleanupCloudinaryResources();
+      setCleanupResults(results);
+    } catch (error) {
+      console.error('Error cleaning up Cloudinary resources:', error);
+      setCleanupResults({
+        success: false,
+        error: error.message || 'Failed to cleanup Cloudinary resources'
+      });
+    } finally {
+      setIsCleanupLoading(false);
+    }
+  };
+  
   // Conditional rendering for auth check
   if (!user) {
     return <div className={styles.loading}>Checking authentication...</div>;
@@ -195,6 +217,48 @@ export default function AdminDashboard() {
       </div>
       
       {error && <div className={styles.error}>{error}</div>}
+      
+      {/* Admin Actions */}
+      <div className={styles.adminActions}>
+        <button 
+          className={styles.adminActionButton}
+          onClick={handleCloudinaryCleanup}
+          disabled={isCleanupLoading}
+        >
+          <FiCloudRain />
+          {isCleanupLoading ? 'Cleaning up...' : 'Cleanup Cloudinary Resources'}
+        </button>
+      </div>
+      
+      {/* Cleanup Results */}
+      {cleanupResults && (
+        <div className={styles.cleanupResults}>
+          <h3>Cloudinary Cleanup Results</h3>
+          <div className={styles.cleanupSummary}>
+            {!cleanupResults.error ? (
+              <>
+                <p><strong>Status:</strong> Success</p>
+                <p><strong>PDFs Cleaned:</strong> {cleanupResults.deleted?.pdfs?.length || 0}</p>
+                <p><strong>Covers Cleaned:</strong> {cleanupResults.deleted?.covers?.length || 0}</p>
+                {cleanupResults.errors && cleanupResults.errors.length > 0 && (
+                  <p className={styles.cleanupErrors}>
+                    <strong>Errors:</strong>
+                    {cleanupResults.errors.map((error, index) => (
+                      <div key={index} className={styles.cleanupError}>
+                        {error.type === 'pdf' ? 'PDF: ' : 'Cover: '}
+                        {error.id ? `${error.id} - ` : ''}
+                        {error.error || error}
+                      </div>
+                    ))}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p><strong>Error:</strong> {cleanupResults.error || 'Unknown error occurred'}</p>
+            )}
+          </div>
+        </div>
+      )}
       
       {/* Users Tab */}
       {activeTab === 'users' && (
@@ -343,7 +407,7 @@ export default function AdminDashboard() {
                           'delete-book', 
                           book._id, 
                           'Delete Book', 
-                          `Are you sure you want to permanently delete "${book.title}"? This action cannot be undone.`
+                          `Are you sure you want to permanently delete "${book.title}"? This will delete the book record, PDF file, cover image, and all associated reviews and bookmarks. This action cannot be undone.`
                         )}
                         title="Delete Book"
                       >

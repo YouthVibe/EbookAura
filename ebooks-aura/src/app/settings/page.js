@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { FaArrowLeft, FaTrash, FaBookmark, FaStar, FaMoon, FaSun, FaExclamationTriangle } from 'react-icons/fa';
+import { FaArrowLeft, FaTrash, FaBookmark, FaStar, FaExclamationTriangle } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import styles from './settings.module.css';
 import { API_BASE_URL } from '../utils/config';
@@ -18,7 +18,6 @@ export default function Settings() {
   const [confirmAction, setConfirmAction] = useState('');
   const [reviews, setReviews] = useState([]);
   const [bookmarks, setBookmarks] = useState([]);
-  const [theme, setTheme] = useState('light');
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
   const [showDeleteReviewsModal, setShowDeleteReviewsModal] = useState(false);
   const [showDeleteBookmarksModal, setShowDeleteBookmarksModal] = useState(false);
@@ -34,11 +33,6 @@ export default function Settings() {
 
     // Load user data
     fetchUserData();
-    
-    // Load saved theme
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    setTheme(savedTheme);
-    document.documentElement.setAttribute('data-theme', savedTheme);
   }, [user, router]);
 
   const fetchUserData = async () => {
@@ -290,13 +284,6 @@ export default function Settings() {
     }
   };
 
-  const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    document.documentElement.setAttribute('data-theme', newTheme);
-  };
-
   if (loading) {
     return (
       <div className={styles.container}>
@@ -432,34 +419,6 @@ export default function Settings() {
               ))}
             </div>
           )}
-        </div>
-
-        <div className={styles.settingsSection}>
-          <h2 className={styles.sectionTitle}>Appearance</h2>
-          <div className={styles.settingItem}>
-            <div className={styles.settingInfo}>
-              <h3 className={styles.settingTitle}>Theme</h3>
-              <p className={styles.settingDescription}>
-                Switch between light and dark mode
-              </p>
-            </div>
-            <button 
-              className={styles.themeButton}
-              onClick={toggleTheme}
-            >
-              {theme === 'light' ? (
-                <>
-                  <FaMoon className={styles.themeIcon} />
-                  Dark Mode
-                </>
-              ) : (
-                <>
-                  <FaSun className={styles.themeIcon} />
-                  Light Mode
-                </>
-              )}
-            </button>
-          </div>
         </div>
       </div>
 

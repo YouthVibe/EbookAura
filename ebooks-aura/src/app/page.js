@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import styles from './page.module.css';
-import { FaSearch, FaBookmark, FaGithub, FaTwitter, FaLinkedin, FaInstagram } from 'react-icons/fa';
+import { FaSearch, FaBookmark, FaGithub, FaInstagram } from 'react-icons/fa';
 
 export default function Home() {
   return (
@@ -32,21 +32,17 @@ export default function Home() {
       <div className={styles.socialSection}>
         <h2 className={styles.socialTitle}>Connect With Us</h2>
         <div className={styles.socialLinks}>
-          <a href="https://github.com" target="_blank" rel="noopener noreferrer" className={styles.socialLink}>
+          <a href="https://github.com/YouthVibe" target="_blank" rel="noopener noreferrer" className={styles.socialLink}>
             <FaGithub className={styles.socialIcon} />
             GitHub
           </a>
-          <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className={styles.socialLink}>
-            <FaTwitter className={styles.socialIcon} />
-            Twitter
-          </a>
-          <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className={styles.socialLink}>
-            <FaLinkedin className={styles.socialIcon} />
-            LinkedIn
-          </a>
-          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className={styles.socialLink}>
+          <a href="https://www.instagram.com/youthvibeit/" target="_blank" rel="noopener noreferrer" className={styles.socialLink}>
             <FaInstagram className={styles.socialIcon} />
-            Instagram
+            Instagram (Official)
+          </a>
+          <a href="https://www.instagram.com/youthvibeit/" target="_blank" rel="noopener noreferrer" className={styles.socialLink}>
+            <FaInstagram className={styles.socialIcon} />
+            Instagram (Community)
           </a>
         </div>
       </div>

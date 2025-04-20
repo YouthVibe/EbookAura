@@ -23,7 +23,7 @@ export async function generateStaticParams() {
     console.log('Generating static book pages...');
     
     // Get the API URL with localhost fallback
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const apiUrl = 'https://ebookaura.onrender.com/api';
     
     // Fetch books
     const response = await fetch(`${apiUrl}/books`);

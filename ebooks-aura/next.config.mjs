@@ -56,7 +56,7 @@ const nextConfig = {
     },
     async rewrites() {
       // Use the API URL from environment variable or fallback to localhost
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+      const apiBaseUrl = 'https://ebookaura.onrender.com/api';
       
       return [
         {

@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { FaStar, FaRegStar, FaUser, FaCalendarAlt, FaTrash, FaTimes } from 'react-icons/fa';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { FaStar, FaRegStar, FaUser, FaCalendarAlt, FaTrash, FaTimes, FaFilter, FaSort, FaCheckCircle, FaExclamationTriangle, FaPaperPlane, FaLock, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { BsStarFill, BsStarHalf, BsStar, BsSortDown, BsSortUp } from 'react-icons/bs';
+import { MdFilterList, MdFilterListOff, MdSort, MdDelete, MdFilterAlt } from 'react-icons/md';
 import { getBookReviews, getBookRating, submitBookReview, deleteReview } from '../api/reviews';
 import { useAuth } from '../context/AuthContext';
 import styles from './BookReview.module.css';
@@ -23,47 +25,100 @@ export default function BookReview({ bookId }) {
   const [characterCount, setCharacterCount] = useState(0);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [reviewToDelete, setReviewToDelete] = useState(null);
+  const [sortOption, setSortOption] = useState('newest');
+  const [ratingFilter, setRatingFilter] = useState(null);
+  const [ratingDistribution, setRatingDistribution] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 4,
+    totalReviews: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
   const { user } = useAuth();
   
   // Fetch reviews and rating
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Validate bookId
-        if (!bookId) {
-          setError('Book ID is missing. Cannot load reviews.');
-          setLoading(false);
-          return;
-        }
-        
-        console.log('BookReview: Fetching data for bookId:', bookId);
-        setLoading(true);
-        
-        // Fetch reviews and rating in parallel
-        const [reviewsData, ratingData] = await Promise.all([
-          getBookReviews(bookId),
-          getBookRating(bookId)
-        ]);
-        
-        setReviews(reviewsData);
-        setAverageRating(ratingData.averageRating);
-        setReviewCount(ratingData.reviewCount);
-        setError(null);
-      } catch (err) {
-        setError('Failed to load reviews. Please try again later.');
-        console.error('Error loading review data:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
     fetchData();
-  }, [bookId]);
+  }, [bookId, sortOption, ratingFilter, currentPage]);
+  
+  const fetchData = async () => {
+    try {
+      // Validate bookId
+      if (!bookId) {
+        setError('Book ID is missing. Cannot load reviews.');
+        setLoading(false);
+        return;
+      }
+      
+      console.log('BookReview: Fetching data for bookId:', bookId);
+      setLoading(true);
+      
+      // Fetch reviews with sort, filter, and pagination options
+      const [reviewsData, ratingData] = await Promise.all([
+        getBookReviews(bookId, sortOption, ratingFilter, currentPage, 4),
+        getBookRating(bookId)
+      ]);
+      
+      let filteredReviews = reviewsData.reviews || [];
+      
+      // If sorting by "my-reviews", filter to show only the current user's reviews
+      if (sortOption === 'my-reviews' && user) {
+        filteredReviews = filteredReviews.filter(review => 
+          (user.name && review.userName === user.name) || 
+          (user.username && review.userName === user.username)
+        );
+      }
+      
+      setReviews(filteredReviews);
+      setAverageRating(ratingData.averageRating);
+      setReviewCount(ratingData.reviewCount);
+      setRatingDistribution(ratingData.ratingDistribution || {});
+      
+      // Save pagination data
+      if (reviewsData.pagination) {
+        setPagination(reviewsData.pagination);
+      }
+      
+      setError(null);
+    } catch (err) {
+      setError('Failed to load reviews. Please try again later.');
+      console.error('Error loading review data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
   
   // Format date to readable format
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+  
+  // Handle sort change
+  const handleSortChange = (option) => {
+    setSortOption(option);
+    setCurrentPage(1); // Reset to first page when sort changes
+  };
+  
+  // Handle rating filter change
+  const handleRatingFilterChange = (rating) => {
+    if (ratingFilter === rating) {
+      // If clicking the same rating filter, clear it
+      setRatingFilter(null);
+    } else {
+      setRatingFilter(rating);
+    }
+    setCurrentPage(1); // Reset to first page when filter changes
+  };
+  
+  // Handle page change
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      setCurrentPage(newPage);
+    }
   };
   
   // Handle comment change with character limit
@@ -97,14 +152,11 @@ export default function BookReview({ bookId }) {
       console.log('Submitting review for bookId:', bookId);
       const newReview = await submitBookReview(bookId, rating, comment);
       
-      // Add the new review to the list
-      setReviews([newReview, ...reviews]);
+      // Reset to first page to see the new review
+      setCurrentPage(1);
       
-      // Update the average rating
-      const newTotal = averageRating * reviewCount + rating;
-      const newCount = reviewCount + 1;
-      setAverageRating(newTotal / newCount);
-      setReviewCount(newCount);
+      // Refetch all review data to ensure we have the latest
+      fetchData();
       
       // Reset form
       setRating(0);
@@ -145,19 +197,8 @@ export default function BookReview({ bookId }) {
       console.log('Deleting review with ID:', reviewToDelete._id);
       await deleteReview(reviewToDelete._id);
       
-      // Remove the review from the list
-      setReviews(reviews.filter(review => review._id !== reviewToDelete._id));
-      
-      // Update the average rating
-      if (reviewCount > 1) {
-        const newTotal = averageRating * reviewCount - reviewToDelete.rating;
-        const newCount = reviewCount - 1;
-        setAverageRating(newTotal / newCount);
-        setReviewCount(newCount);
-      } else {
-        setAverageRating(0);
-        setReviewCount(0);
-      }
+      // Refetch all review data to ensure we have the latest
+      fetchData();
       
       setDeleteSuccess(true);
       
@@ -208,6 +249,37 @@ export default function BookReview({ bookId }) {
     ));
   };
   
+  // Render pagination controls
+  const renderPagination = () => {
+    if (pagination.totalPages <= 1) return null;
+    
+    return (
+      <div className={styles.pagination}>
+        <button
+          className={`${styles.pageButton} ${!pagination.hasPrevPage ? styles.disabled : ''}`}
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={!pagination.hasPrevPage}
+          aria-label="Previous page"
+        >
+          <FaChevronLeft />
+        </button>
+        
+        <div className={styles.pageInfo}>
+          Page {pagination.page} of {pagination.totalPages}
+        </div>
+        
+        <button
+          className={`${styles.pageButton} ${!pagination.hasNextPage ? styles.disabled : ''}`}
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={!pagination.hasNextPage}
+          aria-label="Next page"
+        >
+          <FaChevronRight />
+        </button>
+      </div>
+    );
+  };
+  
   if (loading) {
     return <div className={styles.loading}>Loading reviews...</div>;
   }
@@ -252,134 +324,302 @@ export default function BookReview({ bookId }) {
         </div>
       )}
 
-      <h2 className={styles.reviewHeader}>Customer Reviews</h2>
-      
-      <div className={styles.reviewSummary}>
-        <div className={styles.averageRating}>
-          <span className={styles.ratingNumber}>{averageRating.toFixed(1)}</span>
-          <div className={styles.ratingStars}>
-            {renderDisplayStars(averageRating)}
+      <div className={styles.reviewHeader}>
+        <div className={styles.reviewSummary}>
+          <h2>{reviewCount} Reviews</h2>
+          <div className={styles.totalRating}>
+            <div className={styles.overallRating}>
+              <div className={styles.ratingValue}>{averageRating.toFixed(1)}</div>
+              <div className={styles.ratingStars}>
+                {renderDisplayStars(averageRating)}
+              </div>
+            </div>
+            <div className={styles.totalBadge}>
+              <span>{reviewCount} ratings</span>
+            </div>
           </div>
-          <span className={styles.reviewCount}>
-            Based on {reviewCount} {reviewCount === 1 ? 'review' : 'reviews'}
-          </span>
+        </div>
+        
+        <div className={styles.filterSortContainer}>
+          <div className={styles.ratingFilters}>
+            <div className={styles.filtersHeader}>
+              <h3><MdFilterAlt style={{ color: '#ef4444' }} /> <span>Filter & Sort Reviews</span></h3>
+            </div>
+            
+            {(ratingFilter || sortOption !== 'newest') && (
+              <div className={styles.activeFilterIndicator}>
+                {ratingFilter && (
+                  <div className={styles.filterBadge}>
+                    <div className={styles.filterBadgeContent}>
+                      <strong>{ratingFilter}-star</strong> reviews only
+                    </div>
+                    <button
+                      className={styles.clearFilterButton}
+                      onClick={() => handleRatingFilterChange(null)}
+                      aria-label="Clear rating filter"
+                      title="Clear rating filter"
+                    >
+                      <FaTimes />
+                    </button>
+                  </div>
+                )}
+                
+                {sortOption !== 'newest' && (
+                  <div className={styles.sortBadge}>
+                    <span>Sorted by: <strong>
+                      {sortOption === 'highest' ? 'Highest Rated' : 
+                       sortOption === 'lowest' ? 'Lowest Rated' : 
+                       sortOption === 'oldest' ? 'Oldest First' :
+                       sortOption === 'my-reviews' ? 'My Reviews' : 'Newest First'}
+                    </strong></span>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            <div className={styles.filterOptions}>
+              <div className={styles.filterLabel}>Filter by Rating:</div>
+              <div className={styles.ratingFilterButtons}>
+                <button
+                  className={`${styles.ratingFilterButton} ${ratingFilter === null ? styles.activeFilter : ''}`}
+                  onClick={() => handleRatingFilterChange(null)}
+                  aria-label="Show all reviews"
+                  title="Show all reviews"
+                >
+                  All Ratings
+                </button>
+                {[5, 4, 3, 2, 1].map((rating) => (
+                  <button
+                    key={rating}
+                    className={`${styles.ratingFilterButton} ${ratingFilter === rating ? styles.activeFilter : ''}`}
+                    onClick={() => handleRatingFilterChange(rating)}
+                    aria-label={`Show only ${rating} star reviews`}
+                    title={`Show only ${rating} star reviews`}
+                  >
+                    <span className={styles.filterStars}>
+                      {rating} <FaStar className={styles.filterStar} />
+                    </span>
+                    {ratingDistribution && ratingDistribution[rating] > 0 && (
+                      <span className={styles.filterCount}>({ratingDistribution[rating]})</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className={styles.sortOptions}>
+              <div className={styles.filterLabel}>Sort Reviews By:</div>
+              <div className={styles.sortButtons}>
+                <button
+                  className={`${styles.sortButton} ${sortOption === 'newest' ? styles.activeSort : ''}`}
+                  onClick={() => handleSortChange('newest')}
+                  aria-label="Sort by newest reviews first"
+                  title="Sort by newest reviews first"
+                >
+                  <MdSort /> Newest First
+                </button>
+                <button
+                  className={`${styles.sortButton} ${sortOption === 'oldest' ? styles.activeSort : ''}`}
+                  onClick={() => handleSortChange('oldest')}
+                  aria-label="Sort by oldest reviews first"
+                  title="Sort by oldest reviews first"
+                >
+                  <BsSortUp /> Oldest First
+                </button>
+                <button
+                  className={`${styles.sortButton} ${sortOption === 'highest' ? styles.activeSort : ''}`}
+                  onClick={() => handleSortChange('highest')}
+                  aria-label="Sort by highest rating first"
+                  title="Sort by highest rating first"
+                >
+                  <BsSortDown /> Highest Rated
+                </button>
+                <button
+                  className={`${styles.sortButton} ${sortOption === 'lowest' ? styles.activeSort : ''}`}
+                  onClick={() => handleSortChange('lowest')}
+                  aria-label="Sort by lowest rating first"
+                  title="Sort by lowest rating first"
+                >
+                  <BsSortUp /> Lowest Rated
+                </button>
+                {user && (
+                  <button
+                    className={`${styles.sortButton} ${sortOption === 'my-reviews' ? styles.activeSort : ''}`}
+                    onClick={() => handleSortChange('my-reviews')}
+                    aria-label="Show only my reviews"
+                    title="Show only my reviews"
+                  >
+                    <FaUser /> My Reviews
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       
-      {user ? (
-        <div className={styles.reviewForm}>
-          <h3>Write a Review</h3>
-          
-          {success && (
-            <div className={styles.success}>
-              Your review has been submitted successfully!
-            </div>
-          )}
-          
-          {deleteSuccess && (
-            <div className={styles.success}>
-              Your review has been deleted successfully!
-            </div>
-          )}
-          
-          {submitError && (
-            <div className={styles.submitError}>{submitError}</div>
-          )}
-          
-          <form onSubmit={handleSubmitReview}>
-            <div className={styles.ratingSelector}>
-              <label>Your Rating:</label>
-              <div className={styles.stars}>
-                {renderRatingStars()}
-              </div>
-            </div>
+      <div className={styles.reviewContent}>
+        {user ? (
+          <div className={styles.reviewForm}>
+            <h3>Write a Review</h3>
             
-            <div className={styles.commentField}>
-              <label>
-                Your Review: <span className={styles.optional}>(optional, max 200 characters)</span>
-              </label>
-              <textarea 
-                value={comment}
-                onChange={handleCommentChange}
-                placeholder="Share your thoughts about this book (optional)"
-                rows={4}
-                className={styles.textarea}
-              />
-              <div className={styles.characterCount}>
-                {characterCount}/200 characters
+            {success && (
+              <div className={styles.success}>
+                <FaCheckCircle style={{ marginRight: '8px' }} /> 
+                Your review has been submitted successfully!
               </div>
-            </div>
+            )}
             
-            <button 
-              type="submit" 
-              className={styles.submitButton}
-              disabled={submitting}
-            >
-              {submitting ? 'Submitting...' : 'Submit Review'}
-            </button>
-          </form>
-        </div>
-      ) : (
-        <div className={styles.loginPrompt}>
-          Please log in to leave a review.
-        </div>
-      )}
-      
-      <div className={styles.reviewsList}>
-        <h3>Recent Reviews</h3>
-        
-        {reviews.length === 0 ? (
-          <div className={styles.noReviews}>
-            Be the first to review this book!
+            {deleteSuccess && (
+              <div className={styles.success}>
+                <FaCheckCircle style={{ marginRight: '8px' }} /> 
+                Your review has been deleted successfully!
+              </div>
+            )}
+            
+            {submitError && (
+              <div className={styles.submitError}>
+                <FaExclamationTriangle style={{ marginRight: '8px' }} /> 
+                {submitError}
+              </div>
+            )}
+            
+            <form onSubmit={handleSubmitReview}>
+              <div className={styles.ratingSelector}>
+                <label htmlFor="rating-stars">Your Rating:</label>
+                <div className={styles.stars} id="rating-stars" role="group" aria-label="Select a rating from 1 to 5 stars">
+                  {renderRatingStars()}
+                </div>
+                {rating > 0 && (
+                  <div className={styles.selectedRating}>
+                    You selected: <strong>{rating} {rating === 1 ? 'star' : 'stars'}</strong>
+                  </div>
+                )}
+              </div>
+              
+              <div className={styles.commentField}>
+                <label htmlFor="review-comment">
+                  Your Review: <span className={styles.optional}>(optional, max 200 characters)</span>
+                </label>
+                <textarea 
+                  id="review-comment"
+                  value={comment}
+                  onChange={handleCommentChange}
+                  placeholder="Share your thoughts about this book (optional)"
+                  rows={4}
+                  className={styles.textarea}
+                  maxLength={200}
+                />
+                <div className={styles.characterCount}>
+                  {characterCount}/200 characters
+                </div>
+              </div>
+              
+              <button 
+                type="submit" 
+                className={styles.submitButton}
+                disabled={submitting || rating === 0}
+              >
+                {submitting ? (
+                  <>
+                    <div className={styles.spinner}></div>
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <FaPaperPlane style={{ marginRight: '8px' }} />
+                    Submit Review
+                  </>
+                )}
+              </button>
+            </form>
           </div>
         ) : (
-          reviews.map((review) => (
-            <div key={review._id} className={styles.reviewItem}>
-              <div className={styles.reviewHeader}>
-                <div className={styles.reviewerInfo}>
-                  {review.userImage ? (
-                    <img 
-                      src={review.userImage} 
-                      alt={review.userName} 
-                      className={styles.reviewerImage} 
-                    />
-                  ) : (
-                    <div className={styles.reviewerPlaceholder}>
-                      <FaUser />
-                    </div>
-                  )}
-                  <span className={styles.reviewerName}>{review.userName}</span>
+          <div className={styles.loginPrompt}>
+            <FaLock style={{ marginRight: '8px', fontSize: '1.2rem' }} />
+            Please log in to leave a review.
+          </div>
+        )}
+        
+        <div className={styles.reviewsList}>
+          <div className={styles.reviewsHeader}>
+            <h3>Reviews ({reviewCount})</h3>
+          </div>
+          
+          {reviews.length === 0 ? (
+            <div className={styles.noReviews}>
+              {ratingFilter 
+                ? `No ${ratingFilter}-star reviews found. ${reviewCount > 0 ? 'Try a different filter.' : 'This book has no reviews yet.'}`
+                : sortOption === 'my-reviews'
+                  ? 'You have not reviewed this book yet.'
+                  : reviewCount > 0 
+                    ? 'No reviews match the current filters.' 
+                    : 'Be the first to review this book!'}
+            </div>
+          ) : (
+            <>
+              <div className={styles.activeFilterIndicator}>
+                <div className={styles.reviewCount}>
+                  <span>
+                    {sortOption === 'my-reviews' 
+                      ? `Showing your ${reviews.length} ${reviews.length === 1 ? 'review' : 'reviews'}` 
+                      : <>Showing <strong>{reviews.length}</strong> of <strong>{reviewCount}</strong> reviews</>}
+                  </span>
                 </div>
                 
-                <div className={styles.reviewMetadata}>
-                  <div className={styles.reviewDate}>
-                    <FaCalendarAlt />
-                    <span>{formatDate(review.createdAt)}</span>
+                {reviews.map((review) => (
+                  <div key={review._id} className={styles.reviewItem}>
+                    <div className={styles.reviewHeader}>
+                      <div className={styles.reviewerInfo}>
+                        {review.userImage ? (
+                          <img 
+                            src={review.userImage} 
+                            alt={review.userName} 
+                            className={styles.reviewerImage} 
+                          />
+                        ) : (
+                          <div className={styles.reviewerPlaceholder}>
+                            <FaUser />
+                          </div>
+                        )}
+                        <span className={styles.reviewerName}>{review.userName}</span>
+                      </div>
+                      
+                      <div className={styles.reviewMetadata}>
+                        <div className={styles.reviewDate}>
+                          <FaCalendarAlt />
+                          <span>{formatDate(review.createdAt)}</span>
+                        </div>
+                        
+                        {isUserReview(review) && (
+                          <button 
+                            onClick={() => confirmDeleteReview(review)}
+                            className={styles.deleteButton}
+                            disabled={deleting}
+                            title="Delete your review"
+                          >
+                            <FaTrash />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className={styles.reviewRating}>
+                      {renderDisplayStars(review.rating)}
+                    </div>
+                    
+                    {review.comment && (
+                      <div className={styles.reviewText}>{review.comment}</div>
+                    )}
                   </div>
-                  
-                  {isUserReview(review) && (
-                    <button 
-                      onClick={() => confirmDeleteReview(review)}
-                      className={styles.deleteButton}
-                      disabled={deleting}
-                      title="Delete your review"
-                    >
-                      <FaTrash />
-                    </button>
-                  )}
-                </div>
+                ))}
               </div>
               
-              <div className={styles.reviewRating}>
-                {renderDisplayStars(review.rating)}
-              </div>
-              
-              {review.comment && (
-                <div className={styles.reviewText}>{review.comment}</div>
-              )}
-            </div>
-          ))
-        )}
+              {/* Pagination controls */}
+              {renderPagination()}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

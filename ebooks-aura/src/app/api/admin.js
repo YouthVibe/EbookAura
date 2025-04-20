@@ -1,7 +1,7 @@
 /**
  * API functions for admin operations
  */
-import { getAPI, putAPI, deleteAPI } from './apiUtils';
+import { getAPI, putAPI, deleteAPI, postAPI } from './apiUtils';
 
 // Get all users
 export const getAllUsers = async () => {
@@ -101,6 +101,7 @@ export const deleteBook = async (bookId) => {
       throw new Error('Authentication required');
     }
     
+    // This API call will delete the book record, PDF file and cover image from Cloudinary, as well as all associated reviews and bookmarks
     return await deleteAPI(`/admin/books/${bookId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -109,6 +110,28 @@ export const deleteBook = async (bookId) => {
     });
   } catch (error) {
     console.error('Error deleting book:', error);
+    throw error;
+  }
+};
+
+// Clean up orphaned Cloudinary resources
+export const cleanupCloudinaryResources = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const apiKey = localStorage.getItem('apiKey');
+    
+    if (!token || !apiKey) {
+      throw new Error('Authentication required');
+    }
+    
+    return await postAPI('/admin/cleanup-cloudinary', {}, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'X-API-Key': apiKey
+      }
+    });
+  } catch (error) {
+    console.error('Error cleaning up Cloudinary resources:', error);
     throw error;
   }
 }; 

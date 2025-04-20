@@ -464,4 +464,97 @@
   .bookGrid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Add after activeTab:hover rule */
+.adminActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.adminActionButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  color: #111827;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.adminActionButton:hover {
+  background: #1a1a1a;
+  border-color: #1a1a1a;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.adminActionButton:disabled {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.cleanupResults {
+  background: white;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+  border: 1px solid #e5e7eb;
+  animation: fadeIn 0.3s ease;
+}
+
+.cleanupResults h3 {
+  padding: 1rem 1.5rem;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.cleanupSummary {
+  padding: 1.5rem;
+}
+
+.cleanupSummary p {
+  margin: 0.5rem 0;
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+
+.cleanupErrors {
+  margin-top: 1rem !important;
+  color: #b91c1c !important;
+}
+
+.cleanupError {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #fee2e2;
+  border-radius: 0.25rem;
+  color: #b91c1c;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .adminActions {
+    flex-direction: column;
+  }
+  
+  .adminActionButton {
+    width: 100%;
+  }
 } 

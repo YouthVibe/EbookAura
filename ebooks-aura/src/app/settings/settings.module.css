@@ -109,7 +109,8 @@
 }
 
 .dangerButton:hover {
-  background-color: var(--danger-hover);
+  background-color: var(--danger);
+  color: white;
 }
 
 .message {
@@ -205,19 +206,16 @@
   margin: 0;
 }
 
-.deleteButton, .themeButton {
+.deleteButton {
   display: flex;
   align-items: center;
+  gap: 8px;
   padding: 8px 16px;
-  border-radius: 6px;
+  border-radius: 4px;
   font-weight: 500;
+  border: none;
   cursor: pointer;
   transition: all 0.2s;
-  border: none;
-  font-size: 14px;
-}
-
-.deleteButton {
   background-color: var(--danger-light);
   color: var(--danger);
 }
@@ -227,18 +225,8 @@
   color: white;
 }
 
-.themeButton {
-  background-color: var(--primary-light);
-  color: var(--primary-color);
-}
-
-.themeButton:hover {
-  background-color: var(--primary-color);
-  color: white;
-}
-
-.deleteIcon, .themeIcon {
-  margin-right: 8px;
+.deleteIcon {
+  font-size: 16px;
 }
 
 .reviewsList, .bookmarksList {
