@@ -4,6 +4,8 @@
  */
 
 // Use the API URL from environment variables with fallback
+// const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+// Production URL
 const API_BASE_URL = 'https://ebookaura.onrender.com/api';
 
 /**
@@ -29,13 +31,23 @@ export async function fetchAPI(endpoint, options = {}) {
       options.headers['Content-Type'] = 'application/json';
     }
     
-    // Add auth headers if available from localStorage
-    if (typeof window !== 'undefined') {
+    // Check if this is a public book-related endpoint that doesn't need authentication
+    const isPublicBookEndpoint = 
+      endpoint.startsWith('/books') && 
+      (options.method === 'GET' || !options.method) &&
+      !endpoint.includes('/reviews') && 
+      !endpoint.includes('/bookmarks');
+    
+    // Add auth headers if available from localStorage and not a public book endpoint
+    if (typeof window !== 'undefined' && !isPublicBookEndpoint) {
       const token = localStorage.getItem('token');
       const apiKey = localStorage.getItem('apiKey');
       
-      if (token && apiKey) {
+      if (token && !options.headers['Authorization']) {
         options.headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      if (apiKey && !options.headers['X-API-Key']) {
         options.headers['X-API-Key'] = apiKey;
       }
     }

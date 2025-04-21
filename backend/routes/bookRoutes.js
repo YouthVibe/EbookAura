@@ -13,23 +13,70 @@ const {
   createBookReview
 } = require('../controllers/reviewController');
 const { protect } = require('../middleware/auth');
+const { 
+  apiKeyAuth, 
+  apiKeyReadPermission,
+  apiKeyGetPdfPermission,
+  apiKeyPostReviewsPermission,
+  trackBookSearchUsage,
+  trackReviewPostingUsage 
+} = require('../middleware/apiKeyAuth');
 const Book = require('../models/Book');
 const axios = require('axios');
 
-// Public routes
-router.get('/', getBooks);
+// Authentication middleware that supports both JWT and API key auth
+const flexAuth = async (req, res, next) => {
+  // Check for API key
+  const apiKey = req.headers['x-api-key'];
+  
+  if (apiKey) {
+    // Use API key authentication
+    return apiKeyAuth(req, res, next);
+  } else {
+    // Use JWT authentication
+    return protect(req, res, next);
+  }
+};
+
+// Public routes - no authentication needed
 router.get('/categories', getCategories);
 router.get('/tags', getTags);
 router.get('/:id', getBook);
 router.post('/:id/download', incrementDownloads);
 
+// Books list route - ALWAYS public access without limits
+router.get('/', getBooks);
+
 // Review routes
 router.get('/:bookId/reviews', getBookReviews);
 router.get('/:bookId/rating', getBookRating);
-router.post('/:bookId/reviews', protect, createBookReview);
 
-// Add an endpoint to serve the PDF with proper content type
-router.get('/:id/pdf', async (req, res) => {
+// Create review route - requires authentication and checks permissions for API keys
+router.post('/:bookId/reviews', flexAuth, async (req, res, next) => {
+  // If using API key, check for review posting permission and track usage
+  if (req.apiKey) {
+    return apiKeyPostReviewsPermission(req, res, async (err) => {
+      if (err) return next(err);
+      trackReviewPostingUsage(req, res, async (err) => {
+        if (err) return next(err);
+        // Call the actual controller
+        createBookReview(req, res, next);
+      });
+    });
+  } else {
+    // JWT authenticated user without limits
+    createBookReview(req, res, next);
+  }
+});
+
+// PDF routes - public access without authentication
+router.get('/:id/pdf', servePdf);
+
+// Proxy endpoint to fetch PDF content - public access
+router.get('/:id/pdf-content', servePdfContent);
+
+// Function to serve PDF
+async function servePdf(req, res) {
   try {
     console.log(`PDF request received for book ID: ${req.params.id}, download: ${req.query.download}, counted: ${req.query.counted}`);
     
@@ -40,7 +87,7 @@ router.get('/:id/pdf', async (req, res) => {
       return res.status(404).json({ message: 'Book not found' });
     }
     
-    console.log(`Found book: ${book.title}, PDF URL: ${book.pdfUrl}, PDF ID: ${book.pdfId}`);
+    console.log(`Found book: ${book.title}, PDF URL: ${book.pdfUrl}, PDF ID: ${book.pdfId}, isCustomUrl: ${book.isCustomUrl}`);
     
     // Get filename
     const fileName = `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
@@ -56,13 +103,21 @@ router.get('/:id/pdf', async (req, res) => {
       console.log(`Incremented download count for book: ${book.title} to ${book.downloads}`);
     }
     
-    // Get the PDF URL from the database and add .pdf extension if needed
-    let pdfUrl = book.pdfUrl;
-    if (!pdfUrl.endsWith('.pdf')) {
-      pdfUrl = `${pdfUrl}.pdf`;
+    // Get the PDF URL based on whether it's a custom URL or standard upload
+    let pdfUrl;
+    if (book.isCustomUrl && book.customURLPDF) {
+      // Use the custom URL directly without modification
+      pdfUrl = book.customURLPDF;
+      console.log(`Using custom PDF URL: ${pdfUrl}`);
+    } else {
+      // Standard Cloudinary URL
+      pdfUrl = book.pdfUrl;
+      // Add .pdf extension if needed for standard uploads
+      if (!pdfUrl.endsWith('.pdf')) {
+        pdfUrl = `${pdfUrl}.pdf`;
+      }
+      console.log(`Using standard PDF URL with .pdf extension: ${pdfUrl}`);
     }
-    
-    console.log(`Using original PDF URL with .pdf extension: ${pdfUrl}`);
     
     // Set appropriate headers based on whether this is a download or view request
     res.setHeader('Content-Type', 'application/pdf');
@@ -84,44 +139,10 @@ router.get('/:id/pdf', async (req, res) => {
     console.error('Error serving PDF:', error);
     res.status(500).json({ message: 'Error serving PDF', error: error.message });
   }
-});
+}
 
-// Diagnostic endpoint to test PDF URL parsing
-router.get('/test-pdf-url/:id', async (req, res) => {
-  try {
-    const book = await Book.findById(req.params.id);
-    
-    if (!book) {
-      return res.status(404).json({ message: 'Book not found' });
-    }
-    
-    // Original URL information
-    const pdfUrl = book.pdfUrl;
-    const pdfId = book.pdfId;
-    
-    // Create download URL (original + .pdf)
-    const downloadUrl = pdfUrl.endsWith('.pdf') ? pdfUrl : `${pdfUrl}.pdf`;
-    
-    // Create filename
-    const fileName = `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
-    
-    // Return diagnostic information
-    res.json({
-      bookId: book._id,
-      title: book.title,
-      originalUrl: pdfUrl,
-      pdfId: pdfId,
-      downloadUrl: downloadUrl,
-      fileName: fileName
-    });
-  } catch (error) {
-    console.error('Error in PDF URL test endpoint:', error);
-    res.status(500).json({ message: 'Error testing PDF URL', error: error.message });
-  }
-});
-
-// Add a proxy endpoint to fetch PDF content
-router.get('/:id/pdf-content', async (req, res) => {
+// Function to serve PDF content
+async function servePdfContent(req, res) {
   try {
     console.log(`PDF content request received for book ID: ${req.params.id}`);
     
@@ -132,7 +153,23 @@ router.get('/:id/pdf-content', async (req, res) => {
       return res.status(404).json({ message: 'Book not found' });
     }
     
-    console.log(`Found book: ${book.title}, fetching PDF content from: ${book.pdfUrl}`);
+    // Get the PDF URL based on whether it's a custom URL or standard upload
+    let pdfUrl;
+    if (book.isCustomUrl && book.customURLPDF) {
+      // Use the custom URL directly without modification
+      pdfUrl = book.customURLPDF;
+      console.log(`Using custom PDF URL: ${pdfUrl}`);
+    } else {
+      // Standard Cloudinary URL
+      pdfUrl = book.pdfUrl;
+      // Add .pdf extension if needed for standard uploads
+      if (!pdfUrl.endsWith('.pdf')) {
+        pdfUrl = `${pdfUrl}.pdf`;
+      }
+      console.log(`Using standard PDF URL: ${pdfUrl}`);
+    }
+    
+    console.log(`Found book: ${book.title}, fetching PDF content from: ${pdfUrl}`);
     
     // Check if this is a download request (for download counter)
     const isDownload = req.query.download === 'true';
@@ -147,8 +184,15 @@ router.get('/:id/pdf-content', async (req, res) => {
     
     // Fetch the PDF content
     try {
-      const pdfResponse = await axios.get(book.pdfUrl, {
-        responseType: 'arraybuffer'
+      const pdfResponse = await axios.get(pdfUrl, {
+        responseType: 'arraybuffer',
+        headers: {
+          // Add common headers to help with various services
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Accept': 'application/pdf,*/*'
+        },
+        // Increase timeout for large files or slow servers
+        timeout: 30000
       });
       
       // Set appropriate headers
@@ -167,6 +211,54 @@ router.get('/:id/pdf-content', async (req, res) => {
   } catch (error) {
     console.error('Error in PDF content endpoint:', error);
     res.status(500).json({ message: 'Error serving PDF content', error: error.message });
+  }
+}
+
+// Diagnostic endpoint to test PDF URL parsing
+router.get('/test-pdf-url/:id', async (req, res) => {
+  try {
+    const book = await Book.findById(req.params.id);
+    
+    if (!book) {
+      return res.status(404).json({ message: 'Book not found' });
+    }
+    
+    // Get the PDF URL based on the URL type
+    let pdfUrl;
+    let pdfType;
+    
+    if (book.isCustomUrl && book.customURLPDF) {
+      // Custom URL
+      pdfUrl = book.customURLPDF;
+      pdfType = "custom";
+    } else {
+      // Standard Cloudinary URL
+      pdfUrl = book.pdfUrl;
+      // Add .pdf extension if needed for standard uploads
+      if (!pdfUrl.endsWith('.pdf')) {
+        pdfUrl = `${pdfUrl}.pdf`;
+      }
+      pdfType = "standard";
+    }
+    
+    // Create filename
+    const fileName = `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+    
+    // Return diagnostic information
+    res.json({
+      bookId: book._id,
+      title: book.title,
+      originalUrl: book.pdfUrl,
+      pdfId: book.pdfId,
+      isCustomUrl: book.isCustomUrl || false,
+      customURLPDF: book.customURLPDF || '',
+      effectiveUrl: pdfUrl,
+      urlType: pdfType,
+      fileName: fileName
+    });
+  } catch (error) {
+    console.error('Error in PDF URL test endpoint:', error);
+    res.status(500).json({ message: 'Error testing PDF URL', error: error.message });
   }
 });
 

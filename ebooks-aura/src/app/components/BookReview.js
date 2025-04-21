@@ -339,123 +339,6 @@ export default function BookReview({ bookId }) {
             </div>
           </div>
         </div>
-        
-        <div className={styles.filterSortContainer}>
-          <div className={styles.ratingFilters}>
-            <div className={styles.filtersHeader}>
-              <h3><MdFilterAlt style={{ color: '#ef4444' }} /> <span>Filter & Sort Reviews</span></h3>
-            </div>
-            
-            {(ratingFilter || sortOption !== 'newest') && (
-              <div className={styles.activeFilterIndicator}>
-                {ratingFilter && (
-                  <div className={styles.filterBadge}>
-                    <div className={styles.filterBadgeContent}>
-                      <strong>{ratingFilter}-star</strong> reviews only
-                    </div>
-                    <button
-                      className={styles.clearFilterButton}
-                      onClick={() => handleRatingFilterChange(null)}
-                      aria-label="Clear rating filter"
-                      title="Clear rating filter"
-                    >
-                      <FaTimes />
-                    </button>
-                  </div>
-                )}
-                
-                {sortOption !== 'newest' && (
-                  <div className={styles.sortBadge}>
-                    <span>Sorted by: <strong>
-                      {sortOption === 'highest' ? 'Highest Rated' : 
-                       sortOption === 'lowest' ? 'Lowest Rated' : 
-                       sortOption === 'oldest' ? 'Oldest First' :
-                       sortOption === 'my-reviews' ? 'My Reviews' : 'Newest First'}
-                    </strong></span>
-                  </div>
-                )}
-              </div>
-            )}
-            
-            <div className={styles.filterOptions}>
-              <div className={styles.filterLabel}>Filter by Rating:</div>
-              <div className={styles.ratingFilterButtons}>
-                <button
-                  className={`${styles.ratingFilterButton} ${ratingFilter === null ? styles.activeFilter : ''}`}
-                  onClick={() => handleRatingFilterChange(null)}
-                  aria-label="Show all reviews"
-                  title="Show all reviews"
-                >
-                  All Ratings
-                </button>
-                {[5, 4, 3, 2, 1].map((rating) => (
-                  <button
-                    key={rating}
-                    className={`${styles.ratingFilterButton} ${ratingFilter === rating ? styles.activeFilter : ''}`}
-                    onClick={() => handleRatingFilterChange(rating)}
-                    aria-label={`Show only ${rating} star reviews`}
-                    title={`Show only ${rating} star reviews`}
-                  >
-                    <span className={styles.filterStars}>
-                      {rating} <FaStar className={styles.filterStar} />
-                    </span>
-                    {ratingDistribution && ratingDistribution[rating] > 0 && (
-                      <span className={styles.filterCount}>({ratingDistribution[rating]})</span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            <div className={styles.sortOptions}>
-              <div className={styles.filterLabel}>Sort Reviews By:</div>
-              <div className={styles.sortButtons}>
-                <button
-                  className={`${styles.sortButton} ${sortOption === 'newest' ? styles.activeSort : ''}`}
-                  onClick={() => handleSortChange('newest')}
-                  aria-label="Sort by newest reviews first"
-                  title="Sort by newest reviews first"
-                >
-                  <MdSort /> Newest First
-                </button>
-                <button
-                  className={`${styles.sortButton} ${sortOption === 'oldest' ? styles.activeSort : ''}`}
-                  onClick={() => handleSortChange('oldest')}
-                  aria-label="Sort by oldest reviews first"
-                  title="Sort by oldest reviews first"
-                >
-                  <BsSortUp /> Oldest First
-                </button>
-                <button
-                  className={`${styles.sortButton} ${sortOption === 'highest' ? styles.activeSort : ''}`}
-                  onClick={() => handleSortChange('highest')}
-                  aria-label="Sort by highest rating first"
-                  title="Sort by highest rating first"
-                >
-                  <BsSortDown /> Highest Rated
-                </button>
-                <button
-                  className={`${styles.sortButton} ${sortOption === 'lowest' ? styles.activeSort : ''}`}
-                  onClick={() => handleSortChange('lowest')}
-                  aria-label="Sort by lowest rating first"
-                  title="Sort by lowest rating first"
-                >
-                  <BsSortUp /> Lowest Rated
-                </button>
-                {user && (
-                  <button
-                    className={`${styles.sortButton} ${sortOption === 'my-reviews' ? styles.activeSort : ''}`}
-                    onClick={() => handleSortChange('my-reviews')}
-                    aria-label="Show only my reviews"
-                    title="Show only my reviews"
-                  >
-                    <FaUser /> My Reviews
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
       
       <div className={styles.reviewContent}>
@@ -544,6 +427,124 @@ export default function BookReview({ bookId }) {
         <div className={styles.reviewsList}>
           <div className={styles.reviewsHeader}>
             <h3>Reviews ({reviewCount})</h3>
+          </div>
+          
+          {/* Filter and sort section - moved here from the header */}
+          <div className={styles.filterSortContainer}>
+            <div className={styles.ratingFilters}>
+              <div className={styles.filtersHeader}>
+                <h3><MdFilterAlt style={{ color: '#ef4444' }} /> <span>Filter & Sort Reviews</span></h3>
+              </div>
+              
+              {(ratingFilter || sortOption !== 'newest') && (
+                <div className={styles.activeFilterIndicator}>
+                  {ratingFilter && (
+                    <div className={styles.filterBadge}>
+                      <div className={styles.filterBadgeContent}>
+                        <strong>{ratingFilter}-star</strong> reviews only
+                      </div>
+                      <button
+                        className={styles.clearFilterButton}
+                        onClick={() => handleRatingFilterChange(null)}
+                        aria-label="Clear rating filter"
+                        title="Clear rating filter"
+                      >
+                        <FaTimes />
+                      </button>
+                    </div>
+                  )}
+                  
+                  {sortOption !== 'newest' && (
+                    <div className={styles.sortBadge}>
+                      <span>Sorted by: <strong>
+                        {sortOption === 'highest' ? 'Highest Rated' : 
+                        sortOption === 'lowest' ? 'Lowest Rated' : 
+                        sortOption === 'oldest' ? 'Oldest First' :
+                        sortOption === 'my-reviews' ? 'My Reviews' : 'Newest First'}
+                      </strong></span>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              <div className={styles.filterOptions}>
+                <div className={styles.filterLabel}>Filter by Rating:</div>
+                <div className={styles.ratingFilterButtons}>
+                  <button
+                    className={`${styles.ratingFilterButton} ${ratingFilter === null ? styles.activeFilter : ''}`}
+                    onClick={() => handleRatingFilterChange(null)}
+                    aria-label="Show all reviews"
+                    title="Show all reviews"
+                  >
+                    All Ratings
+                  </button>
+                  {[5, 4, 3, 2, 1].map((rating) => (
+                    <button
+                      key={rating}
+                      className={`${styles.ratingFilterButton} ${ratingFilter === rating ? styles.activeFilter : ''}`}
+                      onClick={() => handleRatingFilterChange(rating)}
+                      aria-label={`Show only ${rating} star reviews`}
+                      title={`Show only ${rating} star reviews`}
+                    >
+                      <span className={styles.filterStars}>
+                        {rating} <FaStar className={styles.filterStar} />
+                      </span>
+                      {ratingDistribution && ratingDistribution[rating] > 0 && (
+                        <span className={styles.filterCount}>({ratingDistribution[rating]})</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <div className={styles.sortOptions}>
+                <div className={styles.filterLabel}>Sort Reviews By:</div>
+                <div className={styles.sortButtons}>
+                  <button
+                    className={`${styles.sortButton} ${sortOption === 'newest' ? styles.activeSort : ''}`}
+                    onClick={() => handleSortChange('newest')}
+                    aria-label="Sort by newest reviews first"
+                    title="Sort by newest reviews first"
+                  >
+                    <MdSort /> Newest First
+                  </button>
+                  <button
+                    className={`${styles.sortButton} ${sortOption === 'oldest' ? styles.activeSort : ''}`}
+                    onClick={() => handleSortChange('oldest')}
+                    aria-label="Sort by oldest reviews first"
+                    title="Sort by oldest reviews first"
+                  >
+                    <BsSortUp /> Oldest First
+                  </button>
+                  <button
+                    className={`${styles.sortButton} ${sortOption === 'highest' ? styles.activeSort : ''}`}
+                    onClick={() => handleSortChange('highest')}
+                    aria-label="Sort by highest rating first"
+                    title="Sort by highest rating first"
+                  >
+                    <BsSortDown /> Highest Rated
+                  </button>
+                  <button
+                    className={`${styles.sortButton} ${sortOption === 'lowest' ? styles.activeSort : ''}`}
+                    onClick={() => handleSortChange('lowest')}
+                    aria-label="Sort by lowest rating first"
+                    title="Sort by lowest rating first"
+                  >
+                    <BsSortUp /> Lowest Rated
+                  </button>
+                  {user && (
+                    <button
+                      className={`${styles.sortButton} ${sortOption === 'my-reviews' ? styles.activeSort : ''}`}
+                      onClick={() => handleSortChange('my-reviews')}
+                      aria-label="Show only my reviews"
+                      title="Show only my reviews"
+                    >
+                      <FaUser /> My Reviews
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
           
           {reviews.length === 0 ? (

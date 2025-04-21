@@ -17,6 +17,13 @@ const nextConfig = {
       ignoreBuildErrors: true,
     },
     trailingSlash: true,
+    
+    // Important: When using static export, we need to make sure our book pages
+    // can still be generated dynamically. Individual book pages should be 
+    // rendered on the client-side when not pre-rendered at build time.
+    // The 'dynamic' and 'revalidate' exports in the book page component 
+    // enable this functionality.
+    
     webpack: (config) => {
       // Handle PDFjs worker
       config.resolve.alias.canvas = false;

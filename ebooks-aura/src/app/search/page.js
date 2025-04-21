@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { FaSearch, FaSort, FaEye, FaDownload, FaBook, FaStar, FaRegStar, FaBookmark, FaRegBookmark, FaStarHalfAlt, FaFileAlt, FaFile, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import Link from 'next/link';
 import styles from './search.module.css';
@@ -42,12 +42,20 @@ export default function SearchPage() {
   const [books, setBooks] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [bookmarkedBooks, setBookmarkedBooks] = useState(new Set());
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const router = useRouter();
   const { getToken, getApiKey } = useAuth();
+  
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalBooks, setTotalBooks] = useState(0);
+  const observer = useRef();
+  const lastBookElementRef = useRef(null);
 
   // Add function to show toast
   const showToast = (message, type = 'success') => {
@@ -256,55 +264,134 @@ export default function SearchPage() {
     }
   };
 
-  // Fetch books with debounce
-  useEffect(() => {
-    const fetchBooks = async () => {
+  // Function to fetch books with pagination
+  const fetchBooks = async (currentPage = 1, shouldReplaceResults = true) => {
+    if (currentPage === 1) {
       setLoading(true);
-      try {
-        const params = new URLSearchParams({
-          search: searchQuery,
-          category: selectedCategory === 'All' ? '' : selectedCategory,
-          sort: sortBy
-        }).toString();
-        
-        const data = await getAPI(`/books?${params}`);
-        
-        if (data && Array.isArray(data)) {
-          setBooks(data);
-        } else if (data && data.books && Array.isArray(data.books)) {
-          // Handle case where API returns { books: [...] }
+    } else {
+      setLoadingMore(true);
+    }
+    
+    setError(null);
+    
+    let apiUrl = '/books?';
+    const params = new URLSearchParams();
+    
+    if (searchQuery) {
+      params.append('search', searchQuery);
+    }
+    
+    if (selectedCategory && selectedCategory !== 'All') {
+      params.append('category', selectedCategory);
+    }
+    
+    if (sortBy) {
+      params.append('sort', sortBy);
+    }
+    
+    // Add pagination parameters
+    params.append('page', currentPage);
+    params.append('limit', 10); // Load 10 books per page
+    
+    // Append parameters to URL
+    apiUrl += params.toString();
+    
+    try {
+      // Use the simple getAPI function without any authentication headers
+      const data = await getAPI(apiUrl);
+      
+      if (data && data.books && Array.isArray(data.books)) {
+        // If we're loading the first page, replace the current books
+        // Otherwise, append the new books to the existing ones
+        if (shouldReplaceResults) {
           setBooks(data.books);
-        } else if (data && typeof data === 'object') {
-          // If the data is not in the expected format, try to extract books
-          const extractedBooks = [];
-          Object.keys(data).forEach(key => {
-            if (Array.isArray(data[key])) {
-              extractedBooks.push(...data[key]);
-            }
-          });
-          
-          if (extractedBooks.length > 0) {
-            setBooks(extractedBooks);
-          } else {
-            setBooks([]);
-            console.warn('Received unexpected data format for books:', data);
-          }
         } else {
-          setBooks([]);
-          console.warn('Received unexpected data type for books:', typeof data);
+          setBooks(prevBooks => [...prevBooks, ...data.books]);
         }
-      } catch (err) {
-        setError('Failed to load books');
-        console.error('Error fetching books:', err);
-        setBooks([]);
-      } finally {
-        setLoading(false);
+        
+        // Update pagination information
+        if (data.pagination) {
+          setHasMore(data.pagination.hasNextPage);
+          setTotalBooks(data.pagination.totalBooks);
+        } else {
+          setHasMore(false);
+        }
+      } else if (data && Array.isArray(data)) {
+        // Handle case where API returns an array directly
+        if (shouldReplaceResults) {
+          setBooks(data);
+        } else {
+          setBooks(prevBooks => [...prevBooks, ...data]);
+        }
+        // Assume there's no more data if the returned array is empty or less than 10 items
+        setHasMore(data.length === 10);
+      } else {
+        if (shouldReplaceResults) {
+          setBooks([]);
+        }
+        setHasMore(false);
+        if (currentPage === 1) {
+          setError('No books found matching your criteria');
+        }
       }
-    };
+    } catch (err) {
+      console.error('Error fetching books:', err);
+      setError('Failed to load books. Please try again.');
+      if (shouldReplaceResults) {
+        setBooks([]);
+      }
+    } finally {
+      if (currentPage === 1) {
+        setLoading(false);
+      } else {
+        setLoadingMore(false);
+      }
+    }
+  };
 
-    const timeoutId = setTimeout(fetchBooks, 500);
-    return () => clearTimeout(timeoutId);
+  // Callback for infinite scrolling using Intersection Observer
+  const lastBookRef = useCallback(node => {
+    if (loading || loadingMore) return;
+    
+    if (observer.current) observer.current.disconnect();
+    
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        setPage(prevPage => prevPage + 1);
+      }
+    }, {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.1
+    });
+    
+    if (node) observer.current.observe(node);
+  }, [loading, loadingMore, hasMore]);
+
+  // Reset pagination when search parameters change
+  useEffect(() => {
+    setPage(1);
+    setBooks([]);
+    setHasMore(true);
+    fetchBooks(1, true);
   }, [searchQuery, selectedCategory, sortBy]);
+
+  // Load more books when page changes
+  useEffect(() => {
+    if (page > 1) {
+      fetchBooks(page, false);
+    }
+  }, [page]);
+
+  // Handle viewing a PDF
+  const handleViewPdf = (bookId) => {
+    window.open(`/api/books/${bookId}/pdf`, '_blank');
+  };
+
+  // Handle downloading a PDF
+  const handleDownloadPdf = (bookId) => {
+    window.open(`/api/books/${bookId}/pdf?download=true`, '_blank');
+  };
 
   const renderRatingStars = (rating) => {
     // Handle case when rating is undefined or 0
@@ -394,16 +481,20 @@ export default function SearchPage() {
 
       {loading ? (
         <div className={styles.loading}>Loading...</div>
-      ) : error ? (
+      ) : error && books.length === 0 ? (
         <div className={styles.error}>{error}</div>
       ) : (
         <>
           <div className={styles.resultsCount}>
-            Found {books.length} {books.length === 1 ? 'book' : 'books'}
+            Found {totalBooks > 0 ? totalBooks : books.length} {totalBooks === 1 ? 'book' : 'books'}
           </div>
           <div className={styles.bookGrid}>
-            {books.map((book) => (
-              <div key={book._id} className={styles.bookCard}>
+            {books.map((book, index) => (
+              <div 
+                key={book._id} 
+                className={styles.bookCard}
+                ref={index === books.length - 1 ? lastBookRef : null}
+              >
                 <button 
                   className={styles.bookmarkButton}
                   onClick={() => handleBookmark(book._id)}
@@ -450,9 +541,23 @@ export default function SearchPage() {
               </div>
             ))}
           </div>
+          
           {books.length === 0 && (
             <div className={styles.noResults}>
               No books found. Try adjusting your search criteria.
+            </div>
+          )}
+          
+          {loadingMore && (
+            <div className={styles.loadingMore}>
+              <div className={styles.loadingSpinner}></div>
+              <p>Loading more books...</p>
+            </div>
+          )}
+          
+          {!hasMore && books.length > 0 && (
+            <div className={styles.endOfResults}>
+              You've reached the end of the results.
             </div>
           )}
         </>

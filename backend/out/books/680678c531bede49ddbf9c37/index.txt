@@ -1,0 +1,25 @@
+1:"$Sreact.fragment"
+2:I[56068,["6711","static/chunks/8e1d74a4-8f3e0958e3a31d0b.js","6874","static/chunks/6874-200505ddd2002a99.js","7177","static/chunks/app/layout-4ff32a526ae79d6e.js"],"AuthProvider"]
+3:I[62162,["6711","static/chunks/8e1d74a4-8f3e0958e3a31d0b.js","6874","static/chunks/6874-200505ddd2002a99.js","7177","static/chunks/app/layout-4ff32a526ae79d6e.js"],"default"]
+4:I[87555,[],""]
+5:I[31295,[],""]
+6:I[32613,["6711","static/chunks/8e1d74a4-8f3e0958e3a31d0b.js","6874","static/chunks/6874-200505ddd2002a99.js","4345","static/chunks/app/not-found-7c3304c8a2870db1.js"],"default"]
+7:I[62802,["6711","static/chunks/8e1d74a4-8f3e0958e3a31d0b.js","6874","static/chunks/6874-200505ddd2002a99.js","4472","static/chunks/app/books/%5Bid%5D/error-9a2456b80ea74bd8.js"],"default"]
+8:I[48476,["6711","static/chunks/8e1d74a4-8f3e0958e3a31d0b.js","6874","static/chunks/6874-200505ddd2002a99.js","2378","static/chunks/app/books/%5Bid%5D/not-found-e1aa250ea2127d68.js"],"default"]
+9:"$Sreact.suspense"
+a:I[89777,["511","static/chunks/app/books/%5Bid%5D/page-d29135bd177cc9aa.js"],"default"]
+c:I[59665,[],"MetadataBoundary"]
+e:I[59665,[],"OutletBoundary"]
+11:I[74911,[],"AsyncMetadataOutlet"]
+13:I[59665,[],"ViewportBoundary"]
+15:I[26614,[],""]
+:HL["/_next/static/css/674964ed0d53aace.css","style"]
+0:{"P":null,"b":"jOy03RbjSQTwy68MR-eo4","p":"","c":["","books","680678c531bede49ddbf9c37",""],"i":false,"f":[[["",{"children":["books",{"children":[["id","680678c531bede49ddbf9c37","d"],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],["",["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/674964ed0d53aace.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{"children":["$","meta",null,{"name":"viewport","content":"width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"}]}],["$","body",null,{"className":"__variable_4d318d __variable_ea5f4b","style":{"backgroundColor":"#ffffff"},"suppressHydrationWarning":true,"children":["$","$L2",null,{"children":[["$","$L3",null,{}],["$","main",null,{"style":{"paddingTop":"60px","minHeight":"calc(100vh - 60px)"},"children":["$","$L4",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L5",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[["$","$L6",null,{}],[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/e53bc1e73e7e65c1.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]]],"forbidden":"$undefined","unauthorized":"$undefined"}]}]]}]}]]}]]}],{"children":["books",["$","$1","c",{"children":[null,["$","$L4",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L5",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["id","680678c531bede49ddbf9c37","d"],["$","$1","c",{"children":[null,["$","section",null,{"children":["$","div",null,{"className":"book-page-wrapper","children":["$","$L4",null,{"parallelRouterKey":"children","error":"$7","errorStyles":[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/2eb13d5855821540.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],"errorScripts":[],"template":["$","$L5",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[["$","$L8",null,{}],[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/2eb13d5855821540.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]]],"forbidden":"$undefined","unauthorized":"$undefined"}]}]}]]}],{"children":["__PAGE__",["$","$1","c",{"children":[["$","$9",null,{"fallback":["$","div",null,{"className":"loading","children":"Loading book..."}],"children":["$","$La",null,{"params":"$@b"}]}],["$","$Lc",null,{"children":"$Ld"}],null,["$","$Le",null,{"children":["$Lf","$L10",["$","$L11",null,{"promise":"$@12"}]]}]]}],{},null,false]},null,false]},null,false]},null,false],["$","$1","h",{"children":[null,["$","$1","ALWXX3_OOeWc5ZmZSuxSV",{"children":[["$","$L13",null,{"children":"$L14"}],null]}],null]}],false]],"m":"$undefined","G":["$15","$undefined"],"s":false,"S":true}
+16:I[74911,[],"AsyncMetadata"]
+b:{"id":"680678c531bede49ddbf9c37"}
+d:["$","$9",null,{"fallback":null,"children":["$","$L16",null,{"promise":"$@17"}]}]
+10:null
+14:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+f:null
+17:{"metadata":[["$","title","0",{"children":"Book Details | EbookAura"}],["$","meta","1",{"name":"description","content":"View and download eBooks from our collection"}],["$","link","2",{"rel":"icon","href":"/favicon.ico","type":"image/x-icon","sizes":"16x16"}]],"error":null,"digest":"$undefined"}
+12:{"metadata":"$17:metadata","error":null,"digest":"$undefined"}

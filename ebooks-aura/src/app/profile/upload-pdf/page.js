@@ -16,7 +16,8 @@ import {
   FaHashtag, 
   FaLayerGroup, 
   FaBookOpen,
-  FaCheck
+  FaCheck,
+  FaLink
 } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import styles from '../profile.module.css';
@@ -99,6 +100,10 @@ export default function UploadPdf() {
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   
+  // New state for PDF URL option
+  const [isPdfUrl, setIsPdfUrl] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState('');
+  
   // Updated character counters
   const [titleChars, setTitleChars] = useState(0);
   const [authorChars, setAuthorChars] = useState(0);
@@ -128,6 +133,9 @@ export default function UploadPdf() {
     type: 'info',
     message: ''
   });
+
+  // New state for custom URL file size
+  const [customUrlFileSize, setCustomUrlFileSize] = useState('');
 
   useEffect(() => {
     // Redirect if not logged in
@@ -233,6 +241,9 @@ export default function UploadPdf() {
   };
 
   const handlePdfChange = (e) => {
+    // Only process if we're in file upload mode
+    if (isPdfUrl) return;
+    
     const selectedFile = e.target.files[0];
     if (selectedFile) {
       if (selectedFile.type !== 'application/pdf') {
@@ -253,6 +264,43 @@ export default function UploadPdf() {
       setPdfFile(selectedFile);
       setPdfFileName(selectedFile.name);
       setError('');
+    }
+  };
+
+  // New handler for PDF URL input
+  const handlePdfUrlChange = (e) => {
+    setPdfUrl(e.target.value);
+    
+    // Simple validation for URL format - just check if it's a valid URL
+    try {
+      if (e.target.value) {
+        new URL(e.target.value);
+        setError('');
+      }
+    } catch (err) {
+      setError('Please enter a valid URL');
+    }
+  };
+
+  // Toggle between file upload and URL input
+  const togglePdfInputMethod = (useUrl) => {
+    setIsPdfUrl(useUrl);
+    
+    // Reset relevant fields and error
+    if (useUrl) {
+      setPdfFile(null);
+      setPdfFileName('No PDF selected');
+      // Clear any error related to file upload
+      if (error && error.includes('PDF file')) {
+        setError('');
+      }
+    } else {
+      setPdfUrl('');
+      setCustomUrlFileSize(''); // Reset custom file size when switching to file upload
+      // Clear any error related to URL input
+      if (error && error.includes('URL')) {
+        setError('');
+      }
     }
   };
 
@@ -360,16 +408,38 @@ export default function UploadPdf() {
       return false;
     }
     
-    // Both files are required by the backend
-    if (!pdfFile) {
-      setError('Please select a PDF file to upload');
-      return false;
-    }
-    
-    // Update size limit to 10MB
-    if (pdfFile.size > 10 * 1024 * 1024) {
-      setError('PDF file size should be less than 10MB');
-      return false;
+    // Custom validation based on PDF input method
+    if (isPdfUrl) {
+      if (!pdfUrl.trim()) {
+        setError('Please enter a PDF URL');
+        return false;
+      }
+      
+      // Validate URL format
+      try {
+        new URL(pdfUrl);
+      } catch (err) {
+        setError('Please enter a valid URL');
+        return false;
+      }
+
+      // Validate file size for custom URL
+      if (!customUrlFileSize || isNaN(customUrlFileSize) || parseFloat(customUrlFileSize) <= 0) {
+        setError('Please enter a valid file size in MB');
+        return false;
+      }
+    } else {
+      // File upload validation
+      if (!pdfFile) {
+        setError('Please select a PDF file to upload');
+        return false;
+      }
+      
+      // Update size limit to 10MB
+      if (pdfFile.size > 10 * 1024 * 1024) {
+        setError('PDF file size should be less than 10MB');
+        return false;
+      }
     }
     
     if (!coverFile) {
@@ -549,17 +619,29 @@ export default function UploadPdf() {
       // Create form data for multipart form upload
       const formData = new FormData();
       
-      // Update status for PDF
-      setUploadStatus('Uploading PDF file...');
-      setUploadProgress(10);
+      // Handle different PDF input methods
+      if (isPdfUrl) {
+        // For URL-based PDFs
+        formData.append('isCustomUrl', 'true');
+        formData.append('customURLPDF', pdfUrl.trim());
+        formData.append('fileSizeMB', customUrlFileSize); // Add file size for custom URL
+        
+        setUploadStatus('Processing PDF URL...');
+      } else {
+        // For file uploads
+        setUploadStatus('Uploading PDF file...');
+        
+        if (pdfFile) formData.append('pdf', pdfFile);
+      }
       
-      // Ensure files are properly appended with the exact field names expected by the backend
-      if (pdfFile) formData.append('pdf', pdfFile);
+      setUploadProgress(10);
       
       // Progress increment for PDF (40% of total)
       setTimeout(() => {
         setUploadProgress(30);
-        setUploadStatus('Processing PDF file...');
+        isPdfUrl ? 
+          setUploadStatus('Validating PDF URL...') : 
+          setUploadStatus('Processing PDF file...');
       }, 800);
       
       setTimeout(() => {
@@ -652,6 +734,10 @@ export default function UploadPdf() {
         setIsUploading(false);
         setUploadProgress(0);
       }, 2000);
+      
+      // Additional reset in case of URL input
+      setIsPdfUrl(false);
+      setPdfUrl('');
       
     } catch (err) {
       console.error('Error uploading e-book:', err);
@@ -968,23 +1054,96 @@ export default function UploadPdf() {
             </div>
           </div>
 
-          <div className={getFileContainerClassName(pdfFile, pdfFile && pdfFile.size <= 10 * 1024 * 1024)}>
-            <input
-              type="file"
-              accept="application/pdf"
-              onChange={handlePdfChange}
-              id="pdf-upload"
-              className={styles.fileInput}
-            />
-            <label htmlFor="pdf-upload" className={styles.fileInputLabel}>
-              <FaFileUpload className={styles.uploadIcon} />
-              Choose PDF (max 10MB)
-            </label>
-            <span className={styles.fileName}>{pdfFileName}</span>
-            {pdfFile && pdfFile.size > 0 && (
-              <span className={styles.fileSize}>
-                {(pdfFile.size / (1024 * 1024)).toFixed(2)} MB
-              </span>
+          {/* PDF Upload Section with Tabs */}
+          <div className={styles.pdfInputSection}>
+            <div className={styles.pdfInputTabs}>
+              <button 
+                type="button"
+                className={`${styles.pdfInputTab} ${!isPdfUrl ? styles.activeTab : ''}`}
+                onClick={() => togglePdfInputMethod(false)}
+              >
+                <FaFileUpload className={styles.tabIcon} />
+                Upload PDF File
+              </button>
+              <button 
+                type="button"
+                className={`${styles.pdfInputTab} ${isPdfUrl ? styles.activeTab : ''}`}
+                onClick={() => togglePdfInputMethod(true)}
+              >
+                <FaLink className={styles.tabIcon} />
+                Paste PDF URL
+              </button>
+            </div>
+
+            {/* Show file upload or URL input based on selected tab */}
+            {!isPdfUrl ? (
+              <div className={getFileContainerClassName(pdfFile, pdfFile && pdfFile.size <= 10 * 1024 * 1024)}>
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handlePdfChange}
+                  id="pdf-upload"
+                  className={styles.fileInput}
+                />
+                <label htmlFor="pdf-upload" className={styles.fileInputLabel}>
+                  <FaFileUpload className={styles.uploadIcon} />
+                  Choose PDF (max 10MB)
+                </label>
+                <span className={styles.fileName}>{pdfFileName}</span>
+                {pdfFile && pdfFile.size > 0 && (
+                  <span className={styles.fileSize}>
+                    {(pdfFile.size / (1024 * 1024)).toFixed(2)} MB
+                  </span>
+                )}
+              </div>
+            ) : (
+              <div className={styles.urlInputContainer}>
+                <label htmlFor="pdf-url" className={styles.urlInputLabel}>
+                  <FaLink className={styles.urlIcon} />
+                  Enter PDF URL
+                </label>
+                <input
+                  type="url"
+                  id="pdf-url"
+                  value={pdfUrl}
+                  onChange={handlePdfUrlChange}
+                  placeholder="https://example.com/document.pdf"
+                  className={styles.urlInput}
+                />
+                
+                {/* Add file size input for custom URL */}
+                <div className={styles.formGroup} style={{ marginTop: '10px' }}>
+                  <label htmlFor="custom-file-size" className={styles.urlInputLabel}>
+                    <FaFileUpload className={styles.urlIcon} />
+                    File Size (MB)
+                  </label>
+                  <input
+                    type="number"
+                    id="custom-file-size"
+                    value={customUrlFileSize}
+                    onChange={(e) => setCustomUrlFileSize(e.target.value)}
+                    min="0.1"
+                    step="0.1"
+                    placeholder="Enter file size in MB"
+                    className={styles.urlInput}
+                  />
+                </div>
+                
+                <p className={styles.urlInputHelp}>
+                  <FaInfoCircle style={{ marginRight: '8px' }} />
+                  Enter any URL to a PDF file (Google Drive, Dropbox, GitHub, etc.)
+                </p>
+                <div className={styles.urlExamples}>
+                  <p className={styles.urlExampleTitle}>Examples of accepted URLs:</p>
+                  <ul className={styles.urlExampleList}>
+                    <li>Google Drive: https://drive.google.com/file/d/...</li>
+                    <li>Dropbox: https://www.dropbox.com/s/...</li>
+                    <li>GitHub: https://github.com/user/repo/raw/branch/file.pdf</li>
+                    <li>Direct links: https://example.com/file.pdf</li>
+                    <li>Any other valid URL that points to a PDF</li>
+                  </ul>
+                </div>
+              </div>
             )}
           </div>
 
@@ -1012,7 +1171,7 @@ export default function UploadPdf() {
           <button
             type="submit"
             className={styles.uploadButton}
-            disabled={isUploading || !pdfFile}
+            disabled={isUploading || (!pdfFile && (!isPdfUrl || !pdfUrl))}
           >
             {isUploading ? (
               <>

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import styles from './page.module.css';
-import { FaSearch, FaBookmark, FaGithub, FaInstagram } from 'react-icons/fa';
+import { FaSearch, FaBookmark, FaGithub, FaInstagram, FaYoutube } from 'react-icons/fa';
 
 export default function Home() {
   return (
@@ -38,11 +38,11 @@ export default function Home() {
           </a>
           <a href="https://www.instagram.com/youthvibeit/" target="_blank" rel="noopener noreferrer" className={styles.socialLink}>
             <FaInstagram className={styles.socialIcon} />
-            Instagram (Official)
+            Instagram
           </a>
-          <a href="https://www.instagram.com/youthvibeit/" target="_blank" rel="noopener noreferrer" className={styles.socialLink}>
-            <FaInstagram className={styles.socialIcon} />
-            Instagram (Community)
+          <a href="https://www.youtube.com/@YouthVibeIT" target="_blank" rel="noopener noreferrer" className={styles.socialLink}>
+            <FaYoutube className={styles.socialIcon} />
+            YouTube
           </a>
         </div>
       </div>

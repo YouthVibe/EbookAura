@@ -96,9 +96,8 @@ export const submitBookReview = async (bookId, rating, comment = '') => {
     }
 
     const token = localStorage.getItem('token');
-    const apiKey = localStorage.getItem('apiKey');
     
-    if (!token || !apiKey) {
+    if (!token) {
       throw new Error('You must be logged in to submit a review');
     }
 
@@ -106,8 +105,7 @@ export const submitBookReview = async (bookId, rating, comment = '') => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        'X-API-Key': apiKey
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({
         rating,
@@ -132,9 +130,8 @@ export const submitBookReview = async (bookId, rating, comment = '') => {
 export const getUserReviews = async () => {
   try {
     const token = localStorage.getItem('token');
-    const apiKey = localStorage.getItem('apiKey');
     
-    if (!token || !apiKey) {
+    if (!token) {
       throw new Error('You must be logged in to view your reviews');
     }
 
@@ -142,8 +139,7 @@ export const getUserReviews = async () => {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        'X-API-Key': apiKey
+        'Authorization': `Bearer ${token}`
       }
     });
 
@@ -164,9 +160,8 @@ export const getUserReviews = async () => {
 export const deleteReview = async (reviewId) => {
   try {
     const token = localStorage.getItem('token');
-    const apiKey = localStorage.getItem('apiKey');
     
-    if (!token || !apiKey) {
+    if (!token) {
       throw new Error('You must be logged in to delete a review');
     }
 
@@ -174,8 +169,7 @@ export const deleteReview = async (reviewId) => {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        'X-API-Key': apiKey
+        'Authorization': `Bearer ${token}`
       }
     });
 

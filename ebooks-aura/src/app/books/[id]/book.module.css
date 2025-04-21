@@ -158,7 +158,7 @@
   width: 100%;
 }
 
-.viewButton, .downloadButton {
+.viewButton, .downloadButton, .openUrlButton {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -206,6 +206,32 @@
   cursor: not-allowed;
 }
 
+/* Style for the Open PDF button for custom URLs */
+.openUrlButton {
+  background: #0369a1; /* A nice blue color to distinguish it */
+  color: white;
+  font-weight: 600;
+  width: 100%;
+  min-width: 200px;
+  padding: 0.85rem 1.5rem; /* Slightly larger padding */
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.openUrlButton:hover {
+  background: #075985;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.openUrlButton:disabled {
+  background: #7eb5d1;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 .loading {
   display: flex;
   align-items: center;
@@ -223,6 +249,10 @@
   border-radius: 0.5rem;
   text-align: center;
   color: #b91c1c;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
 }
 
 .error h2 {
@@ -291,4 +321,48 @@
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Add styles for the search button used in not-found page */
+.actionButtons {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  justify-content: center;
+}
+
+.searchButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #4b5563;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.searchButton:hover {
+  background: #374151;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.errorDetails {
+  font-family: monospace;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  margin: 0.5rem 0;
+  word-break: break-word;
+  font-size: 0.875rem;
+  max-width: 100%;
+  overflow-wrap: break-word;
 } 

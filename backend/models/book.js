@@ -32,6 +32,15 @@ const bookSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  // New fields for custom URL PDF upload
+  isCustomUrl: {
+    type: Boolean,
+    default: false
+  },
+  customURLPDF: {
+    type: String,
+    default: ''
+  },
   pageSize: {
     type: Number,
     required: true

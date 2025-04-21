@@ -10,9 +10,10 @@ const getBooks = asyncHandler(async (req, res) => {
   // Convert pagination parameters to numbers
   const pageNum = parseInt(page) || 1;
   const limitNum = parseInt(limit) || 10;
+  const limitCapped = Math.min(limitNum, 50); // Cap at 50 items per page
   
   // Calculate skip value for pagination
-  const skip = (pageNum - 1) * limitNum;
+  const skip = (pageNum - 1) * limitCapped;
   
   // Build query
   let query = {};
@@ -36,58 +37,64 @@ const getBooks = asyncHandler(async (req, res) => {
     ];
   }
   
-  // Build sort options
+  try {
+    // Get total count of matching books for pagination
+    const totalBooks = await Book.countDocuments(query);
+    
+    // Calculate total pages
+    const totalPages = Math.ceil(totalBooks / limitCapped);
+    
+    // Fetch books with pagination
+    const books = await Book.find(query)
+      .sort(sort ? buildSortOptions(sort) : { createdAt: -1 })
+      .select('title author description category tags views downloads createdAt coverImage pageSize fileSizeMB averageRating isCustomUrl customURLPDF')
+      .skip(skip)
+      .limit(limitCapped);
+      
+    // Send response with pagination metadata
+    res.json({
+      books,
+      pagination: {
+        page: pageNum,
+        limit: limitCapped,
+        totalBooks,
+        totalPages,
+        hasNextPage: pageNum < totalPages,
+        hasPrevPage: pageNum > 1
+      }
+    });
+  } catch (error) {
+    console.error('Error in getBooks controller:', error);
+    res.status(500).json({ message: 'Error fetching books', error: error.message });
+  }
+});
+
+// Helper function to build sort options
+function buildSortOptions(sort) {
   let sortOptions = {};
-  if (sort) {
-    switch (sort) {
-      case 'newest':
-        sortOptions.createdAt = -1;
-        break;
-      case 'oldest':
-        sortOptions.createdAt = 1;
-        break;
-      case 'title':
-        sortOptions.title = 1;
-        break;
-      case 'popular':
-        sortOptions.views = -1;
-        break;
-      case 'rating':
-        sortOptions.averageRating = -1;
-        break;
-      default:
-        sortOptions.createdAt = -1;
-    }
-  } else {
-    sortOptions.createdAt = -1; // Default sort by newest
+  
+  switch (sort) {
+    case 'newest':
+      sortOptions.createdAt = -1;
+      break;
+    case 'oldest':
+      sortOptions.createdAt = 1;
+      break;
+    case 'title':
+      sortOptions.title = 1;
+      break;
+    case 'popular':
+      sortOptions.views = -1;
+      break;
+    case 'rating':
+      sortOptions.averageRating = -1;
+      break;
+    default:
+      sortOptions.createdAt = -1; // Default sort by newest
   }
   
-  // Get total count of matching books for pagination
-  const totalBooks = await Book.countDocuments(query);
-  
-  // Calculate total pages
-  const totalPages = Math.ceil(totalBooks / limitNum);
-  
-  // Fetch books with pagination
-  const books = await Book.find(query)
-    .sort(sortOptions)
-    .select('title author description category tags views downloads createdAt coverImage pageSize fileSizeMB averageRating')
-    .skip(skip)
-    .limit(limitNum);
-    
-  // Send response with pagination metadata
-  res.json({
-    books,
-    pagination: {
-      page: pageNum,
-      limit: limitNum,
-      totalBooks,
-      totalPages,
-      hasNextPage: pageNum < totalPages,
-      hasPrevPage: pageNum > 1
-    }
-  });
-});
+  return sortOptions;
+}
 
 // @desc    Get book categories
 // @route   GET /api/books/categories
@@ -110,7 +117,7 @@ const getTags = asyncHandler(async (req, res) => {
 // @access  Public
 const getBook = asyncHandler(async (req, res) => {
   const book = await Book.findById(req.params.id)
-    .select('title author description category tags views downloads createdAt pdfUrl pdfId coverImage pageSize fileSizeMB averageRating');
+    .select('title author description category tags views downloads createdAt pdfUrl pdfId coverImage pageSize fileSizeMB averageRating isCustomUrl customURLPDF');
     
   if (!book) {
     res.status(404);
@@ -120,6 +127,11 @@ const getBook = asyncHandler(async (req, res) => {
   // Increment views
   book.views += 1;
   await book.save();
+  
+  // Log for debugging custom URLs
+  if (book.isCustomUrl) {
+    console.log(`Serving book with custom URL: ${book.title} - Custom URL: ${book.customURLPDF}`);
+  }
   
   res.json(book);
 });

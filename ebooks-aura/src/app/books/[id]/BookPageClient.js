@@ -29,6 +29,7 @@ export default function BookPageClient({ id }) {
   const [viewing, setViewing] = useState(false);
   const [showPdfViewer, setShowPdfViewer] = useState(false);
   const [pdfUrl, setPdfUrl] = useState(null);
+  const [openingCustomUrl, setOpeningCustomUrl] = useState(false);
   const router = useRouter();
   
   // Static export safeguard - ensure ID is available
@@ -76,6 +77,13 @@ export default function BookPageClient({ id }) {
       const bookData = await response.json();
       console.log('Book data received:', bookData);
       
+      // Enhanced logging for custom URL PDFs
+      if (bookData.isCustomUrl) {
+        console.log('Book has custom URL:', bookData.customURLPDF || bookData.pdfUrl);
+        console.log('Will display single "Open PDF" button instead of View/Download buttons');
+        console.log('This button will redirect to:', bookData.customURLPDF || bookData.pdfUrl);
+      }
+      
       // Validate the book data
       if (!bookData || typeof bookData !== 'object') {
         throw new Error('Invalid book data received from server');
@@ -101,7 +109,7 @@ export default function BookPageClient({ id }) {
       setViewing(true);
       console.log('Fetching PDF content for viewing, book ID:', id);
       
-      // Fetch the PDF data from our proxy endpoint
+      // Fetch the PDF data from our proxy endpoint - no authentication needed
       const proxyUrl = `${API_ENDPOINTS.BOOKS.PDF_CONTENT(id)}?counted=true`;
       const response = await fetch(proxyUrl);
       
@@ -138,17 +146,7 @@ export default function BookPageClient({ id }) {
   };
 
   const handleViewPdf = async () => {
-    // First, track the view via the API
-    try {
-      // Optional: Increment view count via the API
-      await fetch(API_ENDPOINTS.BOOKS.VIEW(id), {
-        method: 'POST',
-      }).catch(err => console.warn('Failed to record view:', err));
-    } catch (err) {
-      console.warn('Failed to record view, but continuing to show PDF:', err);
-    }
-    
-    // Fetch and display the PDF
+    // Public access - no authentication needed
     fetchPdfForViewing();
   };
 
@@ -162,16 +160,20 @@ export default function BookPageClient({ id }) {
       setDownloading(true);
       console.log('Downloading book with ID:', id);
       
-      // Increment download count via the API
-      await fetch(API_ENDPOINTS.BOOKS.DOWNLOAD(id), {
-        method: 'POST',
-      });
+      // Increment download count via the API - public access, no authentication needed
+      try {
+        await fetch(API_ENDPOINTS.BOOKS.DOWNLOAD(id), {
+          method: 'POST',
+        });
+      } catch (countErr) {
+        console.warn('Failed to record download count, but continuing download:', countErr);
+      }
 
       // Get a sanitized file name for the PDF
       const fileName = `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
       
       try {
-        // Use our backend proxy to fetch the PDF content
+        // Use our backend proxy to fetch the PDF content - public access, no authentication needed
         console.log(`Fetching PDF content via backend proxy for book: ${book.title}`);
         
         // Fetch the PDF data from our proxy endpoint
@@ -195,7 +197,7 @@ export default function BookPageClient({ id }) {
         console.log(`PDF downloaded as: ${fileName}`);
       } catch (directDownloadError) {
         console.warn('Direct download failed, using fallback:', directDownloadError);
-        // Fallback to original backend endpoint if proxy fails
+        // Fallback to original backend endpoint if proxy fails - public access, no authentication needed
         const fallbackUrl = `${API_ENDPOINTS.BOOKS.PDF(id)}?download=true&counted=true`;
         window.open(fallbackUrl, '_blank');
       }
@@ -203,7 +205,7 @@ export default function BookPageClient({ id }) {
       // Update local state to show download count increased
       setBook(prevBook => ({
         ...prevBook,
-        downloads: prevBook.downloads + 1
+        downloads: (prevBook.downloads || 0) + 1
       }));
     } catch (err) {
       console.error('Error downloading book:', err);
@@ -217,6 +219,53 @@ export default function BookPageClient({ id }) {
     // Clean up any blob URLs - this is no longer needed with the updated PdfViewer component
     // which handles its own blob URL cleanup
     setPdfUrl(null);
+  };
+
+  // Function to handle opening custom URLs
+  const handleOpenCustomUrl = () => {
+    if (!book) {
+      console.error('Cannot open custom URL: Book data is missing');
+      return;
+    }
+    
+    try {
+      setOpeningCustomUrl(true);
+      const customUrl = book.customURLPDF || book.pdfUrl;
+      
+      // Log the action for debugging and potential analytics
+      console.log('Opening custom URL PDF:', customUrl);
+      
+      // Increment download count via the API - still count as a "download" for analytics
+      try {
+        fetch(API_ENDPOINTS.BOOKS.DOWNLOAD(id), {
+          method: 'POST',
+        }).then(() => {
+          // Update local state to show download count increased
+          setBook(prevBook => ({
+            ...prevBook,
+            downloads: (prevBook.downloads || 0) + 1
+          }));
+          
+          // Open the URL in a new tab
+          window.open(customUrl, '_blank');
+        }).catch(countErr => {
+          console.warn('Failed to record download count for custom URL:', countErr);
+          // Still open the URL even if tracking fails
+          window.open(customUrl, '_blank');
+        }).finally(() => {
+          setOpeningCustomUrl(false);
+        });
+      } catch (err) {
+        console.error('Error opening custom URL:', err);
+        // Still try to open the URL directly as a fallback
+        window.open(customUrl, '_blank');
+        setOpeningCustomUrl(false);
+      }
+    } catch (err) {
+      console.error('Error opening custom URL:', err);
+      alert('Failed to open the PDF. Please try again or contact support if the problem persists.');
+      setOpeningCustomUrl(false);
+    }
   };
 
   const formatDate = (dateString) => {
@@ -324,21 +373,35 @@ export default function BookPageClient({ id }) {
             </div>
 
             <div className={styles.actions}>
-              <button 
-                onClick={handleViewPdf} 
-                className={styles.viewButton}
-                disabled={viewing}
-              >
-                <FaFileAlt /> {viewing ? 'Opening...' : 'View PDF'}
-              </button>
-              
-              <button 
-                onClick={handleDownload} 
-                className={styles.downloadButton}
-                disabled={downloading}
-              >
-                <FaDownload /> {downloading ? 'Downloading...' : 'Download PDF'}
-              </button>
+              {book.isCustomUrl ? (
+                // For custom URL PDFs, show a single "Open PDF" button that redirects to the URL
+                <button 
+                  onClick={handleOpenCustomUrl}
+                  className={styles.openUrlButton}
+                  disabled={openingCustomUrl}
+                >
+                  <FaFileAlt /> {openingCustomUrl ? 'Opening...' : 'Open PDF'}
+                </button>
+              ) : (
+                // For regular PDFs, show the standard View and Download buttons
+                <>
+                  <button 
+                    onClick={handleViewPdf} 
+                    className={styles.viewButton}
+                    disabled={viewing}
+                  >
+                    <FaFileAlt /> {viewing ? 'Opening...' : 'View PDF'}
+                  </button>
+                  
+                  <button 
+                    onClick={handleDownload} 
+                    className={styles.downloadButton}
+                    disabled={downloading}
+                  >
+                    <FaDownload /> {downloading ? 'Downloading...' : 'Download PDF'}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

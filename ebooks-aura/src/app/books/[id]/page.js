@@ -5,8 +5,15 @@
  */
 
 import { Suspense } from 'react';
-import dynamic from 'next/dynamic';
+import { default as DynamicImport } from 'next/dynamic';
 import BookPageClient from './BookClientWrapper';
+
+// Configure rendering for this page - using 'auto' instead of 'force-dynamic' for static exports
+// Comment out the dynamic setting to allow static generation
+// export const dynamic = 'force-dynamic';
+
+// Set revalidation time for static pages (in seconds)
+export const revalidate = 3600; // Revalidate every hour
 
 // Server Component using proper params handling for Next.js 13+
 export default function BookPage({ params }) {
@@ -26,7 +33,9 @@ export async function generateStaticParams() {
     const apiUrl = 'https://ebookaura.onrender.com/api';
     
     // Fetch books
-    const response = await fetch(`${apiUrl}/books`);
+    const response = await fetch(`${apiUrl}/books`, {
+      next: { revalidate: 3600 } // Revalidate cache every hour
+    });
     
     if (!response.ok) {
       throw new Error(`Failed to fetch books: ${response.status}`);

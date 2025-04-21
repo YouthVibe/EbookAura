@@ -22,8 +22,9 @@ export const API_ENDPOINTS = {
     VERIFY_EMAIL: `${API_BASE_URL}/auth/verify-email`,
   },
   
-  // Book endpoints
+  // Book endpoints - Most are public and don't require authentication
   BOOKS: {
+    // Public endpoints - no authentication required
     ALL: `${API_BASE_URL}/books`,
     CATEGORIES: `${API_BASE_URL}/books/categories`,
     TAGS: `${API_BASE_URL}/books/tags`,
@@ -33,9 +34,11 @@ export const API_ENDPOINTS = {
     DOWNLOAD: (id) => `${API_BASE_URL}/books/${id}/download`,
     REVIEWS: (id) => `${API_BASE_URL}/books/${id}/reviews`,
     RATING: (id) => `${API_BASE_URL}/books/${id}/rating`,
+    // Private endpoints - require authentication
+    ADD_REVIEW: (id) => `${API_BASE_URL}/books/${id}/reviews`,
   },
   
-  // Upload endpoints
+  // Upload endpoints - all require authentication
   UPLOAD: {
     FILE: `${API_BASE_URL}/upload`,
     PDF: `${API_BASE_URL}/upload/pdf`,
@@ -43,11 +46,12 @@ export const API_ENDPOINTS = {
     DELETE_BOOK: (id) => `${API_BASE_URL}/upload/book/${id}`,
   },
   
-  // User endpoints
+  // User endpoints - all require authentication
   USER: {
     PROFILE: `${API_BASE_URL}/users/profile`,
     UPDATE_PROFILE: `${API_BASE_URL}/users/profile`,
     UPDATE_IMAGE: `${API_BASE_URL}/users/profile/image`,
+    BOOKMARKS: `${API_BASE_URL}/users/bookmarks`,
   },
 };
 
@@ -64,6 +68,18 @@ export const APP_CONFIG = {
     COVER_IMAGE: 5 * 1024 * 1024,   // 5MB
     PDF: 20 * 1024 * 1024,          // 20MB
   },
+  // Public vs Private endpoints for frontend reference
+  PUBLIC_ENDPOINTS: [
+    '/books',
+    '/books/categories',
+    '/books/tags',
+    '/books/',
+    '/books/:id/pdf',
+    '/books/:id/pdf-content',
+    '/books/:id/download',
+    '/books/:id/reviews',
+    '/books/:id/rating',
+  ]
 };
 
 // Export default config object that includes all configurations
