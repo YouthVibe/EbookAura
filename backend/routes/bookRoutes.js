@@ -23,6 +23,7 @@ const {
 } = require('../middleware/apiKeyAuth');
 const Book = require('../models/Book');
 const axios = require('axios');
+const jwt = require('jsonwebtoken');
 
 // Authentication middleware that supports both JWT and API key auth
 const flexAuth = async (req, res, next) => {
@@ -87,7 +88,57 @@ async function servePdf(req, res) {
       return res.status(404).json({ message: 'Book not found' });
     }
     
-    console.log(`Found book: ${book.title}, PDF URL: ${book.pdfUrl}, PDF ID: ${book.pdfId}, isCustomUrl: ${book.isCustomUrl}`);
+    console.log(`Found book: ${book.title}, PDF URL: ${book.pdfUrl}, PDF ID: ${book.pdfId}, isCustomUrl: ${book.isCustomUrl}, isPremium: ${book.isPremium}`);
+    
+    // Check if the book is premium and require authentication
+    if (book.isPremium) {
+      // Check if user is authenticated via token or API key
+      const token = req.headers.authorization?.split(' ')[1];
+      const apiKey = req.headers['x-api-key'];
+      
+      if (!token && !apiKey) {
+        console.log('Premium content access denied: No authentication provided');
+        return res.status(401).json({ 
+          message: 'Authentication required to access premium content',
+          isPremium: true
+        });
+      }
+      
+      // If token is provided, verify it
+      if (token) {
+        try {
+          const decoded = jwt.verify(token, process.env.JWT_SECRET);
+          req.user = decoded;
+          console.log(`User ${decoded._id} accessing premium content`);
+        } catch (error) {
+          console.log('Premium content access denied: Invalid token');
+          return res.status(401).json({ 
+            message: 'Invalid authentication token',
+            isPremium: true
+          });
+        }
+      }
+      
+      // If API key is provided, verify it
+      if (apiKey && !req.user) {
+        try {
+          // This would need the actual API key verification logic
+          // For now, we'll assume it's handled by a middleware
+          // but we'd need to implement the check here
+          console.log('API key authentication for premium content not fully implemented');
+          return res.status(401).json({ 
+            message: 'Premium content requires full authentication',
+            isPremium: true
+          });
+        } catch (error) {
+          console.log('Premium content access denied: Invalid API key');
+          return res.status(401).json({ 
+            message: 'Invalid API key',
+            isPremium: true
+          });
+        }
+      }
+    }
     
     // Get filename
     const fileName = `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
@@ -151,6 +202,51 @@ async function servePdfContent(req, res) {
     if (!book) {
       console.error(`Book not found with ID: ${req.params.id}`);
       return res.status(404).json({ message: 'Book not found' });
+    }
+    
+    // Enhanced logging for premium books
+    if (book.isPremium) {
+      console.log(`Premium book accessed: "${book.title}" (ID: ${book._id}), isPremium: ${book.isPremium}`);
+    }
+    
+    // Check if the book is premium and require authentication
+    if (book.isPremium) {
+      // Check if user is authenticated via token or API key
+      const token = req.headers.authorization?.split(' ')[1];
+      const apiKey = req.headers['x-api-key'];
+      
+      if (!token && !apiKey) {
+        console.log('Premium content access denied: No authentication provided');
+        return res.status(401).json({ 
+          message: 'Authentication required to access premium content',
+          isPremium: true
+        });
+      }
+      
+      // If token is provided, verify it
+      if (token) {
+        try {
+          const decoded = jwt.verify(token, process.env.JWT_SECRET);
+          req.user = decoded;
+          console.log(`User ${decoded._id} accessing premium content`);
+        } catch (error) {
+          console.log('Premium content access denied: Invalid token');
+          return res.status(401).json({ 
+            message: 'Invalid authentication token',
+            isPremium: true
+          });
+        }
+      }
+      
+      // If API key is provided, verify it
+      if (apiKey && !req.user) {
+        // Similar logic as above - would need verification
+        console.log('API key authentication for premium content not fully implemented');
+        return res.status(401).json({ 
+          message: 'Premium content requires full authentication',
+          isPremium: true
+        });
+      }
     }
     
     // Get the PDF URL based on whether it's a custom URL or standard upload

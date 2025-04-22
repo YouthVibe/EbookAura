@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { FaSearch, FaSort, FaEye, FaDownload, FaBook, FaStar, FaRegStar, FaBookmark, FaRegBookmark, FaStarHalfAlt, FaFileAlt, FaFile, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FaSearch, FaSort, FaEye, FaDownload, FaBook, FaStar, FaRegStar, FaBookmark, FaRegBookmark, FaStarHalfAlt, FaFileAlt, FaFile, FaChevronLeft, FaChevronRight, FaLock, FaCrown } from 'react-icons/fa';
 import Link from 'next/link';
 import styles from './search.module.css';
 import { useRouter } from 'next/navigation';
@@ -47,6 +47,7 @@ export default function SearchPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [bookmarkedBooks, setBookmarkedBooks] = useState(new Set());
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [showPremiumOnly, setShowPremiumOnly] = useState(false);
   const router = useRouter();
   const { getToken, getApiKey } = useAuth();
   
@@ -264,88 +265,86 @@ export default function SearchPage() {
     }
   };
 
-  // Function to fetch books with pagination
   const fetchBooks = async (currentPage = 1, shouldReplaceResults = true) => {
-    if (currentPage === 1) {
-      setLoading(true);
-    } else {
-      setLoadingMore(true);
-    }
-    
-    setError(null);
-    
-    let apiUrl = '/books?';
-    const params = new URLSearchParams();
-    
-    if (searchQuery) {
-      params.append('search', searchQuery);
-    }
-    
-    if (selectedCategory && selectedCategory !== 'All') {
-      params.append('category', selectedCategory);
-    }
-    
-    if (sortBy) {
-      params.append('sort', sortBy);
-    }
-    
-    // Add pagination parameters
-    params.append('page', currentPage);
-    params.append('limit', 10); // Load 10 books per page
-    
-    // Append parameters to URL
-    apiUrl += params.toString();
-    
     try {
-      // Use the simple getAPI function without any authentication headers
-      const data = await getAPI(apiUrl);
+      console.log(`Fetching books: page ${currentPage}, category: "${selectedCategory}", sort: ${sortBy}, query: "${searchQuery}", premium: ${showPremiumOnly}`);
+      setLoadingMore(currentPage > 1);
+      if (currentPage === 1) {
+        setLoading(true);
+      }
+
+      const params = new URLSearchParams();
+      params.append('page', currentPage);
+      params.append('limit', 12);
+      params.append('sort', sortBy);
       
-      if (data && data.books && Array.isArray(data.books)) {
-        // If we're loading the first page, replace the current books
-        // Otherwise, append the new books to the existing ones
-        if (shouldReplaceResults) {
-          setBooks(data.books);
-        } else {
-          setBooks(prevBooks => [...prevBooks, ...data.books]);
-        }
-        
-        // Update pagination information
-        if (data.pagination) {
-          setHasMore(data.pagination.hasNextPage);
-          setTotalBooks(data.pagination.totalBooks);
-        } else {
-          setHasMore(false);
-        }
-      } else if (data && Array.isArray(data)) {
+      if (searchQuery) {
+        params.append('search', searchQuery);
+      }
+
+      if (selectedCategory && selectedCategory !== 'All') {
+        params.append('category', selectedCategory);
+      }
+
+      // Add premium filter parameter
+      if (showPremiumOnly) {
+        params.append('premium', 'true');
+      }
+
+      const queryString = params.toString();
+      const data = await getAPI(`/books?${queryString}`);
+      
+      let booksData = [];
+      let totalCount = 0;
+      
+      if (Array.isArray(data)) {
         // Handle case where API returns an array directly
-        if (shouldReplaceResults) {
-          setBooks(data);
-        } else {
-          setBooks(prevBooks => [...prevBooks, ...data]);
-        }
-        // Assume there's no more data if the returned array is empty or less than 10 items
-        setHasMore(data.length === 10);
+        booksData = data;
+        totalCount = data.length;
+      } else if (data && data.books && Array.isArray(data.books)) {
+        // Handle case where API returns { books: [...], totalCount: X }
+        booksData = data.books;
+        totalCount = data.totalCount || data.pagination?.totalBooks || data.books.length;
       } else {
-        if (shouldReplaceResults) {
-          setBooks([]);
-        }
-        setHasMore(false);
-        if (currentPage === 1) {
-          setError('No books found matching your criteria');
-        }
+        throw new Error('Unexpected response format from API');
+      }
+      
+      // Ensure each book has an isPremium property, default to false if not present
+      booksData = booksData.map(book => {
+        const isPremium = book.isPremium === true; // Force boolean conversion
+        console.log(`Processing book: ${book.title}, isPremium before: ${book.isPremium}, after: ${isPremium}`);
+        return {
+          ...book,
+          isPremium // Convert undefined/null to false, keep true as true
+        };
+      });
+      
+      // Log premium books count
+      const premiumBooksCount = booksData.filter(book => book.isPremium === true).length;
+      console.log(`Fetched ${booksData.length} books (total: ${totalCount}), ${premiumBooksCount} premium books`);
+      
+      // If in premium mode, but no premium books found, log warning
+      if (showPremiumOnly && premiumBooksCount === 0) {
+        console.warn('Premium filter is on but no premium books were found');
+      }
+      
+      setTotalBooks(totalCount);
+      setHasMore(booksData.length > 0 && booksData.length >= 12);
+      
+      if (shouldReplaceResults) {
+        setBooks(booksData);
+      } else {
+        // Filter out duplicates when adding more books
+        const existingIds = new Set(books.map(book => book._id));
+        const uniqueNewBooks = booksData.filter(book => !existingIds.has(book._id));
+        setBooks(prev => [...prev, ...uniqueNewBooks]);
       }
     } catch (err) {
       console.error('Error fetching books:', err);
       setError('Failed to load books. Please try again.');
-      if (shouldReplaceResults) {
-        setBooks([]);
-      }
     } finally {
-      if (currentPage === 1) {
-        setLoading(false);
-      } else {
-        setLoadingMore(false);
-      }
+      setLoading(false);
+      setLoadingMore(false);
     }
   };
 
@@ -382,6 +381,14 @@ export default function SearchPage() {
       fetchBooks(page, false);
     }
   }, [page]);
+
+  // Restart search when premium filter changes
+  useEffect(() => {
+    if (!loading) {
+      setPage(1);
+      fetchBooks(1, true);
+    }
+  }, [showPremiumOnly]);
 
   // Handle viewing a PDF
   const handleViewPdf = (bookId) => {
@@ -463,19 +470,34 @@ export default function SearchPage() {
           ))}
         </div>
 
-        <div className={styles.sortSection}>
-          <FaSort className={styles.sortIcon} />
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className={styles.sortSelect}
-          >
-            {sortOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+        <div className={styles.filterOptions}>
+          <div className={styles.premiumFilter}>
+            <label className={styles.toggleLabel}>
+              <input
+                type="checkbox"
+                checked={showPremiumOnly}
+                onChange={() => setShowPremiumOnly(!showPremiumOnly)}
+                className={styles.toggleCheckbox}
+              />
+              <span className={styles.toggleSwitch}></span>
+              <span className={styles.toggleText}>Premium Books{showPremiumOnly ? '' : ' Only'}</span>
+            </label>
+          </div>
+
+          <div className={styles.sortSection}>
+            <FaSort className={styles.sortIcon} />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className={styles.sortSelect}
+            >
+              {sortOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -485,61 +507,96 @@ export default function SearchPage() {
         <div className={styles.error}>{error}</div>
       ) : (
         <>
+          {showPremiumOnly && (
+            <div className={styles.premiumSectionHeader}>
+              <FaCrown className={styles.premiumHeaderIcon} />
+              <h2>Premium Collection</h2>
+              <p>Exclusive content for our authenticated members</p>
+            </div>
+          )}
+          
           <div className={styles.resultsCount}>
             Found {totalBooks > 0 ? totalBooks : books.length} {totalBooks === 1 ? 'book' : 'books'}
+            {showPremiumOnly && ' (Premium Only)'}
           </div>
           <div className={styles.bookGrid}>
-            {books.map((book, index) => (
-              <div 
-                key={book._id} 
-                className={styles.bookCard}
-                ref={index === books.length - 1 ? lastBookRef : null}
-              >
-                <button 
-                  className={styles.bookmarkButton}
-                  onClick={() => handleBookmark(book._id)}
-                  title={bookmarkedBooks.has(book._id) ? "Remove from bookmarks" : "Add to bookmarks"}
+            {books.map((book, index) => {
+              // Debug premium book status
+              console.log(`Book: ${book.title}, isPremium: ${book.isPremium}`, book);
+              
+              return (
+                <div 
+                  key={book._id} 
+                  className={`${styles.bookCard} ${book.isPremium ? styles.premiumBook : ''}`}
+                  ref={index === books.length - 1 ? lastBookRef : null}
                 >
-                  {bookmarkedBooks.has(book._id) ? <FaBookmark /> : <FaRegBookmark />}
-                </button>
+                  {book.isPremium && (
+                    <span className={styles.premiumBadge}>
+                      <FaCrown className={styles.crownIcon} /> Premium
+                    </span>
+                  )}
+                  <button 
+                    className={styles.bookmarkButton}
+                    onClick={() => handleBookmark(book._id)}
+                    title={bookmarkedBooks.has(book._id) ? "Remove from bookmarks" : "Add to bookmarks"}
+                  >
+                    {bookmarkedBooks.has(book._id) ? <FaBookmark /> : <FaRegBookmark />}
+                  </button>
 
-                <Link href={`/books/${book._id}`} className={styles.bookLink}>
-                  <div className={styles.bookCover}>
-                    {book.coverImage ? (
-                      <img src={book.coverImage} alt={book.title} />
-                    ) : (
-                      <div className={styles.placeholderCover}>
-                        <FaBook />
-                      </div>
-                    )}
-                  </div>
-                  <div className={styles.bookInfo}>
-                    <h3 className={styles.bookTitle}>{book.title}</h3>
-                    <p className={styles.bookAuthor}>by {book.author}</p>
-                    {renderRatingStars(book.averageRating)}
-                    <p className={styles.bookCategory}>{book.category}</p>
-                    <div className={styles.bookStats}>
-                      <span className={styles.stat}>
-                        <FaEye /> {book.views || 0}
-                      </span>
-                      <span className={styles.stat}>
-                        <FaDownload /> {book.downloads || 0}
-                      </span>
-                      {book.pageSize > 0 && (
-                        <span className={styles.stat}>
-                          <FaFileAlt /> {book.pageSize}p
-                        </span>
-                      )}
-                      {book.fileSizeMB > 0 && (
-                        <span className={styles.stat}>
-                          <FaFile /> {book.fileSizeMB}MB
-                        </span>
+                  <Link href={`/books/${book._id}`} className={styles.bookLink}>
+                    <div className={styles.bookCover}>
+                      {book.coverImage ? (
+                        <>
+                          <img src={book.coverImage} alt={book.title} />
+                          {book.isPremium && (
+                            <div className={styles.premiumOverlay}>
+                              <FaLock className={styles.lockIcon} />
+                              <div className={styles.premiumLabel}>Premium Only</div>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className={styles.placeholderCover}>
+                          <FaBook />
+                          {book.isPremium && <FaLock className={styles.lockIconPlaceholder} />}
+                        </div>
                       )}
                     </div>
-                  </div>
-                </Link>
-              </div>
-            ))}
+                    <div className={styles.bookInfo}>
+                      <h3 className={styles.bookTitle}>{book.title}</h3>
+                      <p className={styles.bookAuthor}>by {book.author}</p>
+                      {renderRatingStars(book.averageRating)}
+                      <div className={styles.categoryInfo}>
+                        <p className={styles.bookCategory}>{book.category}</p>
+                        {book.isPremium && (
+                          <span className={styles.bookPremiumTag}>
+                            <FaCrown className={styles.premiumIcon} /> Premium
+                          </span>
+                        )}
+                      </div>
+                      <div className={styles.bookStats}>
+                        <span className={styles.stat}>
+                          <FaEye /> {book.views || 0}
+                        </span>
+                        <span className={styles.stat}>
+                          <FaDownload /> {book.downloads || 0}
+                        </span>
+                        {book.pageSize > 0 && (
+                          <span className={styles.stat}>
+                            <FaFileAlt /> {book.pageSize}p
+                          </span>
+                        )}
+                        {book.fileSizeMB > 0 && (
+                          <span className={styles.stat}>
+                            <FaFile /> {book.fileSizeMB}MB
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+              );
+            })}
           </div>
           
           {books.length === 0 && (

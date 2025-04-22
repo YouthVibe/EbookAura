@@ -136,6 +136,9 @@ export default function UploadPdf() {
 
   // New state for custom URL file size
   const [customUrlFileSize, setCustomUrlFileSize] = useState('');
+  
+  // New state for premium PDF status
+  const [isPremium, setIsPremium] = useState(false);
 
   useEffect(() => {
     // Redirect if not logged in
@@ -665,6 +668,9 @@ export default function UploadPdf() {
         formData.append('category', category);
       }
       
+      // Add premium status
+      formData.append('isPremium', isPremium);
+      
       // Join tags with comma
       if (selectedTags.length > 0) {
         formData.append('tags', selectedTags.join(','));
@@ -725,6 +731,7 @@ export default function UploadPdf() {
       setTitleChars(0);
       setAuthorChars(0);
       setDescChars(0);
+      setIsPremium(false); // Reset premium status
       
       // Set success message
       setSuccess('E-book successfully uploaded!');
@@ -1145,6 +1152,26 @@ export default function UploadPdf() {
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Premium PDF Checkbox */}
+          <div className={styles.formGroup}>
+            <div className={styles.checkboxContainer}>
+              <input
+                type="checkbox"
+                id="premium-pdf"
+                checked={isPremium}
+                onChange={(e) => setIsPremium(e.target.checked)}
+                className={styles.checkbox}
+              />
+              <label htmlFor="premium-pdf" className={styles.checkboxLabel}>
+                This is a Premium PDF
+              </label>
+            </div>
+            <p className={styles.fieldHelp}>
+              <FaInfoCircle style={{ marginRight: '8px' }} />
+              Mark this PDF as premium content (restricted access)
+            </p>
           </div>
 
           <div className={getFileContainerClassName(coverFile, coverFile && coverFile.size <= 1 * 1024 * 1024)}>

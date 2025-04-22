@@ -5,7 +5,7 @@ const asyncHandler = require('express-async-handler');
 // @route   GET /api/books
 // @access  Public
 const getBooks = asyncHandler(async (req, res) => {
-  const { category, tag, search, sort, page = 1, limit = 10 } = req.query;
+  const { category, tag, search, sort, page = 1, limit = 10, premium } = req.query;
   
   // Convert pagination parameters to numbers
   const pageNum = parseInt(page) || 1;
@@ -28,6 +28,12 @@ const getBooks = asyncHandler(async (req, res) => {
     query.tags = tag;
   }
   
+  // Add premium filter if provided
+  if (premium === 'true') {
+    query.isPremium = true;
+    console.log('Filtering for premium books only');
+  }
+  
   // Add search filter if provided
   if (search) {
     query.$or = [
@@ -44,16 +50,24 @@ const getBooks = asyncHandler(async (req, res) => {
     // Calculate total pages
     const totalPages = Math.ceil(totalBooks / limitCapped);
     
-    // Fetch books with pagination
+    // Fetch books with pagination - ensure isPremium is explicitly included
     const books = await Book.find(query)
       .sort(sort ? buildSortOptions(sort) : { createdAt: -1 })
-      .select('title author description category tags views downloads createdAt coverImage pageSize fileSizeMB averageRating isCustomUrl customURLPDF')
+      .select('title author description category tags views downloads createdAt coverImage pageSize fileSizeMB averageRating isCustomUrl customURLPDF isPremium')
       .skip(skip)
       .limit(limitCapped);
+    
+    // Log a sample book to verify isPremium is included
+    if (books.length > 0) {
+      console.log(`Sample book premium status: ${books[0].title} - isPremium: ${books[0].isPremium}`);
+    }
       
-    // Send response with pagination metadata
+    // Send response with pagination metadata and ensure isPremium is properly passed
     res.json({
-      books,
+      books: books.map(book => ({
+        ...book.toObject(),
+        isPremium: book.isPremium || false // Explicitly set isPremium if undefined
+      })),
       pagination: {
         page: pageNum,
         limit: limitCapped,
@@ -117,7 +131,7 @@ const getTags = asyncHandler(async (req, res) => {
 // @access  Public
 const getBook = asyncHandler(async (req, res) => {
   const book = await Book.findById(req.params.id)
-    .select('title author description category tags views downloads createdAt pdfUrl pdfId coverImage pageSize fileSizeMB averageRating isCustomUrl customURLPDF');
+    .select('title author description category tags views downloads createdAt pdfUrl pdfId coverImage pageSize fileSizeMB averageRating isCustomUrl customURLPDF isPremium');
     
   if (!book) {
     res.status(404);
@@ -133,7 +147,14 @@ const getBook = asyncHandler(async (req, res) => {
     console.log(`Serving book with custom URL: ${book.title} - Custom URL: ${book.customURLPDF}`);
   }
   
-  res.json(book);
+  // Log premium status
+  console.log(`Book premium status: ${book.title}, isPremium: ${book.isPremium}`);
+  
+  // Convert book to JSON and ensure isPremium is properly set
+  const bookData = book.toObject();
+  bookData.isPremium = book.isPremium === true;
+  
+  res.json(bookData);
 });
 
 // @desc    Increment book downloads

@@ -41,6 +41,11 @@ const bookSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  // New field for premium PDF status
+  isPremium: {
+    type: Boolean,
+    default: false
+  },
   pageSize: {
     type: Number,
     required: true

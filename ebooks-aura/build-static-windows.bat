@@ -44,6 +44,15 @@ if not exist node_modules (
     )
 )
 
+REM Generate static book IDs
+echo [93mGenerating static book IDs list...[0m
+node scripts/generate-static-books.js
+if %errorlevel% neq 0 (
+    echo [91mFailed to generate static book IDs list![0m
+    echo Please check the error messages above.
+    exit /b 1
+)
+
 REM Build the static site
 echo [93mBuilding static site...[0m
 call npx cross-env NEXT_PUBLIC_API_URL=https://ebookaura.onrender.com/api STATIC_EXPORT=true next build

@@ -6,9 +6,9 @@ import { getAPI, postAPI, putAPI, deleteAPI } from '../api/apiUtils';
  */
 
 // Base API URL from environment variable with fallback
-// export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 // Production URL
-export const API_BASE_URL = 'https://ebookaura.onrender.com/api';
+// export const API_BASE_URL = 'https://ebookaura.onrender.com/api';
 
 // API endpoints
 export const API_ENDPOINTS = {

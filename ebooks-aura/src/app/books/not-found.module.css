@@ -1,0 +1,112 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  padding: 2rem;
+  text-align: center;
+}
+
+.errorCard {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 2.5rem;
+  max-width: 600px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.iconContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background-color: #fff5f5;
+  border-radius: 50%;
+  margin-bottom: 1.5rem;
+}
+
+.icon {
+  font-size: 40px;
+  color: #e53e3e;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #2d3748;
+}
+
+.message {
+  font-size: 1.1rem;
+  color: #4a5568;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.backButton, .searchButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background-color: #edf2f7;
+  color: #4a5568;
+  font-weight: 500;
+  border-radius: 5px;
+  cursor: pointer;
+  text-decoration: none;
+  border: none;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.searchButton {
+  background-color: #4299e1;
+  color: white;
+}
+
+.backButton:hover {
+  background-color: #e2e8f0;
+}
+
+.searchButton:hover {
+  background-color: #3182ce;
+}
+
+@media (max-width: 640px) {
+  .errorCard {
+    padding: 1.5rem;
+  }
+  
+  .title {
+    font-size: 1.5rem;
+  }
+  
+  .message {
+    font-size: 1rem;
+  }
+  
+  .actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .backButton, .searchButton {
+    width: 100%;
+    justify-content: center;
+  }
+} 

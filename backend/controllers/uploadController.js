@@ -97,7 +97,7 @@ const uploadPdf = async (req, res) => {
     });
 
     // Check if all required fields are present
-    const { title, author, description, category, pageSize, isCustomUrl, customURLPDF, customUrlFileSize } = req.body;
+    const { title, author, description, category, pageSize, isCustomUrl, customURLPDF, customUrlFileSize, isPremium } = req.body;
     
     if (!title || !author || !description || !category || !pageSize) {
       return res.status(400).json({ message: 'All fields are required' });
@@ -112,6 +112,9 @@ const uploadPdf = async (req, res) => {
       return res.status(400).json({ message: 'Description must be under 200 characters' });
     }
 
+    // Parse isPremium value
+    const bookIsPremium = isPremium === 'true' || isPremium === true;
+    
     // Handle the custom URL case
     if (isCustomUrl === 'true' && customURLPDF) {
       console.log('Using custom PDF URL:', customURLPDF);
@@ -191,6 +194,7 @@ const uploadPdf = async (req, res) => {
         pdfId: pdfId,
         isCustomUrl: true,
         customURLPDF: customURLPDF,
+        isPremium: bookIsPremium, // Add premium status
         pageSize: parseInt(pageSize, 10),
         fileSizeMB: fileSizeMB, // Use the provided file size
         category,
@@ -361,6 +365,7 @@ const uploadPdf = async (req, res) => {
         pdfId: pdfResult.public_id,
         isCustomUrl: false, // This is a regular file upload
         customURLPDF: '', // No custom URL
+        isPremium: bookIsPremium, // Add premium status
         pageSize: parseInt(pageSize, 10),
         fileSizeMB: fileSizeMB, // Save the calculated file size
         category,

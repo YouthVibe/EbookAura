@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FaDownload, FaEye, FaBook, FaArrowLeft, FaStar, FaCalendarAlt, FaFileAlt } from 'react-icons/fa';
+import { FaDownload, FaEye, FaBook, FaArrowLeft, FaStar, FaCalendarAlt, FaFileAlt, FaLock, FaCrown, FaUser } from 'react-icons/fa';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
@@ -9,6 +9,7 @@ import BookReview from '../../components/BookReview';
 import styles from './book.module.css';
 import { API_ENDPOINTS } from '../../utils/config';
 import { createDownloadablePdf } from '../../utils/pdfUtils';
+import { useAuth } from '../../context/AuthContext';
 
 // Dynamically import PdfViewer with no SSR to avoid the Promise.withResolvers error
 const PdfViewer = dynamic(() => import('../../components/PdfViewer'), {
@@ -30,7 +31,9 @@ export default function BookPageClient({ id }) {
   const [showPdfViewer, setShowPdfViewer] = useState(false);
   const [pdfUrl, setPdfUrl] = useState(null);
   const [openingCustomUrl, setOpeningCustomUrl] = useState(false);
+  const [premiumError, setPremiumError] = useState(null);
   const router = useRouter();
+  const { isLoggedIn, getToken, getApiKey } = useAuth();
   
   // Static export safeguard - ensure ID is available
   useEffect(() => {
@@ -55,45 +58,57 @@ export default function BookPageClient({ id }) {
     };
   }, [pdfUrl]);
   
-  // Extracted fetch logic into a separate function
+  // Function to fetch book details
   const fetchBookDetails = async (bookId) => {
+    setLoading(true);
+    setError(null);
+    
     try {
-      console.log('BookPageClient: Fetching details for book ID:', bookId);
-      setLoading(true);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+      console.log(`Fetching book details from: ${apiUrl}/books/${bookId}`);
       
-      const response = await fetch(API_ENDPOINTS.BOOKS.DETAILS(bookId), {
-        // Add cache control headers
-        cache: 'no-store', // Don't cache this request 
-        next: { revalidate: 60 } // Or revalidate every 60 seconds
+      const response = await fetch(`${apiUrl}/books/${bookId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
       
       if (!response.ok) {
-        console.error(`Book fetch failed with status: ${response.status}`);
-        throw new Error(response.status === 404 
-          ? 'Book not found. It may have been removed or the ID is incorrect.' 
-          : `Failed to load book (${response.status})`);
+        if (response.status === 404) {
+          throw new Error('Book not found. It may have been removed or the ID is invalid.');
+        } else {
+          throw new Error(`Error fetching book details: ${response.status}`);
+        }
       }
       
       const bookData = await response.json();
-      console.log('Book data received:', bookData);
       
-      // Enhanced logging for custom URL PDFs
-      if (bookData.isCustomUrl) {
-        console.log('Book has custom URL:', bookData.customURLPDF || bookData.pdfUrl);
-        console.log('Will display single "Open PDF" button instead of View/Download buttons');
-        console.log('This button will redirect to:', bookData.customURLPDF || bookData.pdfUrl);
+      if (!bookData) {
+        throw new Error('No book data returned from the server');
       }
       
-      // Validate the book data
-      if (!bookData || typeof bookData !== 'object') {
-        throw new Error('Invalid book data received from server');
-      }
-      
+      // Set the book data in state
       setBook(bookData);
-      setError(null);
+      
+      // Track view if not tracked already in this session
+      const viewedBooks = JSON.parse(localStorage.getItem('viewedBooks') || '[]');
+      if (!viewedBooks.includes(bookId)) {
+        // Add this book to viewed books in this session
+        viewedBooks.push(bookId);
+        localStorage.setItem('viewedBooks', JSON.stringify(viewedBooks));
+        
+        // Send view tracking request (no need to await)
+        fetch(`${apiUrl}/books/${bookId}/view`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }).catch(e => console.error('Error tracking view:', e));
+      }
     } catch (err) {
-      console.error('Error in fetchBookDetails:', err);
-      setError(err.message || 'Error loading book details. Please try again later.');
+      console.error('Error fetching book details:', err);
+      setError(err.message || 'Failed to load book details. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -109,11 +124,37 @@ export default function BookPageClient({ id }) {
       setViewing(true);
       console.log('Fetching PDF content for viewing, book ID:', id);
       
-      // Fetch the PDF data from our proxy endpoint - no authentication needed
+      // For premium content, add authentication headers
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (book.isPremium) {
+        const token = getToken();
+        const apiKey = getApiKey();
+        
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        if (apiKey) {
+          headers['X-API-Key'] = apiKey;
+        }
+      }
+      
+      // Fetch the PDF data from our proxy endpoint
       const proxyUrl = `${API_ENDPOINTS.BOOKS.PDF_CONTENT(id)}?counted=true`;
-      const response = await fetch(proxyUrl);
+      const response = await fetch(proxyUrl, { headers });
       
       if (!response.ok) {
+        // Handle premium authentication error
+        if (response.status === 401) {
+          const errorData = await response.json();
+          if (errorData.isPremium) {
+            setPremiumError('This is premium content. Please log in to access it.');
+            throw new Error('Premium content requires authentication');
+          }
+        }
         throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
       }
       
@@ -126,7 +167,18 @@ export default function BookPageClient({ id }) {
     } catch (err) {
       console.error('Error fetching PDF for viewing:', err);
       
-      // Fallback - try direct URL if our endpoint fails
+      // Don't try fallback for premium content errors
+      if (premiumError) {
+        if (!isLoggedIn) {
+          alert('This is premium content. Please log in to access it.');
+          router.push('/login');
+        } else {
+          alert('You do not have access to this premium content.');
+        }
+        return;
+      }
+      
+      // Fallback for non-premium errors
       try {
         if (book.pdfUrl) {
           const directUrl = book.pdfUrl.endsWith('.pdf') ? book.pdfUrl : `${book.pdfUrl}.pdf`;
@@ -146,7 +198,13 @@ export default function BookPageClient({ id }) {
   };
 
   const handleViewPdf = async () => {
-    // Public access - no authentication needed
+    // Check for premium content
+    if (book.isPremium && !isLoggedIn) {
+      setPremiumError('This is premium content. Please log in to access it.');
+      router.push('/login');
+      return;
+    }
+    
     fetchPdfForViewing();
   };
 
@@ -155,15 +213,41 @@ export default function BookPageClient({ id }) {
       console.error('Cannot download: Book data or ID is missing');
       return;
     }
+    
+    // Check for premium content
+    if (book.isPremium && !isLoggedIn) {
+      setPremiumError('This is premium content. Please log in to access it.');
+      router.push('/login');
+      return;
+    }
       
     try {
       setDownloading(true);
       console.log('Downloading book with ID:', id);
       
-      // Increment download count via the API - public access, no authentication needed
+      // For premium content, add authentication headers
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (book.isPremium) {
+        const token = getToken();
+        const apiKey = getApiKey();
+        
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        if (apiKey) {
+          headers['X-API-Key'] = apiKey;
+        }
+      }
+      
+      // Increment download count via the API
       try {
         await fetch(API_ENDPOINTS.BOOKS.DOWNLOAD(id), {
           method: 'POST',
+          headers
         });
       } catch (countErr) {
         console.warn('Failed to record download count, but continuing download:', countErr);
@@ -173,14 +257,22 @@ export default function BookPageClient({ id }) {
       const fileName = `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
       
       try {
-        // Use our backend proxy to fetch the PDF content - public access, no authentication needed
+        // Use our backend proxy to fetch the PDF content
         console.log(`Fetching PDF content via backend proxy for book: ${book.title}`);
         
         // Fetch the PDF data from our proxy endpoint
         const proxyUrl = `${API_ENDPOINTS.BOOKS.PDF_CONTENT(id)}?download=true&counted=true`;
-        const response = await fetch(proxyUrl);
+        const response = await fetch(proxyUrl, { headers });
         
         if (!response.ok) {
+          // Handle premium authentication error
+          if (response.status === 401) {
+            const errorData = await response.json();
+            if (errorData.isPremium) {
+              setPremiumError('This is premium content. Please log in to access it.');
+              throw new Error('Premium content requires authentication');
+            }
+          }
           throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
         }
         
@@ -316,10 +408,23 @@ export default function BookPageClient({ id }) {
         <div className={styles.bookInformation}>
           <div className={styles.bookCover}>
             {book.coverImage ? (
-              <img src={book.coverImage} alt={book.title} />
+              <>
+                <img src={book.coverImage} alt={book.title} />
+                {book.isPremium && (
+                  <div className={styles.premiumOverlay}>
+                    <FaLock className={styles.lockIcon} />
+                  </div>
+                )}
+              </>
             ) : (
               <div className={styles.placeholderCover}>
                 <FaBook />
+                {book.isPremium && <FaLock className={styles.lockIconPlaceholder} />}
+              </div>
+            )}
+            {book.isPremium && (
+              <div className={styles.premiumBadge}>
+                <FaCrown className={styles.crownIcon} /> Premium
               </div>
             )}
           </div>
@@ -327,7 +432,14 @@ export default function BookPageClient({ id }) {
           <div className={styles.bookInfo}>
             <h1 className={styles.title}>{book.title}</h1>
             <p className={styles.author}>by {book.author}</p>
-            <p className={styles.category}>{book.category}</p>
+            <div className={styles.categoryInfo}>
+              <p className={styles.category}>{book.category}</p>
+              {book.isPremium && (
+                <span className={styles.premiumTag}>
+                  <FaCrown className={styles.premiumIcon} /> Premium
+                </span>
+              )}
+            </div>
             
             <div className={styles.stats}>
               <span className={styles.stat}>
@@ -373,12 +485,19 @@ export default function BookPageClient({ id }) {
             </div>
 
             <div className={styles.actions}>
+              {book.isPremium && !isLoggedIn && (
+                <div className={styles.premiumMessage}>
+                  <FaLock className={styles.lockIconMessage} />
+                  <p>This is premium content. <Link href="/login" className={styles.loginLink}>Log in</Link> to access.</p>
+                </div>
+              )}
+              
               {book.isCustomUrl ? (
                 // For custom URL PDFs, show a single "Open PDF" button that redirects to the URL
                 <button 
                   onClick={handleOpenCustomUrl}
-                  className={styles.openUrlButton}
-                  disabled={openingCustomUrl}
+                  className={`${styles.openUrlButton} ${book.isPremium && !isLoggedIn ? styles.disabledButton : ''}`}
+                  disabled={openingCustomUrl || (book.isPremium && !isLoggedIn)}
                 >
                   <FaFileAlt /> {openingCustomUrl ? 'Opening...' : 'Open PDF'}
                 </button>
@@ -387,16 +506,16 @@ export default function BookPageClient({ id }) {
                 <>
                   <button 
                     onClick={handleViewPdf} 
-                    className={styles.viewButton}
-                    disabled={viewing}
+                    className={`${styles.viewButton} ${book.isPremium && !isLoggedIn ? styles.disabledButton : ''}`}
+                    disabled={viewing || (book.isPremium && !isLoggedIn)}
                   >
                     <FaFileAlt /> {viewing ? 'Opening...' : 'View PDF'}
                   </button>
                   
                   <button 
                     onClick={handleDownload} 
-                    className={styles.downloadButton}
-                    disabled={downloading}
+                    className={`${styles.downloadButton} ${book.isPremium && !isLoggedIn ? styles.disabledButton : ''}`}
+                    disabled={downloading || (book.isPremium && !isLoggedIn)}
                   >
                     <FaDownload /> {downloading ? 'Downloading...' : 'Download PDF'}
                   </button>

@@ -4,9 +4,9 @@
  */
 
 // Use the API URL from environment variables with fallback
-// const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-// Production URL
-const API_BASE_URL = 'https://ebookaura.onrender.com/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+// Production URL - commented out to use environment variable
+// const API_BASE_URL = 'https://ebookaura.onrender.com/api';
 
 /**
  * Make a fetch request to the API with appropriate headers and error handling

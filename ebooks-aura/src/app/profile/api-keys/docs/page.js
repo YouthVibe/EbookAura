@@ -17,8 +17,8 @@ import { useEffect } from 'react';
 import KeyIcon from '@mui/icons-material/Key';
 import ApiIcon from '@mui/icons-material/Api';
 
-// Base API URL for documentation
-const API_BASE_URL = 'https://ebookaura.onrender.com/api';
+// Change from hardcoded URL to environment variable with fallback
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export default function ApiDocumentation() {
   const { user, loading: isLoading } = useAuth();
