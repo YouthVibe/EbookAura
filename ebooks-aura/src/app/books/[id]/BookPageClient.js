@@ -41,10 +41,11 @@ export default function BookPageClient({ id }) {
   const router = useRouter();
   const { user, isLoggedIn, getToken, getApiKey, updateUserCoins } = useAuth();
   
-  // Computed properties for better readability
-  const isPremiumBook = book?.isPremium;
-  const userHasPurchased = book?.userHasAccess;
-  const userHasEnoughCoins = user && book ? user.coins >= book.price : false;
+  // Computed properties for better readability and premium status handling
+  // Using explicit boolean conversion for consistent behavior in all environments
+  const isPremiumBook = book ? Boolean(book.isPremium) : false;
+  const userHasPurchased = book ? Boolean(book.userHasAccess) : false;
+  const userHasEnoughCoins = user && book ? Number(user.coins || 0) >= Number(book.price || 0) : false;
   
   // Check if user has purchased the book
   const checkPurchaseStatus = useCallback(async () => {
@@ -116,6 +117,8 @@ export default function BookPageClient({ id }) {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
       
+      console.log(`Fetching book details from API: ${apiUrl}/books/${bookId}`);
+      
       // Always check for token directly from localStorage as a fallback
       const localStorageToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
       
@@ -135,6 +138,9 @@ export default function BookPageClient({ id }) {
       // Add token to headers if available
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
+        console.log('Using authentication token for book details request');
+      } else {
+        console.log('No authentication token available for book details request');
       }
       
       const response = await fetch(`${apiUrl}/books/${bookId}`, {
@@ -156,11 +162,33 @@ export default function BookPageClient({ id }) {
         throw new Error('No book data returned from the server');
       }
       
+      // Debug log book data to diagnose issues
+      console.log('Book data received:', {
+        id: bookData._id,
+        title: bookData.title,
+        isPremium: bookData.isPremium,
+        userHasAccess: bookData.userHasAccess,
+        price: bookData.price
+      });
+      
+      // Ensure premium properties are correctly typed
+      // This fixes potential issues between dev and production environments
+      const normalizedBookData = {
+        ...bookData,
+        isPremium: bookData.isPremium === true,
+        userHasAccess: bookData.userHasAccess === true
+      };
+      
+      console.log('Normalized book data:', {
+        isPremium: normalizedBookData.isPremium,
+        userHasAccess: normalizedBookData.userHasAccess
+      });
+      
       // Set the book data in state
-      setBook(bookData);
+      setBook(normalizedBookData);
       
       // If premium book and user has access, clear any previous purchase states
-      if (bookData.isPremium && bookData.userHasAccess) {
+      if (normalizedBookData.isPremium && normalizedBookData.userHasAccess) {
         setPurchaseSuccess(true);
         setPurchaseError(null);
       }
@@ -600,7 +628,7 @@ export default function BookPageClient({ id }) {
             <p className={styles.author}>by {book.author}</p>
             <div className={styles.categoryInfo}>
               <p className={styles.category}>{book.category}</p>
-              {isPremiumBook && (
+              {(isPremiumBook === true || book.isPremium === true) && (
                 <span className={styles.premiumTag}>
                   <FaCrown className={styles.premiumIcon} /> Premium
                 </span>
@@ -650,14 +678,20 @@ export default function BookPageClient({ id }) {
               </div>
             </div>
             
-            {/* Display price for premium books */}
-            {isPremiumBook && (
+            {/* Display price for premium books with improved condition */}
+            {(isPremiumBook === true || book.isPremium === true) && (
               <div className={styles.premiumPurchaseContainer}>
                 {/* Debug info - only in development */}
                 {process.env.NODE_ENV === 'development' && (
-                  <div style={{ fontSize: '10px', background: '#f0f0f0', padding: '5px', marginBottom: '10px', borderRadius: '4px', display: 'none' }}>
+                  <div style={{ fontSize: '10px', background: '#f0f0f0', padding: '5px', marginBottom: '10px', borderRadius: '4px' }}>
+                    <div>Debug: book.isPremium={String(book.isPremium)} ({typeof book.isPremium})</div>
+                    <div>Debug: isPremiumBook={String(isPremiumBook)} ({typeof isPremiumBook})</div>
+                    <div>Debug: userHasPurchased={String(userHasPurchased)} ({typeof userHasPurchased})</div>
+                    <div>Debug: book.userHasAccess={String(book.userHasAccess)} ({typeof book.userHasAccess})</div>
+                    <div>Debug: purchaseSuccess={String(purchaseSuccess)}</div>
                     <div>Debug: isLoggedIn={String(isLoggedIn)}</div>
-                    <div>Debug: userHasPurchased={String(userHasPurchased)}</div>
+                    <div>Debug: user.coins={user ? String(user.coins) : 'undefined'}</div>
+                    <div>Debug: book.price={String(book.price)}</div>
                   </div>
                 )}
                 
@@ -677,7 +711,7 @@ export default function BookPageClient({ id }) {
                 </div>
                 
                 {/* Purchase section for logged in users */}
-                {isLoggedIn && !userHasPurchased && !purchaseSuccess && (
+                {isLoggedIn && !userHasPurchased && book && book.price && !purchaseSuccess && (
                   <>
                     {purchaseError && (
                       <div className={styles.purchaseError}>
@@ -698,9 +732,9 @@ export default function BookPageClient({ id }) {
                       )}
                     </button>
                     
-                    {!userHasEnoughCoins && (
+                    {!userHasEnoughCoins && user && (
                       <div className={styles.insufficientCoins}>
-                        You need <strong>{book.price - user.coins}</strong> more coins to purchase this book.
+                        You need <strong>{Number(book.price) - Number(user.coins || 0)}</strong> more coins to purchase this book.
                         <Link href="/coins" className={styles.getCoinsLink}>
                           <FaCoins className={styles.coinIcon} /> Get more coins
                         </Link>
@@ -709,8 +743,8 @@ export default function BookPageClient({ id }) {
                   </>
                 )}
                 
-                {/* Success message after purchase */}
-                {(userHasPurchased || purchaseSuccess) && (
+                {/* Success message after purchase - show for both userHasPurchased or purchaseSuccess */}
+                {(userHasPurchased === true || purchaseSuccess === true) && (
                   <div className={styles.purchaseSuccess}>
                     <FaCheck /> You own this book! You can now access the full content.
                   </div>
@@ -752,7 +786,7 @@ export default function BookPageClient({ id }) {
                 <button 
                   onClick={handleOpenCustomUrl}
                   className={`${styles.openUrlButton} ${(isPremiumBook && !userHasPurchased && !purchaseSuccess) ? styles.disabledButton : ''}`}
-                  disabled={openingCustomUrl || (isPremiumBook && !userHasPurchased && !purchaseSuccess)}
+                  disabled={openingCustomUrl || (isPremiumBook === true && userHasPurchased !== true && purchaseSuccess !== true)}
                 >
                   <FaFileAlt /> {openingCustomUrl ? 'Opening...' : 'Open PDF'}
                 </button>
@@ -762,7 +796,7 @@ export default function BookPageClient({ id }) {
                   <button 
                     onClick={handleViewPdf} 
                     className={`${styles.viewButton} ${(isPremiumBook && !userHasPurchased && !purchaseSuccess) ? styles.disabledButton : ''}`}
-                    disabled={viewing || (isPremiumBook && !userHasPurchased && !purchaseSuccess)}
+                    disabled={viewing || (isPremiumBook === true && userHasPurchased !== true && purchaseSuccess !== true)}
                   >
                     <FaFileAlt /> {viewing ? 'Opening...' : 'View PDF'}
                   </button>
@@ -770,7 +804,7 @@ export default function BookPageClient({ id }) {
                   <button 
                     onClick={handleDownload} 
                     className={`${styles.downloadButton} ${(isPremiumBook && !userHasPurchased && !purchaseSuccess) ? styles.disabledButton : ''}`}
-                    disabled={downloading || (isPremiumBook && !userHasPurchased && !purchaseSuccess)}
+                    disabled={downloading || (isPremiumBook === true && userHasPurchased !== true && purchaseSuccess !== true)}
                   >
                     <FaDownload /> {downloading ? 'Downloading...' : 'Download PDF'}
                   </button>

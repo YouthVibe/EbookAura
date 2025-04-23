@@ -311,11 +311,19 @@ export default function SearchPage() {
       
       // Ensure each book has an isPremium property, default to false if not present
       booksData = booksData.map(book => {
-        const isPremium = book.isPremium === true; // Force boolean conversion
-        console.log(`Processing book: ${book.title}, isPremium before: ${book.isPremium}, after: ${isPremium}`);
+        // Force boolean conversion for isPremium
+        const isPremium = book.isPremium === true;
+        // Force numeric conversion for price
+        const price = book.price !== undefined ? Number(book.price) : 0;
+        
+        if (isPremium !== book.isPremium || price !== book.price) {
+          console.log(`Normalizing book: ${book.title} - isPremium: ${book.isPremium}=>${isPremium}, price: ${book.price}=>${price}`);
+        }
+        
         return {
           ...book,
-          isPremium // Convert undefined/null to false, keep true as true
+          isPremium,  // Convert undefined/null to false, keep true as true
+          price       // Ensure price is a number
         };
       });
       
@@ -521,13 +529,14 @@ export default function SearchPage() {
           </div>
           <div className={styles.bookGrid}>
             {books.map((book, index) => {
-              // Debug premium book status
-              console.log(`Book: ${book.title}, isPremium: ${book.isPremium}`, book);
+              // Explicitly check premium status for rendering
+              const isPremium = book.isPremium === true;
+              const price = Number(book.price || 0);
               
               return (
                 <div 
                   key={book._id} 
-                  className={`${styles.bookCard} ${book.isPremium ? styles.premiumBook : ''}`}
+                  className={`${styles.bookCard} ${isPremium ? styles.premiumBook : ''}`}
                   ref={index === books.length - 1 ? lastBookRef : null}
                 >
                   <Link href={`/books/${book._id}`} className={styles.bookLink}>
@@ -540,18 +549,18 @@ export default function SearchPage() {
                             className={styles.coverImage}
                             loading="lazy"
                           />
-                          {book.isPremium && book.price > 0 && (
+                          {isPremium && price > 0 && (
                             <div className={styles.premiumPrice}>
-                              {book.price} <FaCoins className={styles.miniCoin} />
+                              {price} <FaCoins className={styles.miniCoin} />
                             </div>
                           )}
                         </div>
                       ) : (
                         <div className={styles.placeholderCover}>
                           <FaBook className={styles.bookIcon} />
-                          {book.isPremium && book.price > 0 && (
+                          {isPremium && price > 0 && (
                             <div className={styles.premiumPrice}>
-                              {book.price} <FaCoins className={styles.miniCoin} />
+                              {price} <FaCoins className={styles.miniCoin} />
                             </div>
                           )}
                         </div>
@@ -563,7 +572,7 @@ export default function SearchPage() {
                       {renderRatingStars(book.averageRating)}
                       <div className={styles.categoryInfo}>
                         <p className={styles.bookCategory}>{book.category}</p>
-                        {book.isPremium && (
+                        {isPremium && (
                           <span className={styles.bookPremiumTag}>
                             <FaCrown className={styles.premiumIcon} /> Premium
                           </span>

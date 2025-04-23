@@ -57,20 +57,40 @@ const getBooks = asyncHandler(async (req, res) => {
       .skip(skip)
       .limit(limitCapped);
     
+    // Debug logging for premium books
+    const premiumBooks = books.filter(book => book.isPremium);
+    console.log(`Found ${premiumBooks.length} premium books out of ${books.length} total books`);
+    
+    // Log detailed info for each premium book
+    premiumBooks.forEach(book => {
+      console.log(`Premium book found: ${book.title}`);
+      console.log(` - isPremium: ${book.isPremium} (type: ${typeof book.isPremium})`);
+      console.log(` - price: ${book.price} (type: ${typeof book.price})`);
+      console.log(` - _id: ${book._id} (type: ${typeof book._id})`);
+    });
+    
     // Log a sample book to verify isPremium is included
     if (books.length > 0) {
-      console.log(`Sample book premium status: ${books[0].title} - isPremium: ${books[0].isPremium}`);
+      console.log(`Sample book premium status: ${books[0].title} - isPremium: ${books[0].isPremium} (type: ${typeof books[0].isPremium})`);
+      console.log(`Sample book data structure: ${JSON.stringify(books[0], null, 2).substring(0, 300)}...`);
       if (books[0].isPremium) {
-        console.log(`Sample book price: ${books[0].price} coins`);
+        console.log(`Sample book price: ${books[0].price} coins (type: ${typeof books[0].price})`);
       }
     }
       
+    // Transform book objects to ensure consistent formats
+    const transformedBooks = books.map(book => {
+      const bookObj = book.toObject();
+      return {
+        ...bookObj,
+        isPremium: bookObj.isPremium === true, // Force boolean
+        price: bookObj.price ? Number(bookObj.price) : 0 // Force number or default to 0
+      };
+    });
+    
     // Send response with pagination metadata and ensure isPremium is properly passed
     res.json({
-      books: books.map(book => ({
-        ...book.toObject(),
-        isPremium: book.isPremium || false // Explicitly set isPremium if undefined
-      })),
+      books: transformedBooks,
       pagination: {
         page: pageNum,
         limit: limitCapped,
@@ -150,22 +170,32 @@ const getBook = asyncHandler(async (req, res) => {
     console.log(`Serving book with custom URL: ${book.title} - Custom URL: ${book.customURLPDF}`);
   }
   
-  // Log premium status
-  console.log(`Book premium status: ${book.title}, isPremium: ${book.isPremium}`);
+  // Log premium status and data types
+  console.log(`Book premium status: ${book.title}, isPremium: ${book.isPremium} (type: ${typeof book.isPremium})`);
   
-  // Convert book to JSON and ensure isPremium is properly set
+  if (book.isPremium) {
+    console.log(`Premium book price: ${book.price} coins (type: ${typeof book.price})`);
+  }
+  
+  // Convert book to JSON and ensure property types are consistent
   const bookData = book.toObject();
+  
+  // Force proper types for premium-related properties
   bookData.isPremium = book.isPremium === true;
+  bookData.price = book.price ? Number(book.price) : 0;
+  
+  // Debug output of processed book data
+  console.log(`Processed book data: isPremium=${bookData.isPremium}, price=${bookData.price}`);
   
   // Check if the user has purchased this book (if authenticated and book is premium)
-  if (req.user && book.isPremium) {
+  if (req.user && bookData.isPremium) {
     const hasAccess = req.user.purchasedBooks && req.user.purchasedBooks.some(
       purchasedId => purchasedId.toString() === book._id.toString()
     );
     bookData.userHasAccess = hasAccess;
     console.log(`User ${req.user._id} has access to premium book ${book._id}: ${hasAccess}`);
   } else {
-    bookData.userHasAccess = !book.isPremium; // Non-premium books are always accessible
+    bookData.userHasAccess = !bookData.isPremium; // Non-premium books are always accessible
   }
   
   res.json(bookData);
