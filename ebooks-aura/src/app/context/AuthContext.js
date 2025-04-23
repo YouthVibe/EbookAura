@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAPI, postAPI } from '../api/apiUtils';
 
@@ -19,42 +19,83 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
+  // Track token validation status
+  const validatingTokenRef = useRef(false);
+  const tokenValidatedRef = useRef(false);
 
   // Only run on client-side
   useEffect(() => {
     setMounted(true);
-    // Check for stored user info
-    const userInfo = localStorage.getItem('userInfo');
-    const token = localStorage.getItem('token');
-    const apiKey = localStorage.getItem('apiKey');
     
-    if (userInfo && token) {
+    const initializeAuth = async () => {
       try {
-        setUser(JSON.parse(userInfo));
+        // Check for stored user info
+        const userInfo = localStorage.getItem('userInfo');
+        const token = localStorage.getItem('token');
+        const apiKey = localStorage.getItem('apiKey');
         
-        // Validate token with the server
-        const validateToken = async () => {
+        if (userInfo && token) {
           try {
-            await getAPI('/auth/check', {
-              headers: {
-                'Authorization': `Bearer ${token}`
+            // Set user from localStorage immediately to prevent flashing logged-out state
+            setUser(JSON.parse(userInfo));
+            
+            // Validate token with the server, but don't block rendering
+            if (!validatingTokenRef.current && !tokenValidatedRef.current) {
+              validatingTokenRef.current = true;
+              
+              try {
+                await getAPI('/auth/check', {
+                  headers: {
+                    'Authorization': `Bearer ${token}`
+                  }
+                });
+                
+                // Token is valid
+                tokenValidatedRef.current = true;
+              } catch (error) {
+                console.error('Token validation failed:', error);
+                
+                // On production, retry once before logging out
+                if (window.location.hostname !== 'localhost') {
+                  try {
+                    console.log('Retrying token validation...');
+                    
+                    // Wait a moment before retrying
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    await getAPI('/auth/check', {
+                      headers: {
+                        'Authorization': `Bearer ${token}`
+                      }
+                    });
+                    
+                    // Retry succeeded
+                    tokenValidatedRef.current = true;
+                  } catch (retryError) {
+                    console.error('Token validation retry failed:', retryError);
+                    logout();
+                  }
+                } else {
+                  logout();
+                }
+              } finally {
+                validatingTokenRef.current = false;
               }
-            });
-          } catch (error) {
-            console.error('Token validation failed:', error);
-            logout();
+            }
+          } catch (parseError) {
+            console.error('Failed to parse user info:', parseError);
+            localStorage.removeItem('userInfo');
+            localStorage.removeItem('token');
+            localStorage.removeItem('apiKey');
           }
-        };
-        
-        validateToken();
-      } catch (error) {
-        console.error('Failed to parse user info:', error);
-        localStorage.removeItem('userInfo');
-        localStorage.removeItem('token');
-        localStorage.removeItem('apiKey');
+        }
+      } finally {
+        // Always mark as done loading
+        setLoading(false);
       }
-    }
-    setLoading(false);
+    };
+    
+    initializeAuth();
   }, []);
 
   // Login function

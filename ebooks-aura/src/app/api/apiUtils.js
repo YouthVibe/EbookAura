@@ -38,12 +38,17 @@ export async function fetchAPI(endpoint, options = {}) {
       !endpoint.includes('/reviews') && 
       !endpoint.includes('/bookmarks');
     
-    // Add auth headers if available from localStorage and not a public book endpoint
-    if (typeof window !== 'undefined' && !isPublicBookEndpoint) {
+    // Add auth headers if available from localStorage
+    // For book detail endpoints, always include auth if available for consistent user access checks
+    const isBookDetailEndpoint = endpoint.match(/^\/books\/[a-z0-9]+$/i);
+    
+    if (typeof window !== 'undefined') {
       const token = localStorage.getItem('token');
       const apiKey = localStorage.getItem('apiKey');
       
-      if (token && !options.headers['Authorization']) {
+      // Include auth for all non-public endpoints OR book detail endpoints
+      // This ensures consistent auth state for book details
+      if (token && (!isPublicBookEndpoint || isBookDetailEndpoint) && !options.headers['Authorization']) {
         options.headers['Authorization'] = `Bearer ${token}`;
       }
       
