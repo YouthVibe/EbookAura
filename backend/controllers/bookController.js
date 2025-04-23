@@ -170,22 +170,32 @@ const getBook = asyncHandler(async (req, res) => {
     console.log(`Serving book with custom URL: ${book.title} - Custom URL: ${book.customURLPDF}`);
   }
   
-  // Log premium status and data types
-  console.log(`Book premium status: ${book.title}, isPremium: ${book.isPremium} (type: ${typeof book.isPremium})`);
-  
-  if (book.isPremium) {
-    console.log(`Premium book price: ${book.price} coins (type: ${typeof book.price})`);
-  }
-  
   // Convert book to JSON and ensure property types are consistent
   const bookData = book.toObject();
   
-  // Force proper types for premium-related properties
+  // IMPORTANT: Force proper types for premium-related properties with redundant checks
+  // This ensures these fields are properly converted from MongoDB types
   bookData.isPremium = book.isPremium === true;
   bookData.price = book.price ? Number(book.price) : 0;
   
-  // Debug output of processed book data
-  console.log(`Processed book data: isPremium=${bookData.isPremium}, price=${bookData.price}`);
+  // Additional safeguards to ensure premium books are correctly identified
+  // For premium books with price but no isPremium flag
+  if (!bookData.isPremium && bookData.price > 0) {
+    bookData.isPremium = true;
+    console.log(`Setting isPremium=true for book with price ${bookData.price}`);
+  }
+  
+  // Force these to be proper JavaScript primitive types
+  bookData.views = Number(book.views);
+  bookData.downloads = Number(book.downloads);
+  bookData.averageRating = Number(book.averageRating || 0);
+  bookData.pageSize = Number(book.pageSize || 0);
+  bookData.fileSizeMB = Number(book.fileSizeMB || 0);
+  
+  // Debug output of processed book data with explicit type information
+  console.log(`Processed book data for ${book.title}:`);
+  console.log(`- isPremium = ${bookData.isPremium} (${typeof bookData.isPremium})`);
+  console.log(`- price = ${bookData.price} (${typeof bookData.price})`);
   
   // Check if the user has purchased this book (if authenticated and book is premium)
   if (req.user && bookData.isPremium) {

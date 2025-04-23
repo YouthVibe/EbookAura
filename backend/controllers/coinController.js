@@ -1,5 +1,7 @@
 const User = require('../models/User');
 const Book = require('../models/Book');
+const Purchase = require('../models/Purchase');
+const { v4: uuidv4 } = require('uuid');
 
 // @desc    Get user's coin balance
 // @route   GET /api/coins
@@ -166,17 +168,41 @@ const purchaseBook = async (req, res) => {
       });
     }
     
+    // Generate a transaction ID
+    const transactionId = uuidv4();
+    const balanceBefore = user.coins;
+    
     // Deduct coins and add book to user's purchased books
     user.coins -= book.price;
     user.purchasedBooks.push(bookId);
     await user.save();
+    
+    // Create purchase record
+    const purchase = new Purchase({
+      user: user._id,
+      book: book._id,
+      price: book.price,
+      purchaseDate: new Date(),
+      bookDetails: {
+        title: book.title,
+        author: book.author,
+        category: book.category,
+        coverImage: book.coverImage
+      },
+      transactionId,
+      balanceBefore,
+      balanceAfter: user.coins
+    });
+    
+    await purchase.save();
     
     res.status(200).json({
       message: 'Book purchased successfully',
       coins: user.coins,
       coinsSpent: book.price,
       bookId: book._id,
-      bookTitle: book.title
+      bookTitle: book.title,
+      transactionId
     });
   } catch (error) {
     console.error('Error purchasing book:', error);

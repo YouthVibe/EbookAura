@@ -88,7 +88,46 @@ export async function fetchAPI(endpoint, options = {}) {
       }
     }
     
-    // Handle successful response based on content type
+    // Check if this is a book detail endpoint and ensure proper data handling
+    if (endpoint.match(/^\/books\/[a-z0-9]+$/i) && 
+        contentType && contentType.includes('application/json')) {
+      try {
+        const responseData = await response.json();
+        
+        // Extra processing for book details to ensure premium properties are correct
+        if (responseData && typeof responseData === 'object') {
+          // Ensure isPremium is a proper boolean
+          if ('isPremium' in responseData) {
+            responseData.isPremium = responseData.isPremium === true;
+          }
+          
+          // Ensure price is a number
+          if ('price' in responseData) {
+            responseData.price = Number(responseData.price || 0);
+          }
+          
+          // If there's a price but no isPremium flag, set isPremium to true
+          if (!responseData.isPremium && responseData.price > 0) {
+            responseData.isPremium = true;
+            console.log('API Utils: Setting isPremium=true based on price > 0');
+          }
+          
+          // Log the processed book data
+          console.log('API Utils - Processed book details:', {
+            title: responseData.title,
+            isPremium: responseData.isPremium,
+            price: responseData.price
+          });
+        }
+        
+        return responseData;
+      } catch (parseError) {
+        console.error('Error parsing book details:', parseError);
+        throw parseError;
+      }
+    }
+    
+    // Regular handling for other endpoints
     if (contentType && contentType.includes('application/json')) {
       return await response.json();
     } else {
