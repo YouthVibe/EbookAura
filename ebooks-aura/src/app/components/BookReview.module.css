@@ -1452,4 +1452,108 @@
     height: 32px;
     font-size: 0.8rem;
   }
+}
+
+/* Already reviewed section */
+.alreadyReviewed {
+  padding: 1.5rem;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.alreadyReviewed h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.userReviewBox {
+  background-color: white;
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.userReviewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.userReviewRating {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.userReviewRating .displayStar {
+  color: #f59e0b;
+  font-size: 1.2rem;
+}
+
+.ratingText {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.deleteUserReviewButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.deleteUserReviewButton:hover {
+  background-color: #fecaca;
+  color: #ef4444;
+}
+
+.userReviewComment {
+  font-size: 1rem;
+  color: #1f2937;
+  line-height: 1.5;
+  font-style: italic;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background-color: #f9fafb;
+  border-radius: 0.375rem;
+  border-left: 3px solid #d1d5db;
+}
+
+.userReviewDate {
+  font-size: 0.875rem;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+  .userReviewHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .deleteUserReviewButton {
+    width: 100%;
+    justify-content: center;
+  }
 } 

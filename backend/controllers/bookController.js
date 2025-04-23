@@ -53,13 +53,16 @@ const getBooks = asyncHandler(async (req, res) => {
     // Fetch books with pagination - ensure isPremium is explicitly included
     const books = await Book.find(query)
       .sort(sort ? buildSortOptions(sort) : { createdAt: -1 })
-      .select('title author description category tags views downloads createdAt coverImage pageSize fileSizeMB averageRating isCustomUrl customURLPDF isPremium')
+      .select('title author description category tags views downloads createdAt coverImage pageSize fileSizeMB averageRating isCustomUrl customURLPDF isPremium price')
       .skip(skip)
       .limit(limitCapped);
     
     // Log a sample book to verify isPremium is included
     if (books.length > 0) {
       console.log(`Sample book premium status: ${books[0].title} - isPremium: ${books[0].isPremium}`);
+      if (books[0].isPremium) {
+        console.log(`Sample book price: ${books[0].price} coins`);
+      }
     }
       
     // Send response with pagination metadata and ensure isPremium is properly passed
@@ -131,7 +134,7 @@ const getTags = asyncHandler(async (req, res) => {
 // @access  Public
 const getBook = asyncHandler(async (req, res) => {
   const book = await Book.findById(req.params.id)
-    .select('title author description category tags views downloads createdAt pdfUrl pdfId coverImage pageSize fileSizeMB averageRating isCustomUrl customURLPDF isPremium');
+    .select('title author description category tags views downloads createdAt pdfUrl pdfId coverImage pageSize fileSizeMB averageRating isCustomUrl customURLPDF isPremium price');
     
   if (!book) {
     res.status(404);
@@ -153,6 +156,17 @@ const getBook = asyncHandler(async (req, res) => {
   // Convert book to JSON and ensure isPremium is properly set
   const bookData = book.toObject();
   bookData.isPremium = book.isPremium === true;
+  
+  // Check if the user has purchased this book (if authenticated and book is premium)
+  if (req.user && book.isPremium) {
+    const hasAccess = req.user.purchasedBooks && req.user.purchasedBooks.some(
+      purchasedId => purchasedId.toString() === book._id.toString()
+    );
+    bookData.userHasAccess = hasAccess;
+    console.log(`User ${req.user._id} has access to premium book ${book._id}: ${hasAccess}`);
+  } else {
+    bookData.userHasAccess = !book.isPremium; // Non-premium books are always accessible
+  }
   
   res.json(bookData);
 });

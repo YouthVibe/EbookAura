@@ -8,6 +8,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import { useAuth } from '../../context/AuthContext';
 
 // Dynamically import the BookPageClient component to avoid PDF.js related SSR issues
 const BookPageClient = dynamic(() => import('./BookPageClient'), {
@@ -37,6 +38,19 @@ export default function BookClientWrapper({ params: serverParams }) {
   const clientParams = useParams();
   const pathname = usePathname();
   const router = useRouter();
+  
+  // Get auth context
+  const { user, isLoggedIn } = useAuth();
+  
+  // Debug auth state
+  useEffect(() => {
+    console.log('BookClientWrapper - Auth State:', { 
+      isLoggedIn, 
+      user: user ? 'exists' : 'null',
+      userId: user?.id,
+      coins: user?.coins
+    });
+  }, [user, isLoggedIn]);
 
   useEffect(() => {
     // Function to extract book ID from different sources
@@ -134,5 +148,6 @@ export default function BookClientWrapper({ params: serverParams }) {
     </div>;
   }
 
+  // Render the BookPageClient component with the book ID
   return <BookPageClient id={bookId} />;
 } 

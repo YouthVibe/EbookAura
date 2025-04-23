@@ -1,0 +1,299 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-top: 4rem;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background-color: #f4f4f4;
+  color: #333;
+  border-radius: 50%;
+  margin-right: 1rem;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.backButton:hover {
+  background-color: #e0e0e0;
+  transform: translateX(-3px);
+}
+
+.title {
+  font-size: 2rem;
+  margin: 0;
+  color: #333;
+}
+
+.loading {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #666;
+  margin-top: 2rem;
+}
+
+.error {
+  background-color: #fee2e2;
+  color: #ef4444;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.success {
+  background-color: #ecfdf5;
+  color: #10b981;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.coinsBalance {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #111;
+  color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  margin-bottom: 2.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.coinsBalance::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center, rgba(255, 215, 0, 0.2) 0%, rgba(0, 0, 0, 0) 70%);
+  pointer-events: none;
+}
+
+.coinIcon {
+  font-size: 3rem;
+  color: #ffd700;
+  margin-bottom: 1rem;
+}
+
+.coinCount {
+  font-size: 4rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.coinLabel {
+  font-size: 1.5rem;
+  color: #ccc;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.actionsContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.rewardCard {
+  background-color: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.rewardCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.rewardHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.rewardIcon {
+  font-size: 1.5rem;
+  margin-right: 0.75rem;
+  color: #ffd700;
+}
+
+.rewardTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  color: #333;
+}
+
+.rewardDescription {
+  color: #666;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.errorMessage {
+  color: #ef4444;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.nextClaimTime {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.claimButton, .adButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.claimButton {
+  background-color: #ffd700;
+  color: #111;
+}
+
+.claimButton:hover {
+  background-color: #f8c500;
+  transform: translateY(-2px);
+}
+
+.adButton {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.adButton:hover {
+  background-color: #2563eb;
+  transform: translateY(-2px);
+}
+
+.claimButton:disabled, .adButton:disabled {
+  background-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.buttonIcon {
+  font-size: 1.2rem;
+}
+
+.historySection {
+  background-color: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.historyTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.5rem;
+  color: #333;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #eee;
+}
+
+.historyList {
+  display: flex;
+  flex-direction: column;
+}
+
+.historyItem {
+  display: grid;
+  grid-template-columns: 1fr 1fr 0.7fr;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.historyItem:last-child {
+  border-bottom: none;
+}
+
+.historyDate {
+  color: #666;
+}
+
+.historyType {
+  color: #333;
+  font-weight: 500;
+}
+
+.historyAmount {
+  color: #10b981;
+  font-weight: 600;
+  text-align: right;
+}
+
+.emptyHistory {
+  color: #666;
+  text-align: center;
+  padding: 2rem 0;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .header {
+    padding-top: 5rem;
+  }
+  
+  .title {
+    font-size: 1.75rem;
+  }
+  
+  .coinCount {
+    font-size: 3rem;
+  }
+  
+  .actionsContainer {
+    grid-template-columns: 1fr;
+  }
+  
+  .historyItem {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .historyAmount {
+    grid-column: 2;
+    text-align: right;
+  }
+  
+  .historyType {
+    grid-column: 1;
+    grid-row: 2;
+  }
+} 

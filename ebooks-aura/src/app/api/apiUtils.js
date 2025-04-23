@@ -3,10 +3,10 @@
  * This file centralizes API call functions and ensures they all use the configured API URL
  */
 
-// Use the API URL from environment variables with fallback
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-// Production URL - commented out to use environment variable
-// const API_BASE_URL = 'https://ebookaura.onrender.com/api';
+// Use the production API URL directly
+const API_BASE_URL = 'https://ebookaura.onrender.com/api';
+// Fallback options commented out
+// const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 /**
  * Make a fetch request to the API with appropriate headers and error handling

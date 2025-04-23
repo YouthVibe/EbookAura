@@ -97,7 +97,7 @@ const uploadPdf = async (req, res) => {
     });
 
     // Check if all required fields are present
-    const { title, author, description, category, pageSize, isCustomUrl, customURLPDF, customUrlFileSize, isPremium } = req.body;
+    const { title, author, description, category, pageSize, isCustomUrl, customURLPDF, customUrlFileSize, isPremium, price } = req.body;
     
     if (!title || !author || !description || !category || !pageSize) {
       return res.status(400).json({ message: 'All fields are required' });
@@ -114,6 +114,19 @@ const uploadPdf = async (req, res) => {
 
     // Parse isPremium value
     const bookIsPremium = isPremium === 'true' || isPremium === true;
+    
+    // Parse and validate price if book is premium
+    let bookPrice = 0;
+    if (bookIsPremium) {
+      if (!price && price !== 0) {
+        return res.status(400).json({ message: 'Price is required for premium books' });
+      }
+      
+      bookPrice = parseInt(price, 10);
+      if (isNaN(bookPrice) || bookPrice < 0) {
+        return res.status(400).json({ message: 'Price must be a valid number greater than or equal to 0' });
+      }
+    }
     
     // Handle the custom URL case
     if (isCustomUrl === 'true' && customURLPDF) {
@@ -178,28 +191,37 @@ const uploadPdf = async (req, res) => {
         });
       }
       
-      // Generate a placeholder PDF ID for custom URL PDFs
+      // Generate a unique identifier for the PDF
       const timestamp = Date.now();
       const sanitizedTitle = title.replace(/[^a-zA-Z0-9]/g, '_');
       const pdfId = `custom_url_${sanitizedTitle}_${timestamp}`;
       
-      // Create a new book document with the custom URL
+      // Create a new book document for the custom URL PDF
       const newBook = new Book({
         title,
         author,
         description,
         coverImage: coverResult.secure_url,
         coverImageId: coverResult.public_id,
-        pdfUrl: customURLPDF, // Use the custom URL directly
+        pdfUrl: customURLPDF,
         pdfId: pdfId,
         isCustomUrl: true,
         customURLPDF: customURLPDF,
-        isPremium: bookIsPremium, // Add premium status
+        isPremium: bookIsPremium,
+        price: bookPrice, // Add price field for premium books
         pageSize: parseInt(pageSize, 10),
-        fileSizeMB: fileSizeMB, // Use the provided file size
+        fileSizeMB: fileSizeMB,
         category,
         tags: req.body.tags ? req.body.tags.split(',').map(tag => tag.trim()) : [],
         uploadedBy: req.user._id
+      });
+      
+      console.log('Creating book with custom URL and user ID:', req.user._id);
+      console.log('Book data being saved:', { 
+        ...newBook._doc, 
+        uploadedBy: req.user._id.toString(),
+        isPremium: bookIsPremium,
+        price: bookPrice
       });
       
       // Create new book in database
@@ -366,6 +388,7 @@ const uploadPdf = async (req, res) => {
         isCustomUrl: false, // This is a regular file upload
         customURLPDF: '', // No custom URL
         isPremium: bookIsPremium, // Add premium status
+        price: bookPrice, // Add the price for premium books
         pageSize: parseInt(pageSize, 10),
         fileSizeMB: fileSizeMB, // Save the calculated file size
         category,
@@ -374,7 +397,12 @@ const uploadPdf = async (req, res) => {
       });
       
       console.log('Creating book with user ID:', req.user._id);
-      console.log('Book data being saved:', { ...newBook, uploadedBy: req.user._id.toString() });
+      console.log('Book data being saved:', { 
+        ...newBook._doc, 
+        uploadedBy: req.user._id.toString(),
+        isPremium: bookIsPremium,
+        price: bookPrice
+      });
       
       // Create new book in database
       try {

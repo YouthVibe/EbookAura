@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { FaDownload, FaEye, FaBook, FaArrowLeft, FaStar, FaCalendarAlt, FaFileAlt, FaLock, FaCrown, FaUser } from 'react-icons/fa';
+import { useState, useEffect, useCallback } from 'react';
+import { FaDownload, FaEye, FaBook, FaArrowLeft, FaStar, FaCalendarAlt, FaFileAlt, FaLock, FaCrown, FaUser, FaCoins, FaCheck } from 'react-icons/fa';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
@@ -10,6 +10,8 @@ import styles from './book.module.css';
 import { API_ENDPOINTS } from '../../utils/config';
 import { createDownloadablePdf } from '../../utils/pdfUtils';
 import { useAuth } from '../../context/AuthContext';
+import { purchaseBook, checkBookPurchase } from '../../api/coins';
+import { toast } from 'react-toastify';
 
 // Dynamically import PdfViewer with no SSR to avoid the Promise.withResolvers error
 const PdfViewer = dynamic(() => import('../../components/PdfViewer'), {
@@ -32,8 +34,50 @@ export default function BookPageClient({ id }) {
   const [pdfUrl, setPdfUrl] = useState(null);
   const [openingCustomUrl, setOpeningCustomUrl] = useState(false);
   const [premiumError, setPremiumError] = useState(null);
+  const [purchasing, setPurchasing] = useState(false);
+  const [purchaseSuccess, setPurchaseSuccess] = useState(false);
+  const [purchaseError, setPurchaseError] = useState(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const router = useRouter();
-  const { isLoggedIn, getToken, getApiKey } = useAuth();
+  const { user, isLoggedIn, getToken, getApiKey, updateUserCoins } = useAuth();
+  
+  // Computed properties for better readability
+  const isPremiumBook = book?.isPremium;
+  const userHasPurchased = book?.userHasAccess;
+  const userHasEnoughCoins = user && book ? user.coins >= book.price : false;
+  
+  // Check if user has purchased the book
+  const checkPurchaseStatus = useCallback(async () => {
+    if (!isLoggedIn || !id || !isPremiumBook) {
+      return;
+    }
+    
+    try {
+      const result = await checkBookPurchase(id);
+      
+      if (result && result.success) {
+        // Update book with purchase status
+        setBook(prevBook => ({
+          ...prevBook,
+          userHasAccess: result.hasPurchased
+        }));
+        
+        if (result.hasPurchased) {
+          setPurchaseSuccess(true);
+        }
+      }
+    } catch (err) {
+      console.error('Error checking book purchase status:', err);
+      // Don't show an error UI to the user for this check
+    }
+  }, [isLoggedIn, id, isPremiumBook, setPurchaseSuccess, setBook]);
+  
+  // Check purchase status when auth state changes or after purchase
+  useEffect(() => {
+    if (isLoggedIn && id && isPremiumBook) {
+      checkPurchaseStatus();
+    }
+  }, [isLoggedIn, id, isPremiumBook, checkPurchaseStatus]);
   
   // Static export safeguard - ensure ID is available
   useEffect(() => {
@@ -44,9 +88,15 @@ export default function BookPageClient({ id }) {
       return;
     }
     
-    console.log('BookPageClient: Initializing with book ID:', id);
     fetchBookDetails(id);
   }, [id]);
+  
+  // Refetch book details when auth state changes
+  useEffect(() => {
+    if (id && (user || isLoggedIn)) {
+      fetchBookDetails(id);
+    }
+  }, [user, isLoggedIn, id]);
 
   // Clean up PDF blob URL when component unmounts or when PDF viewer is closed
   useEffect(() => {
@@ -65,13 +115,31 @@ export default function BookPageClient({ id }) {
     
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-      console.log(`Fetching book details from: ${apiUrl}/books/${bookId}`);
+      
+      // Always check for token directly from localStorage as a fallback
+      const localStorageToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      
+      // Add auth token if user is logged in to check purchase status
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      // First try to use the token from auth context
+      let token = getToken();
+      
+      // If no token from context but one exists in localStorage, use that instead
+      if (!token && localStorageToken) {
+        token = localStorageToken;
+      }
+      
+      // Add token to headers if available
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
       
       const response = await fetch(`${apiUrl}/books/${bookId}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        headers
       });
       
       if (!response.ok) {
@@ -90,6 +158,12 @@ export default function BookPageClient({ id }) {
       
       // Set the book data in state
       setBook(bookData);
+      
+      // If premium book and user has access, clear any previous purchase states
+      if (bookData.isPremium && bookData.userHasAccess) {
+        setPurchaseSuccess(true);
+        setPurchaseError(null);
+      }
       
       // Track view if not tracked already in this session
       const viewedBooks = JSON.parse(localStorage.getItem('viewedBooks') || '[]');
@@ -365,6 +439,98 @@ export default function BookPageClient({ id }) {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
+  // Function to initiate the purchase process
+  const initiateBookPurchase = () => {
+    if (!book || !id) {
+      console.error('Cannot purchase: Book data or ID is missing');
+      return;
+    }
+    
+    if (!isLoggedIn) {
+      setPremiumError('You need to be logged in to purchase this book');
+      router.push('/login');
+      return;
+    }
+    
+    // Check if user already owns the book
+    if (userHasPurchased || purchaseSuccess) {
+      toast.info('You already own this book');
+      return;
+    }
+    
+    // Check if user has enough coins
+    if (!userHasEnoughCoins) {
+      setPurchaseError(`You need ${book.price - user.coins} more coins to purchase this book`);
+      return;
+    }
+    
+    // Show confirmation dialog
+    setShowConfirmation(true);
+  };
+  
+  // Function to actually purchase the book after confirmation
+  const handlePurchase = async () => {
+    try {
+      setPurchasing(true);
+      setPurchaseError(null);
+      setShowConfirmation(false);
+      
+      const result = await purchaseBook(id);
+      
+      // Update user's coins
+      if (result && typeof result.coins === 'number') {
+        updateUserCoins(result.coins);
+        
+        // Check purchase status to update UI
+        await checkPurchaseStatus();
+        
+        setPurchaseSuccess(true);
+        toast.success('Book purchased successfully!');
+      }
+    } catch (err) {
+      console.error('Error purchasing book:', err);
+      
+      // Extract error message from the response if available
+      let errorMessage = 'Failed to purchase book. Please try again.';
+      if (err.response && err.response.data && err.response.data.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setPurchaseError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setPurchasing(false);
+    }
+  };
+  
+  // Function to cancel purchase
+  const cancelPurchase = () => {
+    setShowConfirmation(false);
+  };
+  
+  // Force check login state
+  const forceCheckLogin = () => {
+    // Check local storage directly
+    const token = localStorage.getItem('token');
+    const userInfo = localStorage.getItem('userInfo');
+    
+    if (token && userInfo) {
+      try {
+        // Fetch book with auth token to refresh state
+        fetchBookDetails(id);
+        
+        // Show success message
+        toast.info('Auth state refreshed');
+      } catch (e) {
+        console.error('Error refreshing auth state:', e);
+      }
+    } else {
+      toast.error('No login data found in local storage');
+    }
+  };
+
   if (loading) {
     return (
       <div className={styles.loadingContainer}>
@@ -410,7 +576,7 @@ export default function BookPageClient({ id }) {
             {book.coverImage ? (
               <>
                 <img src={book.coverImage} alt={book.title} />
-                {book.isPremium && (
+                {isPremiumBook && (
                   <div className={styles.premiumOverlay}>
                     <FaLock className={styles.lockIcon} />
                   </div>
@@ -419,10 +585,10 @@ export default function BookPageClient({ id }) {
             ) : (
               <div className={styles.placeholderCover}>
                 <FaBook />
-                {book.isPremium && <FaLock className={styles.lockIconPlaceholder} />}
+                {isPremiumBook && <FaLock className={styles.lockIconPlaceholder} />}
               </div>
             )}
-            {book.isPremium && (
+            {isPremiumBook && (
               <div className={styles.premiumBadge}>
                 <FaCrown className={styles.crownIcon} /> Premium
               </div>
@@ -434,7 +600,7 @@ export default function BookPageClient({ id }) {
             <p className={styles.author}>by {book.author}</p>
             <div className={styles.categoryInfo}>
               <p className={styles.category}>{book.category}</p>
-              {book.isPremium && (
+              {isPremiumBook && (
                 <span className={styles.premiumTag}>
                   <FaCrown className={styles.premiumIcon} /> Premium
                 </span>
@@ -483,21 +649,110 @@ export default function BookPageClient({ id }) {
                 )}
               </div>
             </div>
+            
+            {/* Display price for premium books */}
+            {isPremiumBook && (
+              <div className={styles.premiumPurchaseContainer}>
+                {/* Debug info - only in development */}
+                {process.env.NODE_ENV === 'development' && (
+                  <div style={{ fontSize: '10px', background: '#f0f0f0', padding: '5px', marginBottom: '10px', borderRadius: '4px', display: 'none' }}>
+                    <div>Debug: isLoggedIn={String(isLoggedIn)}</div>
+                    <div>Debug: userHasPurchased={String(userHasPurchased)}</div>
+                  </div>
+                )}
+                
+                <div className={styles.premiumInfo}>
+                  <div className={styles.premiumPrice}>
+                    <FaCoins className={styles.coinIcon} />
+                    <span className={styles.priceValue}>{book.price}</span> coins
+                  </div>
+                  
+                  {isLoggedIn && (
+                    <div className={styles.userCoins}>
+                      <span>Your balance: </span>
+                      <FaCoins className={styles.coinIcon} />
+                      <span className={styles.coinValue}>{user?.coins || 0}</span> coins
+                    </div>
+                  )}
+                </div>
+                
+                {/* Purchase section for logged in users */}
+                {isLoggedIn && !userHasPurchased && !purchaseSuccess && (
+                  <>
+                    {purchaseError && (
+                      <div className={styles.purchaseError}>
+                        {purchaseError}
+                      </div>
+                    )}
+                    
+                    <button 
+                      onClick={initiateBookPurchase}
+                      className={`${styles.purchaseButton} ${!userHasEnoughCoins ? styles.disabledPurchase : ''}`}
+                      disabled={purchasing || !userHasEnoughCoins}
+                    >
+                      {purchasing ? 'Processing...' : (
+                        <>
+                          <FaCoins className={styles.buttonCoinIcon} />
+                          Purchase with Coins
+                        </>
+                      )}
+                    </button>
+                    
+                    {!userHasEnoughCoins && (
+                      <div className={styles.insufficientCoins}>
+                        You need <strong>{book.price - user.coins}</strong> more coins to purchase this book.
+                        <Link href="/coins" className={styles.getCoinsLink}>
+                          <FaCoins className={styles.coinIcon} /> Get more coins
+                        </Link>
+                      </div>
+                    )}
+                  </>
+                )}
+                
+                {/* Success message after purchase */}
+                {(userHasPurchased || purchaseSuccess) && (
+                  <div className={styles.purchaseSuccess}>
+                    <FaCheck /> You own this book! You can now access the full content.
+                  </div>
+                )}
+                
+                {/* Message for non-logged in users */}
+                {!isLoggedIn && (
+                  <div className={styles.purchaseLogin}>
+                    <Link href="/login" className={styles.loginLink}>
+                      <FaUser className={styles.userIcon} /> Log in
+                    </Link> 
+                    to purchase this premium book.
+                    
+                    {process.env.NODE_ENV === 'development' && (
+                      <button 
+                        onClick={forceCheckLogin}
+                        style={{
+                          display: 'none', // Hide in UI but keep for debugging
+                          marginLeft: '10px',
+                          fontSize: '11px',
+                          padding: '3px 6px',
+                          background: '#f0f0f0',
+                          border: '1px solid #ccc',
+                          borderRadius: '3px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Retry login check
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className={styles.actions}>
-              {book.isPremium && !isLoggedIn && (
-                <div className={styles.premiumMessage}>
-                  <FaLock className={styles.lockIconMessage} />
-                  <p>This is premium content. <Link href="/login" className={styles.loginLink}>Log in</Link> to access.</p>
-                </div>
-              )}
-              
               {book.isCustomUrl ? (
                 // For custom URL PDFs, show a single "Open PDF" button that redirects to the URL
                 <button 
                   onClick={handleOpenCustomUrl}
-                  className={`${styles.openUrlButton} ${book.isPremium && !isLoggedIn ? styles.disabledButton : ''}`}
-                  disabled={openingCustomUrl || (book.isPremium && !isLoggedIn)}
+                  className={`${styles.openUrlButton} ${(isPremiumBook && !userHasPurchased && !purchaseSuccess) ? styles.disabledButton : ''}`}
+                  disabled={openingCustomUrl || (isPremiumBook && !userHasPurchased && !purchaseSuccess)}
                 >
                   <FaFileAlt /> {openingCustomUrl ? 'Opening...' : 'Open PDF'}
                 </button>
@@ -506,16 +761,16 @@ export default function BookPageClient({ id }) {
                 <>
                   <button 
                     onClick={handleViewPdf} 
-                    className={`${styles.viewButton} ${book.isPremium && !isLoggedIn ? styles.disabledButton : ''}`}
-                    disabled={viewing || (book.isPremium && !isLoggedIn)}
+                    className={`${styles.viewButton} ${(isPremiumBook && !userHasPurchased && !purchaseSuccess) ? styles.disabledButton : ''}`}
+                    disabled={viewing || (isPremiumBook && !userHasPurchased && !purchaseSuccess)}
                   >
                     <FaFileAlt /> {viewing ? 'Opening...' : 'View PDF'}
                   </button>
                   
                   <button 
                     onClick={handleDownload} 
-                    className={`${styles.downloadButton} ${book.isPremium && !isLoggedIn ? styles.disabledButton : ''}`}
-                    disabled={downloading || (book.isPremium && !isLoggedIn)}
+                    className={`${styles.downloadButton} ${(isPremiumBook && !userHasPurchased && !purchaseSuccess) ? styles.disabledButton : ''}`}
+                    disabled={downloading || (isPremiumBook && !userHasPurchased && !purchaseSuccess)}
                   >
                     <FaDownload /> {downloading ? 'Downloading...' : 'Download PDF'}
                   </button>
@@ -527,6 +782,20 @@ export default function BookPageClient({ id }) {
 
         <BookReview bookId={id} />
       </div>
+
+      {/* Purchase confirmation dialog */}
+      {showConfirmation && (
+        <div className={styles.confirmationOverlay}>
+          <div className={styles.confirmationDialog}>
+            <h3>Confirm Purchase</h3>
+            <p>Are you sure you want to purchase "{book.title}" for {book.price} coins?</p>
+            <div className={styles.confirmationButtons}>
+              <button onClick={cancelPurchase} className={styles.cancelButton}>Cancel</button>
+              <button onClick={handlePurchase} className={styles.confirmButton}>Confirm Purchase</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showPdfViewer && pdfUrl && typeof window !== 'undefined' && (
         <PdfViewer 

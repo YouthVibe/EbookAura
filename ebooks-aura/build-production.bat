@@ -8,7 +8,9 @@ echo Checking configuration...
 REM Check if .env file exists
 if not exist .env (
   echo Creating .env file with production settings...
-  echo # Production API URL > .env
+  echo # Development URL (commented out) > .env
+  echo # NEXT_PUBLIC_API_URL=http://localhost:5000/api >> .env
+  echo # Production URL (active) >> .env
   echo NEXT_PUBLIC_API_URL=https://ebookaura.onrender.com/api >> .env
   echo STATIC_EXPORT=true >> .env
 ) else (
@@ -19,12 +21,21 @@ if not exist .env (
 
 REM Check config.js file
 echo Verifying API configuration in source files...
-powershell -Command "(Get-Content src/app/utils/config.js) -replace 'export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL \|\| ''http://localhost:5000/api'';', '// export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ''http://localhost:5000/api'';' | Set-Content src/app/utils/config.js"
-powershell -Command "(Get-Content src/app/utils/config.js) -replace '// export const API_BASE_URL = ''https://ebookaura.onrender.com/api'';', 'export const API_BASE_URL = ''https://ebookaura.onrender.com/api'';' | Set-Content src/app/utils/config.js"
+powershell -Command "(Get-Content src/app/utils/config.js) -replace 'export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL \|\| ''http://localhost:5000/api'';', '// Fallback options commented out\n// export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ''http://localhost:5000/api'';' | Set-Content src/app/utils/config.js"
+powershell -Command "(Get-Content src/app/utils/config.js) -replace '// export const API_BASE_URL = ''https://ebookaura.onrender.com/api'';', '// Use production URL directly\nexport const API_BASE_URL = ''https://ebookaura.onrender.com/api'';' | Set-Content src/app/utils/config.js"
+
+REM Check apiUtils.js file
+echo Updating API utilities...
+powershell -Command "(Get-Content src/app/api/apiUtils.js) -replace 'const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL \|\| ''http://localhost:5000/api'';', '// Fallback options commented out\n// const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ''http://localhost:5000/api'';' | Set-Content src/app/api/apiUtils.js"
+powershell -Command "(Get-Content src/app/api/apiUtils.js) -replace '// const API_BASE_URL = ''https://ebookaura.onrender.com/api'';', '// Use the production API URL directly\nconst API_BASE_URL = ''https://ebookaura.onrender.com/api'';' | Set-Content src/app/api/apiUtils.js"
 
 echo.
 echo Building production version...
 echo.
+
+REM Run node script to check API URLs
+echo Running API URL configuration check...
+node check-api-urls.js
 
 REM Run build
 call npm run build

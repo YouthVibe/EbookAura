@@ -17,7 +17,8 @@ import {
   FaLayerGroup, 
   FaBookOpen,
   FaCheck,
-  FaLink
+  FaLink,
+  FaCoins
 } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import styles from '../profile.module.css';
@@ -139,6 +140,8 @@ export default function UploadPdf() {
   
   // New state for premium PDF status
   const [isPremium, setIsPremium] = useState(false);
+  // New state for price in coins
+  const [price, setPrice] = useState('');
 
   useEffect(() => {
     // Redirect if not logged in
@@ -384,8 +387,8 @@ export default function UploadPdf() {
       return false;
     }
     
-    if (description.length > 1000) {
-      setError('Description must be under 1000 characters');
+    if (description.length > 200) {
+      setError('Description must be under 200 characters');
       return false;
     }
     
@@ -399,48 +402,47 @@ export default function UploadPdf() {
       return false;
     }
     
-    // Check min 1 tag requirement
-    if (selectedTags.length < 1) {
-      setError('Please add at least 1 tag');
-      return false;
-    }
-    
-    // Check max 10 tags limit
-    if (selectedTags.length > 10) {
-      setError('Maximum 10 tags allowed');
-      return false;
-    }
-    
-    // Custom validation based on PDF input method
-    if (isPdfUrl) {
-      if (!pdfUrl.trim()) {
-        setError('Please enter a PDF URL');
+    // Check for price if it's a premium PDF
+    if (isPremium) {
+      if (!price) {
+        setError('Price is required for premium PDFs');
         return false;
       }
       
-      // Validate URL format
-      try {
-        new URL(pdfUrl);
-      } catch (err) {
-        setError('Please enter a valid URL');
+      const priceNum = parseInt(price, 10);
+      if (isNaN(priceNum) || priceNum < 0) {
+        setError('Price must be a valid number greater than or equal to 0');
         return false;
       }
-
-      // Validate file size for custom URL
+    }
+    
+    // Check PDF file or URL depending on input method
+    if (isPdfUrl) {
+      if (!pdfUrl.trim()) {
+        setError('Please enter a valid PDF URL');
+        return false;
+      }
+      
+      try {
+        new URL(pdfUrl);
+      } catch (error) {
+        setError('Please enter a valid URL format');
+        return false;
+      }
+      
+      // Check file size for custom URL PDFs
       if (!customUrlFileSize || isNaN(customUrlFileSize) || parseFloat(customUrlFileSize) <= 0) {
-        setError('Please enter a valid file size in MB');
+        setError('Please enter a valid file size for the PDF (greater than 0 MB)');
         return false;
       }
     } else {
-      // File upload validation
       if (!pdfFile) {
         setError('Please select a PDF file to upload');
         return false;
       }
       
-      // Update size limit to 10MB
-      if (pdfFile.size > 10 * 1024 * 1024) {
-        setError('PDF file size should be less than 10MB');
+      if (pdfFile.size > 300 * 1024 * 1024) {
+        setError('PDF file size should be less than 300MB');
         return false;
       }
     }
@@ -450,9 +452,8 @@ export default function UploadPdf() {
       return false;
     }
     
-    // Update size limit to 1MB
-    if (coverFile.size > 1 * 1024 * 1024) {
-      setError('Cover image size should be less than 1MB');
+    if (coverFile.size > 5 * 1024 * 1024) {
+      setError('Cover image size should be less than 5MB');
       return false;
     }
     
@@ -671,6 +672,11 @@ export default function UploadPdf() {
       // Add premium status
       formData.append('isPremium', isPremium);
       
+      // Add price for premium books
+      if (isPremium) {
+        formData.append('price', price);
+      }
+      
       // Join tags with comma
       if (selectedTags.length > 0) {
         formData.append('tags', selectedTags.join(','));
@@ -731,7 +737,11 @@ export default function UploadPdf() {
       setTitleChars(0);
       setAuthorChars(0);
       setDescChars(0);
-      setIsPremium(false); // Reset premium status
+      setIsPdfUrl(false);
+      setPdfUrl('');
+      setCustomUrlFileSize('');
+      setIsPremium(false);
+      setPrice('');
       
       // Set success message
       setSuccess('E-book successfully uploaded!');
@@ -741,10 +751,6 @@ export default function UploadPdf() {
         setIsUploading(false);
         setUploadProgress(0);
       }, 2000);
-      
-      // Additional reset in case of URL input
-      setIsPdfUrl(false);
-      setPdfUrl('');
       
     } catch (err) {
       console.error('Error uploading e-book:', err);
@@ -1170,9 +1176,32 @@ export default function UploadPdf() {
             </div>
             <p className={styles.fieldHelp}>
               <FaInfoCircle style={{ marginRight: '8px' }} />
-              Mark this PDF as premium content (restricted access)
+              Mark this PDF as premium content that requires coins to access
             </p>
           </div>
+          
+          {/* Price field - only shown when isPremium is checked */}
+          {isPremium && (
+            <div className={styles.formGroup}>
+              <label htmlFor="price" className={styles.label}>
+                <FaCoins style={{ marginRight: '8px' }} />
+                Price (in coins)
+              </label>
+              <input
+                type="number"
+                id="price"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                className={styles.input}
+                min="0"
+                required={isPremium}
+              />
+              <p className={styles.fieldHelp}>
+                <FaInfoCircle style={{ marginRight: '8px' }} />
+                Set the price in coins that users need to pay to access this premium content
+              </p>
+            </div>
+          )}
 
           <div className={getFileContainerClassName(coverFile, coverFile && coverFile.size <= 1 * 1024 * 1024)}>
             <input

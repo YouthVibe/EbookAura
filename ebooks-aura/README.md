@@ -172,41 +172,42 @@ Upload the contents of the `out` directory to any static file host.
 
 This application is configured to use the production API at `https://ebookaura.onrender.com/api`. 
 
-To switch between development and production environments:
+We have implemented several utilities to help manage API URLs between development and production:
 
-1. In `src/app/utils/config.js`, comment/uncomment the appropriate API_BASE_URL line:
-   ```javascript
-   // For local development
-   // export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-   
-   // For production deployment
-   export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://ebookaura.onrender.com/api';
+1. **Automatic Configuration Scripts**
+   - `build-production.bat` - Sets up all configuration files to use the production API URL and builds the application
+   - `switch-to-dev.bat` - Switches configuration to use the development API URL (localhost)
+   - `check-api-urls.js` - Utility script to verify API URL configuration across files
+
+2. **Configuration Files**
+   - `.env` - Contains environment variables like `NEXT_PUBLIC_API_URL`
+   - `src/app/api/apiUtils.js` - Central API utilities with API_BASE_URL configuration
+   - `src/app/utils/config.js` - Application-wide configuration including API endpoints
+   - `next.config.mjs` - Next.js configuration with API rewrites
+
+To switch between environments:
+
+1. **For Production**:
+   ```
+   npm run build:production
+   ```
+   or
+   ```
+   .\build-production.bat
    ```
 
-2. For environment-based configuration, use the `.env.local` file:
+2. **For Development**:
    ```
-   # Set to your backend URL
-   NEXT_PUBLIC_API_URL=https://ebookaura.onrender.com/api
+   .\switch-to-dev.bat
+   npm run dev
    ```
 
-### Deploying to Vercel
-
-The frontend can be easily deployed to Vercel:
-
-1. Connect your GitHub repository to Vercel
-2. Configure the environment variables
-3. Deploy with default settings
-
-### Deploying to Other Platforms
-
-For other platforms (Netlify, etc.):
-
-1. Build the application:
+3. **To Check Configuration**:
    ```
-   npm run build
+   node check-api-urls.js
    ```
-   
-2. Deploy the `.next` directory according to the platform's documentation
+
+The scripts ensure consistent API URL usage across all files in the application.
 
 ## Folder Structure
 

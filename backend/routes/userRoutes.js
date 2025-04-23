@@ -13,7 +13,8 @@ const {
   forgotPasswordWithCode,
   resetPasswordWithCode,
   deleteAccount,
-  verifyPassword
+  verifyPassword,
+  checkBookPurchase
 } = require('../controllers/userController');
 const { 
   getUserBookmarks, 
@@ -50,6 +51,7 @@ router.get('/profile', protect, getUserProfile);
 router.put('/profile', protect, updateUserProfile);
 router.delete('/profile', protect, deleteAccount);
 router.post('/verify-password', protect, verifyPassword);
+router.get('/check-purchase/:bookId', protect, checkBookPurchase);
 
 // Apply fileUpload middleware only for the image upload route
 router.put('/profile/image', protect, fileUpload(fileUploadOptions), updateProfileImage);

@@ -248,6 +248,7 @@ const loginUser = async (req, res) => {
       isEmailVerified: user.isEmailVerified,
       profileImage: user.profileImage,
       isAdmin: user.isAdmin,
+      coins: user.coins,
       token
     });
   } catch (error) {
@@ -277,6 +278,7 @@ const getUserProfile = async (req, res) => {
       isEmailVerified: user.isEmailVerified,
       profileImage: user.profileImage,
       isAdmin: user.isAdmin,
+      coins: user.coins,
       createdAt: user.createdAt
     });
   } catch (error) {
@@ -756,6 +758,51 @@ const verifyPassword = async (req, res) => {
   }
 };
 
+// @desc    Check if user has purchased a book
+// @route   GET /api/users/check-purchase/:bookId
+// @access  Private
+const checkBookPurchase = async (req, res) => {
+  try {
+    const { bookId } = req.params;
+    
+    if (!bookId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Book ID is required' 
+      });
+    }
+
+    // Find the user with populated purchased books
+    const user = await User.findById(req.user._id);
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+    
+    // Check if the book is in the user's purchased books array
+    const hasPurchased = user.purchasedBooks.some(
+      id => id.toString() === bookId
+    );
+    
+    res.status(200).json({
+      success: true,
+      hasPurchased,
+      bookId
+    });
+    
+  } catch (error) {
+    console.error('Error checking book purchase:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error', 
+      error: error.message 
+    });
+  }
+};
+
 module.exports = {
   registerUser,
   verifyEmail,
@@ -769,5 +816,6 @@ module.exports = {
   forgotPasswordWithCode,
   resetPasswordWithCode,
   deleteAccount,
-  verifyPassword
+  verifyPassword,
+  checkBookPurchase
 }; 

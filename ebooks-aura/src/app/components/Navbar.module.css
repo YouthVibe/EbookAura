@@ -61,6 +61,38 @@
   font-size: 1.2rem;
 }
 
+.coinsButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  transition: all 0.3s ease;
+}
+
+.coinsButton:hover {
+  background-color: #ffd700;
+  color: #1a1a1a;
+  transform: scale(1.05);
+}
+
+.coinIcon {
+  font-size: 1.2rem;
+  color: #ffd700;
+}
+
+.coinsButton:hover .coinIcon {
+  color: #1a1a1a;
+}
+
+.coinCount {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
 .profileContainer {
   position: relative;
 }

@@ -126,17 +126,30 @@ export const AuthProvider = ({ children }) => {
     return null;
   };
 
+  // Update user coins
+  const updateUserCoins = (newCoinAmount) => {
+    if (user) {
+      const updatedUser = { ...user, coins: newCoinAmount };
+      setUser(updatedUser);
+      
+      // Update localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('userInfo', JSON.stringify(updatedUser));
+      }
+    }
+  };
+
   // Return a loading state during SSR to avoid hydration mismatch
   if (!mounted) {
     return (
-      <AuthContext.Provider value={{ user: null, loading: true, login, logout, getToken, getApiKey }}>
+      <AuthContext.Provider value={{ user: null, isLoggedIn: false, loading: true, login, logout, getToken, getApiKey, updateUserCoins }}>
         {children}
       </AuthContext.Provider>
     );
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, getToken, getApiKey }}>
+    <AuthContext.Provider value={{ user, isLoggedIn: !!user, loading, login, logout, getToken, getApiKey, updateUserCoins }}>
       {children}
     </AuthContext.Provider>
   );

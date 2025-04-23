@@ -37,6 +37,8 @@ export default function BookReview({ bookId }) {
     hasNextPage: false,
     hasPrevPage: false
   });
+  const [userHasReviewed, setUserHasReviewed] = useState(false);
+  const [userReview, setUserReview] = useState(null);
   const { user } = useAuth();
   
   // Fetch reviews and rating
@@ -76,6 +78,24 @@ export default function BookReview({ bookId }) {
       setAverageRating(ratingData.averageRating);
       setReviewCount(ratingData.reviewCount);
       setRatingDistribution(ratingData.ratingDistribution || {});
+      
+      // Check if the current user has already reviewed this book
+      if (user) {
+        const userHasReview = filteredReviews.some(review => 
+          (user.name && review.userName === user.name) || 
+          (user.username && review.userName === user.username)
+        );
+        
+        setUserHasReviewed(userHasReview);
+        
+        if (userHasReview) {
+          const foundUserReview = filteredReviews.find(review => 
+            (user.name && review.userName === user.name) || 
+            (user.username && review.userName === user.username)
+          );
+          setUserReview(foundUserReview);
+        }
+      }
       
       // Save pagination data
       if (reviewsData.pagination) {
@@ -343,80 +363,111 @@ export default function BookReview({ bookId }) {
       
       <div className={styles.reviewContent}>
         {user ? (
-          <div className={styles.reviewForm}>
-            <h3>Write a Review</h3>
-            
-            {success && (
-              <div className={styles.success}>
-                <FaCheckCircle style={{ marginRight: '8px' }} /> 
-                Your review has been submitted successfully!
-              </div>
-            )}
-            
-            {deleteSuccess && (
-              <div className={styles.success}>
-                <FaCheckCircle style={{ marginRight: '8px' }} /> 
-                Your review has been deleted successfully!
-              </div>
-            )}
-            
-            {submitError && (
-              <div className={styles.submitError}>
-                <FaExclamationTriangle style={{ marginRight: '8px' }} /> 
-                {submitError}
-              </div>
-            )}
-            
-            <form onSubmit={handleSubmitReview}>
-              <div className={styles.ratingSelector}>
-                <label htmlFor="rating-stars">Your Rating:</label>
-                <div className={styles.stars} id="rating-stars" role="group" aria-label="Select a rating from 1 to 5 stars">
-                  {renderRatingStars()}
+          userHasReviewed ? (
+            <div className={styles.alreadyReviewed}>
+              <h3>Your Review</h3>
+              <div className={styles.userReviewBox}>
+                <div className={styles.userReviewHeader}>
+                  <div className={styles.userReviewRating}>
+                    {renderDisplayStars(userReview?.rating || 0)}
+                    <span className={styles.ratingText}>
+                      {userReview?.rating || 0}/5 stars
+                    </span>
+                  </div>
+                  <button 
+                    onClick={() => confirmDeleteReview(userReview)}
+                    className={styles.deleteUserReviewButton}
+                    title="Delete your review"
+                  >
+                    <FaTrash /> Delete Review
+                  </button>
                 </div>
-                {rating > 0 && (
-                  <div className={styles.selectedRating}>
-                    You selected: <strong>{rating} {rating === 1 ? 'star' : 'stars'}</strong>
+                {userReview?.comment && (
+                  <div className={styles.userReviewComment}>
+                    "{userReview.comment}"
                   </div>
                 )}
-              </div>
-              
-              <div className={styles.commentField}>
-                <label htmlFor="review-comment">
-                  Your Review: <span className={styles.optional}>(optional, max 200 characters)</span>
-                </label>
-                <textarea 
-                  id="review-comment"
-                  value={comment}
-                  onChange={handleCommentChange}
-                  placeholder="Share your thoughts about this book (optional)"
-                  rows={4}
-                  className={styles.textarea}
-                  maxLength={200}
-                />
-                <div className={styles.characterCount}>
-                  {characterCount}/200 characters
+                <div className={styles.userReviewDate}>
+                  Reviewed on {formatDate(userReview?.createdAt)}
                 </div>
               </div>
+            </div>
+          ) : (
+            <div className={styles.reviewForm}>
+              <h3>Write a Review</h3>
               
-              <button 
-                type="submit" 
-                className={styles.submitButton}
-                disabled={submitting || rating === 0}
-              >
-                {submitting ? (
-                  <>
-                    <div className={styles.spinner}></div>
-                    Submitting...
-                  </>
-                ) : (
-                  <>
-                    <FaPaperPlane style={{ marginRight: '8px' }} />
-                    Submit Review
-                  </>
-                )}
-              </button>
-            </form>
-          </div>
+              {success && (
+                <div className={styles.success}>
+                  <FaCheckCircle style={{ marginRight: '8px' }} /> 
+                  Your review has been submitted successfully!
+                </div>
+              )}
+              
+              {deleteSuccess && (
+                <div className={styles.success}>
+                  <FaCheckCircle style={{ marginRight: '8px' }} /> 
+                  Your review has been deleted successfully!
+                </div>
+              )}
+              
+              {submitError && (
+                <div className={styles.submitError}>
+                  <FaExclamationTriangle style={{ marginRight: '8px' }} /> 
+                  {submitError}
+                </div>
+              )}
+              
+              <form onSubmit={handleSubmitReview}>
+                <div className={styles.ratingSelector}>
+                  <label htmlFor="rating-stars">Your Rating:</label>
+                  <div className={styles.stars} id="rating-stars" role="group" aria-label="Select a rating from 1 to 5 stars">
+                    {renderRatingStars()}
+                  </div>
+                  {rating > 0 && (
+                    <div className={styles.selectedRating}>
+                      You selected: <strong>{rating} {rating === 1 ? 'star' : 'stars'}</strong>
+                    </div>
+                  )}
+                </div>
+                
+                <div className={styles.commentField}>
+                  <label htmlFor="review-comment">
+                    Your Review: <span className={styles.optional}>(optional, max 200 characters)</span>
+                  </label>
+                  <textarea 
+                    id="review-comment"
+                    value={comment}
+                    onChange={handleCommentChange}
+                    placeholder="Share your thoughts about this book (optional)"
+                    rows={4}
+                    className={styles.textarea}
+                    maxLength={200}
+                  />
+                  <div className={styles.characterCount}>
+                    {characterCount}/200 characters
+                  </div>
+                </div>
+                
+                <button 
+                  type="submit" 
+                  className={styles.submitButton}
+                  disabled={submitting || rating === 0}
+                >
+                  {submitting ? (
+                    <>
+                      <div className={styles.spinner}></div>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <FaPaperPlane style={{ marginRight: '8px' }} />
+                      Submit Review
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
+          )
         ) : (
           <div className={styles.loginPrompt}>
             <FaLock style={{ marginRight: '8px', fontSize: '1.2rem' }} />

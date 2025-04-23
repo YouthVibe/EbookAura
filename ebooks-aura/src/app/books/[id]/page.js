@@ -18,6 +18,11 @@ import STATIC_BOOKS from '../../utils/STATIC_BOOKS';
 // Set revalidation time for static pages (in seconds)
 export const revalidate = 3600;
 
+export const metadata = {
+  title: 'Book Details - EbookAura',
+  description: 'View book details, read and download PDFs',
+};
+
 // Server Component using proper params handling for Next.js 13+
 export default function BookPage({ params }) {
   return (

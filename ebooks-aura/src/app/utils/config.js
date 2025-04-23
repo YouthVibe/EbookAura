@@ -5,10 +5,10 @@ import { getAPI, postAPI, putAPI, deleteAPI } from '../api/apiUtils';
  * This file centralizes configuration to ensure consistency across the application
  */
 
-// Base API URL from environment variable with fallback
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-// Production URL
-// export const API_BASE_URL = 'https://ebookaura.onrender.com/api';
+// Use production URL directly
+export const API_BASE_URL = 'https://ebookaura.onrender.com/api';
+// Fallback options commented out
+// export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 // API endpoints
 export const API_ENDPOINTS = {

@@ -38,6 +38,19 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  coins: {
+    type: Number,
+    default: 0
+  },
+  lastCoinReward: {
+    type: Date,
+    default: null
+  },
+  // Track purchased books
+  purchasedBooks: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Book'
+  }],
   emailVerificationToken: String,
   emailVerificationExpires: Date,
   resetPasswordToken: String,

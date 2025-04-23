@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { FaSearch, FaSort, FaEye, FaDownload, FaBook, FaStar, FaRegStar, FaBookmark, FaRegBookmark, FaStarHalfAlt, FaFileAlt, FaFile, FaChevronLeft, FaChevronRight, FaLock, FaCrown } from 'react-icons/fa';
+import { FaSearch, FaSort, FaEye, FaDownload, FaBook, FaStar, FaRegStar, FaBookmark, FaRegBookmark, FaStarHalfAlt, FaFileAlt, FaFile, FaChevronLeft, FaChevronRight, FaLock, FaCrown, FaCoins } from 'react-icons/fa';
 import Link from 'next/link';
 import styles from './search.module.css';
 import { useRouter } from 'next/navigation';
@@ -530,35 +530,30 @@ export default function SearchPage() {
                   className={`${styles.bookCard} ${book.isPremium ? styles.premiumBook : ''}`}
                   ref={index === books.length - 1 ? lastBookRef : null}
                 >
-                  {book.isPremium && (
-                    <span className={styles.premiumBadge}>
-                      <FaCrown className={styles.crownIcon} /> Premium
-                    </span>
-                  )}
-                  <button 
-                    className={styles.bookmarkButton}
-                    onClick={() => handleBookmark(book._id)}
-                    title={bookmarkedBooks.has(book._id) ? "Remove from bookmarks" : "Add to bookmarks"}
-                  >
-                    {bookmarkedBooks.has(book._id) ? <FaBookmark /> : <FaRegBookmark />}
-                  </button>
-
                   <Link href={`/books/${book._id}`} className={styles.bookLink}>
                     <div className={styles.bookCover}>
                       {book.coverImage ? (
-                        <>
-                          <img src={book.coverImage} alt={book.title} />
-                          {book.isPremium && (
-                            <div className={styles.premiumOverlay}>
-                              <FaLock className={styles.lockIcon} />
-                              <div className={styles.premiumLabel}>Premium Only</div>
+                        <div className={styles.coverImageContainer}>
+                          <img 
+                            src={book.coverImage} 
+                            alt={book.title} 
+                            className={styles.coverImage}
+                            loading="lazy"
+                          />
+                          {book.isPremium && book.price > 0 && (
+                            <div className={styles.premiumPrice}>
+                              {book.price} <FaCoins className={styles.miniCoin} />
                             </div>
                           )}
-                        </>
+                        </div>
                       ) : (
                         <div className={styles.placeholderCover}>
-                          <FaBook />
-                          {book.isPremium && <FaLock className={styles.lockIconPlaceholder} />}
+                          <FaBook className={styles.bookIcon} />
+                          {book.isPremium && book.price > 0 && (
+                            <div className={styles.premiumPrice}>
+                              {book.price} <FaCoins className={styles.miniCoin} />
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -594,6 +589,25 @@ export default function SearchPage() {
                       </div>
                     </div>
                   </Link>
+                  
+                  <button 
+                    className={styles.inlineBookmarkButton}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleBookmark(book._id);
+                    }}
+                    title={bookmarkedBooks.has(book._id) ? "Remove from bookmarks" : "Add to bookmarks"}
+                  >
+                    {bookmarkedBooks.has(book._id) ? (
+                      <>
+                        <FaBookmark /> Bookmarked
+                      </>
+                    ) : (
+                      <>
+                        <FaRegBookmark /> Bookmark
+                      </>
+                    )}
+                  </button>
                 </div>
               );
             })}

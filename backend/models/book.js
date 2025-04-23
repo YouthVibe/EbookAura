@@ -46,6 +46,11 @@ const bookSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  // Price in coins for premium books
+  price: {
+    type: Number,
+    default: 0 // Default to 0 if not specified
+  },
   pageSize: {
     type: Number,
     required: true
