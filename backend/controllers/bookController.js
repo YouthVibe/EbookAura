@@ -1,5 +1,6 @@
 const Book = require('../models/Book');
 const asyncHandler = require('express-async-handler');
+const User = require('../models/User');
 
 // @desc    Get all books
 // @route   GET /api/books
@@ -182,11 +183,14 @@ const getBook = asyncHandler(async (req, res) => {
   console.log(`- Raw price = ${book.price} (${typeof book.price})`);
   
   // More robust checks for premium status
-  // First convert to proper boolean using strict comparison
-  bookData.isPremium = book.isPremium === true;
+  // First extract values with explicit type conversion that works in all environments
+  // Use String() for conversion to handle all possible data formats safely
+  const isPremiumValue = String(book.isPremium).toLowerCase() === 'true' || book.isPremium === true || book.isPremium === 1;
+  const priceValue = Number(book.price || 0);
   
-  // Convert price to proper number
-  bookData.price = typeof book.price === 'number' ? book.price : Number(book.price || 0);
+  // Apply the extracted and converted values
+  bookData.isPremium = isPremiumValue;
+  bookData.price = priceValue;
   
   // Additional safeguards to ensure premium books are correctly identified
   // For premium books with price but no isPremium flag
@@ -200,39 +204,49 @@ const getBook = asyncHandler(async (req, res) => {
     console.log(`Updated database record for book ${book._id} to set isPremium=true`);
   }
   
-  // Force these to be proper JavaScript primitive types
-  bookData.views = Number(book.views);
-  bookData.downloads = Number(book.downloads);
-  bookData.averageRating = Number(book.averageRating || 0);
-  bookData.pageSize = Number(book.pageSize || 0);
-  bookData.fileSizeMB = Number(book.fileSizeMB || 0);
+  // Check if a premium book is missing a price and set a default
+  if (bookData.isPremium && (!bookData.price || bookData.price === 0)) {
+    bookData.price = 25; // Default price for premium books
+    console.log(`Setting default price=25 for premium book without price`);
+    
+    // Also update the database for consistency
+    book.price = 25;
+    await book.save();
+    console.log(`Updated database record for book ${book._id} to set price=25`);
+  }
   
-  // Debug output of processed book data with explicit type information
-  console.log(`Processed book data for ${book.title}:`);
+  // Check user authentication for purchase status
+  // If authenticated, check if the user has purchased this book
+  if (req.user && req.user._id) {
+    try {
+      const userId = req.user._id;
+      const user = await User.findById(userId);
+      
+      if (user) {
+        // Check if the book ID exists in the user's purchased books array
+        const hasPurchased = user.purchasedBooks && user.purchasedBooks.some(id => 
+          id.toString() === book._id.toString()
+        );
+        
+        // Add purchase info to book data
+        bookData.userHasAccess = hasPurchased;
+        console.log(`User ${userId} has ${hasPurchased ? 'purchased' : 'not purchased'} book ${book._id}`);
+      }
+    } catch (err) {
+      console.error('Error checking user purchase status:', err);
+      // Don't let this error block the response
+      bookData.userHasAccess = false;
+    }
+  } else {
+    // No authenticated user
+    bookData.userHasAccess = false;
+  }
+  
+  // Log transformed book data for debugging
+  console.log(`Transformed book data for ${book.title}:`);
   console.log(`- isPremium = ${bookData.isPremium} (${typeof bookData.isPremium})`);
   console.log(`- price = ${bookData.price} (${typeof bookData.price})`);
-  
-  // Check if the user has purchased this book (if authenticated and book is premium)
-  if (req.user && bookData.isPremium) {
-    const hasAccess = req.user.purchasedBooks && req.user.purchasedBooks.some(
-      purchasedId => purchasedId.toString() === book._id.toString()
-    );
-    bookData.userHasAccess = hasAccess;
-    console.log(`User ${req.user._id} has access to premium book ${book._id}: ${hasAccess}`);
-  } else {
-    bookData.userHasAccess = !bookData.isPremium; // Non-premium books are always accessible
-  }
-  
-  // Add the environment info to help with debugging
-  if (process.env.NODE_ENV === 'development') {
-    bookData._devInfo = {
-      env: 'development'
-    };
-  } else {
-    bookData._devInfo = {
-      env: process.env.NODE_ENV || 'production'
-    };
-  }
+  console.log(`- userHasAccess = ${bookData.userHasAccess}`);
   
   res.json(bookData);
 });

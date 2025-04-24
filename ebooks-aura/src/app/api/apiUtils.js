@@ -3,9 +3,9 @@
  * This file centralizes API call functions and ensures they all use the configured API URL
  */
 
-// Production URL (commented out)
+// Production URL (active)
 const API_BASE_URL = 'https://ebookaura.onrender.com/api';
-// // Use API URL from environment variables with fallback (commented out)
+// // // Use API URL from environment variables with fallback (commented out) (commented out)
 // const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 /**
@@ -96,9 +96,19 @@ export async function fetchAPI(endpoint, options = {}) {
         
         // Extra processing for book details to ensure premium properties are correct
         if (responseData && typeof responseData === 'object') {
-          // Ensure isPremium is a proper boolean
+          console.log('Raw premium data from API:', {
+            isPremium: responseData.isPremium,
+            isPremiumType: typeof responseData.isPremium,
+            price: responseData.price,
+            priceType: typeof responseData.price,
+          });
+          
+          // Ensure isPremium is a proper boolean by checking all possible truthy values
           if ('isPremium' in responseData) {
-            responseData.isPremium = responseData.isPremium === true;
+            responseData.isPremium = responseData.isPremium === true || 
+                                     responseData.isPremium === 'true' || 
+                                     responseData.isPremium === 1 ||
+                                     String(responseData.isPremium).toLowerCase() === 'true';
           }
           
           // Ensure price is a number
