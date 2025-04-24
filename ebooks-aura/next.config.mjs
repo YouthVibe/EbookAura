@@ -63,7 +63,7 @@ const nextConfig = {
     },
     async rewrites() {
       // Use the production API URL directly
-      const apiBaseUrl = 'https://ebookaura.onrender.com/api';
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
       
       return [
         {

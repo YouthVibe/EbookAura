@@ -88,7 +88,7 @@ CONFIG.FILES.forEach(filePath => {
     if (updatedContent !== originalContent) {
       fs.writeFileSync(fullPath, updatedContent);
       logLine(`Updated: ${filePath}`);
-    } else {
+        } else {
       logLine(`No changes needed for: ${filePath}`);
     }
   } catch (error) {

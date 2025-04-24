@@ -51,10 +51,11 @@ const getBooks = asyncHandler(async (req, res) => {
     // Calculate total pages
     const totalPages = Math.ceil(totalBooks / limitCapped);
     
-    // Fetch books with pagination - ensure isPremium is explicitly included
+    // IMPORTANT FIX: Explicitly list ALL required fields including premium-related ones
+    // This ensures they're always included even in production
     const books = await Book.find(query)
       .sort(sort ? buildSortOptions(sort) : { createdAt: -1 })
-      .select('title author description category tags views downloads createdAt coverImage pageSize fileSizeMB averageRating isCustomUrl customURLPDF isPremium price')
+      .select('_id title author description category tags views downloads createdAt coverImage pageSize fileSizeMB averageRating isCustomUrl customURLPDF isPremium price')
       .skip(skip)
       .limit(limitCapped);
     
@@ -154,8 +155,9 @@ const getTags = asyncHandler(async (req, res) => {
 // @route   GET /api/books/:id
 // @access  Public
 const getBook = asyncHandler(async (req, res) => {
+  // IMPORTANT FIX: Explicitly include all fields, especially isPremium and price
   const book = await Book.findById(req.params.id)
-    .select('title author description category tags views downloads createdAt pdfUrl pdfId coverImage pageSize fileSizeMB averageRating isCustomUrl customURLPDF isPremium price');
+    .select('_id title author description category tags views downloads createdAt pdfUrl pdfId coverImage pageSize fileSizeMB averageRating isCustomUrl customURLPDF isPremium price');
     
   if (!book) {
     res.status(404);
