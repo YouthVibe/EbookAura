@@ -13,6 +13,7 @@ import { useAuth } from '../../context/AuthContext';
 import { purchaseBook, checkBookPurchase } from '../../api/coins';
 import { toast } from 'react-toastify';
 import { getAPI, postAPI } from '../../api/apiUtils';
+import { normalizeMongoDocument } from '../../utils/mongoUtils';
 
 // Dynamically import PdfViewer with no SSR to avoid the Promise.withResolvers error
 const PdfViewer = dynamic(() => import('../../components/PdfViewer'), {
@@ -203,38 +204,8 @@ export default function BookPageClient({ id }) {
       console.log('Raw isPremium value:', String(bookData.isPremium), 'type:', typeof bookData.isPremium);
       console.log('Raw price value:', String(bookData.price), 'type:', typeof bookData.price);
       
-      // Extract premium data specifically to ensure consistent type handling
-      const extractedData = {
-        isPremium: bookData.isPremium === true || 
-                   bookData.isPremium === 'true' ||
-                   bookData.isPremium === 1 ||
-                   String(bookData.isPremium).toLowerCase() === 'true',
-        price: bookData.price ? Number(bookData.price) : 0,
-        userHasAccess: bookData.userHasAccess === true || 
-                      bookData.userHasAccess === 'true' ||
-                      bookData.userHasAccess === 1 ||
-                      String(bookData.userHasAccess).toLowerCase() === 'true'
-      };
-      
-      console.log('Book data received:', {
-        id: bookData._id || bookData.id,
-        title: bookData.title,
-        isPremium: extractedData.isPremium,
-        userHasAccess: extractedData.userHasAccess,
-        price: extractedData.price
-      });
-      
-      // Ensure premium properties are correctly typed
-      // This fixes potential issues between dev and production environments
-      const normalizedBookData = {
-        ...bookData,
-        // Handle various possible formats for isPremium flag
-        isPremium: extractedData.isPremium,
-        // Ensure userHasAccess is a proper boolean
-        userHasAccess: extractedData.userHasAccess,
-        // Ensure price is a number
-        price: extractedData.price
-      };
+      // Normalize the MongoDB document to ensure consistent types
+      const normalizedBookData = normalizeMongoDocument(bookData);
       
       // Add an additional safeguard - if there's a price, it must be premium
       if (!normalizedBookData.isPremium && normalizedBookData.price > 0) {

@@ -3,10 +3,8 @@
  * This file centralizes API call functions and ensures they all use the configured API URL
  */
 
-// Production URL (active)
-const API_BASE_URL = 'https://ebookaura.onrender.com/api';
-// // // Use API URL from environment variables with fallback (commented out) (commented out)
-// const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+// API base URL with environment fallback to production
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://ebookaura.onrender.com/api';
 
 /**
  * Make a fetch request to the API with appropriate headers and error handling
@@ -102,6 +100,14 @@ export async function fetchAPI(endpoint, options = {}) {
             price: responseData.price,
             priceType: typeof responseData.price,
           });
+          
+          // Special handling for MongoDB format - extract $numberLong values
+          if (responseData.price && 
+              typeof responseData.price === 'object' && 
+              responseData.price.$numberLong) {
+            responseData.price = Number(responseData.price.$numberLong);
+            console.log('Extracted $numberLong price:', responseData.price);
+          }
           
           // Ensure isPremium is a proper boolean by checking all possible truthy values
           if ('isPremium' in responseData) {
