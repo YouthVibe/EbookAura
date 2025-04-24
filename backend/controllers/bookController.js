@@ -59,9 +59,36 @@ const getBooks = asyncHandler(async (req, res) => {
       .skip(skip)
       .limit(limitCapped);
     
+    // Create a more reliable transformed books array
+    const transformedBooks = await Promise.all(books.map(async (book) => {
+      // Start with basic book data
+      const bookObj = book.toObject();
+      
+      // Use the direct premium check function for more reliability
+      // This bypasses any serialization issues
+      const bookId = book._id.toString();
+      const isPremiumDirect = await checkIfBookIsPremium(bookId);
+      
+      // Only use direct check if it returned a non-null result
+      const finalIsPremium = isPremiumDirect !== null 
+        ? isPremiumDirect 
+        : book.isPremium === true || typeof book.price === 'number' && book.price > 0;
+      
+      // Ensure price is a number
+      const finalPrice = typeof book.price === 'number' ? book.price :
+                        (finalIsPremium ? 25 : 0);
+      
+      // Return the enhanced book object with correct types
+      return {
+        ...bookObj,
+        isPremium: finalIsPremium,
+        price: finalPrice
+      };
+    }));
+    
     // Debug logging for premium books
-    const premiumBooks = books.filter(book => book.isPremium);
-    console.log(`Found ${premiumBooks.length} premium books out of ${books.length} total books`);
+    const premiumBooks = transformedBooks.filter(book => book.isPremium);
+    console.log(`Found ${premiumBooks.length} premium books out of ${transformedBooks.length} total books`);
     
     // Log detailed info for each premium book
     premiumBooks.forEach(book => {
@@ -72,25 +99,15 @@ const getBooks = asyncHandler(async (req, res) => {
     });
     
     // Log a sample book to verify isPremium is included
-    if (books.length > 0) {
-      console.log(`Sample book premium status: ${books[0].title} - isPremium: ${books[0].isPremium} (type: ${typeof books[0].isPremium})`);
-      console.log(`Sample book data structure: ${JSON.stringify(books[0], null, 2).substring(0, 300)}...`);
-      if (books[0].isPremium) {
-        console.log(`Sample book price: ${books[0].price} coins (type: ${typeof books[0].price})`);
+    if (transformedBooks.length > 0) {
+      console.log(`Sample book premium status: ${transformedBooks[0].title} - isPremium: ${transformedBooks[0].isPremium} (type: ${typeof transformedBooks[0].isPremium})`);
+      console.log(`Sample book data structure: ${JSON.stringify(transformedBooks[0], null, 2).substring(0, 300)}...`);
+      if (transformedBooks[0].isPremium) {
+        console.log(`Sample book price: ${transformedBooks[0].price} coins (type: ${typeof transformedBooks[0].price})`);
       }
     }
-      
-    // Transform book objects to ensure consistent formats
-    const transformedBooks = books.map(book => {
-      const bookObj = book.toObject();
-      return {
-        ...bookObj,
-        isPremium: bookObj.isPremium === true, // Force boolean
-        price: bookObj.price ? Number(bookObj.price) : 0 // Force number or default to 0
-      };
-    });
     
-    // Send response with pagination metadata and ensure isPremium is properly passed
+    // Send response with pagination metadata
     res.json({
       books: transformedBooks,
       pagination: {
@@ -184,30 +201,41 @@ const getBook = asyncHandler(async (req, res) => {
   console.log(`- Raw isPremium = ${book.isPremium} (${typeof book.isPremium})`);
   console.log(`- Raw price = ${book.price} (${typeof book.price})`);
   
-  // More robust checks for premium status
-  // First extract values with explicit type conversion that works in all environments
-  // Use String() for conversion to handle all possible data formats safely
-  const isPremiumValue = String(book.isPremium).toLowerCase() === 'true' || book.isPremium === true || book.isPremium === 1;
-  const priceValue = Number(book.price || 0);
+  // ENHANCED PRODUCTION FIX: More robust checks for premium status
+  // Get the book ID as string for reference
+  const bookId = book._id.toString();
   
-  // Apply the extracted and converted values
-  bookData.isPremium = isPremiumValue;
-  bookData.price = priceValue;
+  // Check if this book is known to be premium by looking up its ID directly
+  const isPremiumBook = await checkIfBookIsPremium(bookId);
   
-  // Additional safeguards to ensure premium books are correctly identified
-  // For premium books with price but no isPremium flag
-  if (!bookData.isPremium && bookData.price > 0) {
-    bookData.isPremium = true;
-    console.log(`Setting isPremium=true for book with price ${bookData.price}`);
+  // If we have conclusive information from the direct check, use it
+  if (isPremiumBook !== null) {
+    console.log(`Direct premium check for ${book.title}: isPremium=${isPremiumBook}`);
+    bookData.isPremium = isPremiumBook;
     
-    // Also update the database for consistency
-    book.isPremium = true;
-    await book.save();
-    console.log(`Updated database record for book ${book._id} to set isPremium=true`);
+    // If the book is premium but the database doesn't reflect it, update it
+    if (isPremiumBook === true && book.isPremium !== true) {
+      console.log(`Fixing premium status for book ${bookId} in database`);
+      book.isPremium = true;
+      await book.save();
+    }
+  } else {
+    // Use multiple checks for premium status as backup
+    // Try various ways to determine if the book is premium
+    const isPremiumByFlag = book.isPremium === true;
+    const isPremiumByPrice = typeof book.price === 'number' && book.price > 0;
+    const isPremiumByString = String(book.isPremium).toLowerCase() === 'true';
+    
+    // Combine all checks
+    bookData.isPremium = isPremiumByFlag || isPremiumByPrice || isPremiumByString;
   }
   
-  // Check if a premium book is missing a price and set a default
-  if (bookData.isPremium && (!bookData.price || bookData.price === 0)) {
+  // Force price to be a number regardless of MongoDB type
+  bookData.price = typeof book.price === 'number' ? book.price : 
+                  (bookData.isPremium ? 25 : 0);
+  
+  // Additional safeguards to ensure premium books have prices
+  if (bookData.isPremium && (!bookData.price || bookData.price <= 0)) {
     bookData.price = 25; // Default price for premium books
     console.log(`Setting default price=25 for premium book without price`);
     
@@ -252,6 +280,29 @@ const getBook = asyncHandler(async (req, res) => {
   
   res.json(bookData);
 });
+
+// Helper function to directly check if a book is premium by ID
+// This bypasses any serialization issues by making a direct DB query
+const checkIfBookIsPremium = async (bookId) => {
+  try {
+    // Use a lean query to get raw data and avoid any conversion issues
+    const premiumCheck = await Book.findById(bookId)
+      .select('isPremium price')
+      .lean();
+    
+    if (!premiumCheck) return null;
+    
+    // Check both properties to determine premium status
+    if (premiumCheck.isPremium === true) return true;
+    if (typeof premiumCheck.price === 'number' && premiumCheck.price > 0) return true;
+    
+    // If we have conclusive evidence it's not premium
+    return false;
+  } catch (err) {
+    console.error(`Error in direct premium check for book ${bookId}:`, err);
+    return null; // Return null to indicate the check failed
+  }
+};
 
 // @desc    Increment book downloads
 // @route   POST /api/books/:id/download
