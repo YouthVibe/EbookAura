@@ -1,29 +1,26 @@
 @echo off
-echo Fix Premium Status for a Specific Book
-echo ===================================
+echo === Fix Premium Book Issues for Specific Book ===
+echo.
+echo This script will ensure a specific book has correct premium status.
 echo.
 
-REM Check if book ID was provided
-if "%~1"=="" (
-  echo ERROR: Book ID is required.
-  echo Usage: fix-specific-book.bat [book_id]
-  echo.
-  set /p BOOK_ID=Enter book ID to fix: 
-) else (
-  set BOOK_ID=%~1
+REM Check if Node.js is installed
+where node >nul 2>nul
+if %ERRORLEVEL% NEQ 0 (
+  echo Node.js is not installed. Please install Node.js to run this script.
+  exit /b 1
 )
 
-echo.
-echo Starting specific book fix for ID: %BOOK_ID%
-cd %~dp0
-node scripts/fix-specific-book.js %BOOK_ID%
+REM Run the fix script
+echo Running fix script...
+node scripts/fix-specific-book.js %*
 
 if %ERRORLEVEL% EQU 0 (
   echo.
-  echo Book fix completed successfully.
+  echo Book fixed successfully!
 ) else (
   echo.
-  echo Error occurred while running book fix.
+  echo An error occurred while fixing the book.
 )
 
 pause 

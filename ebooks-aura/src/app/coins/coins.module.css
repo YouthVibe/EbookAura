@@ -209,62 +209,6 @@
   font-size: 1.2rem;
 }
 
-.historySection {
-  background-color: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-.historyTitle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1.5rem;
-  color: #333;
-  margin-top: 0;
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid #eee;
-}
-
-.historyList {
-  display: flex;
-  flex-direction: column;
-}
-
-.historyItem {
-  display: grid;
-  grid-template-columns: 1fr 1fr 0.7fr;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid #f5f5f5;
-}
-
-.historyItem:last-child {
-  border-bottom: none;
-}
-
-.historyDate {
-  color: #666;
-}
-
-.historyType {
-  color: #333;
-  font-weight: 500;
-}
-
-.historyAmount {
-  color: #10b981;
-  font-weight: 600;
-  text-align: right;
-}
-
-.emptyHistory {
-  color: #666;
-  text-align: center;
-  padding: 2rem 0;
-}
-
 /* Responsive styles */
 @media (max-width: 768px) {
   .header {
@@ -281,19 +225,5 @@
   
   .actionsContainer {
     grid-template-columns: 1fr;
-  }
-  
-  .historyItem {
-    grid-template-columns: 1fr 1fr;
-  }
-  
-  .historyAmount {
-    grid-column: 2;
-    text-align: right;
-  }
-  
-  .historyType {
-    grid-column: 1;
-    grid-row: 2;
   }
 } 

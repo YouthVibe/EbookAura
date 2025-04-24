@@ -1,40 +1,26 @@
 @echo off
-echo Starting comprehensive premium book fixes...
-cd %~dp0
+echo === Fix All Premium Book Issues ===
+echo.
+echo This script will ensure all books have correct premium status.
+echo.
 
-echo.
-echo ========================================
-echo Step 1: Fixing premium books with price issues
-echo ========================================
-echo.
-call fix-premium-books.bat
+REM Check if Node.js is installed
+where node >nul 2>nul
+if %ERRORLEVEL% NEQ 0 (
+  echo Node.js is not installed. Please install Node.js to run this script.
+  exit /b 1
+)
 
-echo.
-echo ========================================
-echo Step 2: Fixing book prices
-echo ========================================
-echo.
-call fix-book-prices.bat
+REM Run the fix script
+echo Running fix script...
+node scripts/fix-all-premium-issues.js
 
-echo.
-echo ========================================
-echo Step 3: Fixing book purchases
-echo ========================================
-echo.
-call fix-book-purchases.bat
+if %ERRORLEVEL% EQU 0 (
+  echo.
+  echo Script completed successfully!
+) else (
+  echo.
+  echo An error occurred while fixing premium books.
+)
 
-echo.
-echo ========================================
-echo Step 4: Fixing user purchases
-echo ========================================
-echo.
-call fix-user-purchases.bat
-
-echo.
-echo ========================================
-echo All fixes completed!
-echo ========================================
-echo.
-echo Premium book system should now be functioning correctly.
-echo.
 pause 

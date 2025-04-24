@@ -210,10 +210,50 @@ const purchaseBook = async (req, res) => {
   }
 };
 
+// @desc    Check if user has claimed daily coins
+// @route   GET /api/coins/daily-status
+// @access  Private
+const checkDailyCoinsStatus = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Get today's date with time set to midnight
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Calculate next reward time (next day at midnight)
+    const nextRewardTime = new Date(today);
+    nextRewardTime.setDate(nextRewardTime.getDate() + 1);
+
+    // Check if user already claimed daily coins
+    const hasClaimed = user.lastCoinReward && new Date(user.lastCoinReward) >= today;
+
+    // If claimed, calculate when they can claim again
+    let claimAgainTime = null;
+    if (hasClaimed) {
+      claimAgainTime = nextRewardTime.toISOString();
+    }
+
+    res.status(200).json({
+      hasClaimed,
+      nextRewardTime: claimAgainTime,
+      lastClaimTime: user.lastCoinReward ? new Date(user.lastCoinReward).toISOString() : null
+    });
+  } catch (error) {
+    console.error('Error checking daily coins status:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = {
   getUserCoins,
   awardDailyCoins,
   awardAdCoins,
   awardDailyCoinsToAll,
-  purchaseBook
+  purchaseBook,
+  checkDailyCoinsStatus
 }; 

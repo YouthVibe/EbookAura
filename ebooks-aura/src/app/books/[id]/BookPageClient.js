@@ -12,6 +12,7 @@ import { createDownloadablePdf } from '../../utils/pdfUtils';
 import { useAuth } from '../../context/AuthContext';
 import { purchaseBook, checkBookPurchase } from '../../api/coins';
 import { toast } from 'react-toastify';
+import { getAPI, postAPI } from '../../api/apiUtils';
 
 // Dynamically import PdfViewer with no SSR to avoid the Promise.withResolvers error
 const PdfViewer = dynamic(() => import('../../components/PdfViewer'), {
@@ -62,14 +63,21 @@ export default function BookPageClient({ id }) {
   // Using explicit boolean conversion for consistent behavior in all environments
   // More robust premium detection to handle various data types from the API
   const isPremiumBook = book ? (
+    // Explicitly check all possible truthy representations that might come from different environments
     book.isPremium === true || 
     book.isPremium === 'true' || 
-    book.price > 0
+    book.isPremium === 1 ||
+    // Special check for MongoDB data that might be returned from the API as strings in production
+    String(book.isPremium).toLowerCase() === 'true' ||
+    // If there's a price, it must be premium
+    (book.price && Number(book.price) > 0)
   ) : false;
   
   const userHasPurchased = book ? (
     book.userHasAccess === true || 
-    book.userHasAccess === 'true'
+    book.userHasAccess === 'true' ||
+    book.userHasAccess === 1 ||
+    String(book.userHasAccess).toLowerCase() === 'true'
   ) : false;
   
   const userHasEnoughCoins = user && book ? (
@@ -155,64 +163,40 @@ export default function BookPageClient({ id }) {
   
   // Function to fetch book details
   const fetchBookDetails = async (bookId) => {
-    if (!bookId) {
-      throw new Error('Book ID is required');
+    if (isFetchingRef.current) {
+      return;
     }
 
-    console.log(`Fetching book details for ID: ${bookId}`);
-    setPremiumError(null);
+    isFetchingRef.current = true;
     
     try {
       setLoading(true);
       
-      // Build fetch URL with API key for better caching behavior
-      const apiKey = getApiKey();
-      const apiUrl = `${API_ENDPOINTS.BASE_URL}/books/${bookId}${apiKey ? `?key=${apiKey}` : ''}`;
+      // Use our API utility to fetch book details
+      const bookData = await getAPI(`/books/${bookId}`);
       
-      const response = await fetch(apiUrl, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': getToken() ? `Bearer ${getToken()}` : ''
-        },
-        cache: 'no-store'
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch book details: ${response.status}`);
-      }
-      
-      const bookData = await response.json();
-      
-      if (!bookData) {
-        throw new Error('No book data returned from the server');
-      }
-      
-      // Helper function to handle MongoDB $numberLong and $numberInt types
-      const parseMongoDBNumber = (value) => {
-        if (value && typeof value === 'object') {
-          if (value.$numberLong !== undefined) return Number(value.$numberLong);
-          if (value.$numberInt !== undefined) return Number(value.$numberInt);
-        }
-        return typeof value === 'number' ? value : Number(value || 0);
-      };
-      
-      // Extract and normalize premium-related fields, handling MongoDB's special types
+      // Extract premium data specifically to ensure consistent type handling
       const extractedData = {
-        ...bookData,
-        // Handle possible MongoDB object format for isPremium
-        isPremium: bookData.isPremium === true || bookData.isPremium === 'true',
-        // Handle possible MongoDB object format for price
-        price: parseMongoDBNumber(bookData.price),
+        isPremium: bookData.isPremium === true || 
+                   bookData.isPremium === 'true' ||
+                   bookData.isPremium === 1 ||
+                   String(bookData.isPremium).toLowerCase() === 'true',
+        price: bookData.price ? Number(bookData.price) : 0,
+        userHasAccess: bookData.userHasAccess === true || 
+                      bookData.userHasAccess === 'true' ||
+                      bookData.userHasAccess === 1 ||
+                      String(bookData.userHasAccess).toLowerCase() === 'true'
       };
       
       // Debug log book data to diagnose issues
       console.log('Raw book data structure:', JSON.stringify(bookData).substring(0, 500) + '...');
+      console.log('Raw isPremium value:', String(bookData.isPremium), 'type:', typeof bookData.isPremium);
+      console.log('Raw price value:', String(bookData.price), 'type:', typeof bookData.price);
       console.log('Book data received:', {
         id: bookData._id || bookData.id,
         title: bookData.title,
         isPremium: extractedData.isPremium,
-        userHasAccess: bookData.userHasAccess,
+        userHasAccess: extractedData.userHasAccess,
         price: extractedData.price
       });
       
@@ -221,11 +205,9 @@ export default function BookPageClient({ id }) {
       const normalizedBookData = {
         ...bookData,
         // Handle various possible formats for isPremium flag
-        isPremium: extractedData.isPremium === true || 
-                  extractedData.isPremium === 'true' || 
-                  extractedData.price > 0,
+        isPremium: extractedData.isPremium || extractedData.price > 0,
         // Ensure userHasAccess is a proper boolean
-        userHasAccess: bookData.userHasAccess === true || bookData.userHasAccess === 'true',
+        userHasAccess: extractedData.userHasAccess,
         // Ensure price is a number
         price: extractedData.price
       };
@@ -249,6 +231,7 @@ export default function BookPageClient({ id }) {
       setError(`Failed to fetch book details: ${err.message}`);
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
   };
 
@@ -607,30 +590,48 @@ export default function BookPageClient({ id }) {
     }
   };
 
-  // Force check premium status
-  const forceCheckPremium = () => {
+  // Modify forceCheckPremium to not show alert
+  const forceCheckPremium = useCallback(() => {
     setDebugMode(true);
     
-    if (book) {
-      // Explicitly set premium status
-      if (book.price > 0) {
-        setBook(prevBook => ({
-          ...prevBook,
-          isPremium: true
-        }));
-        console.log('Forced isPremium=true based on price');
-      }
-      
-      // Add an alert with the raw data
-      alert(`Book Premium Debug:
-Raw isPremium: ${JSON.stringify(book.isPremium)}
-Computed isPremiumBook: ${isPremiumBook}
-Price: ${book.price} (${typeof book.price})
-Raw Price: ${JSON.stringify(book.price)}
-Book Price: ${bookPrice}
-`);
+    // Check the raw premium status first - remove alert but keep logging for developers
+    console.log('Raw isPremium value:', String(book.isPremium), 'type:', typeof book.isPremium);
+    console.log('Raw price value:', String(book.price), 'type:', typeof book.price);
+    console.log('Current computed isPremiumBook:', isPremiumBook);
+    
+    // Calculate isPremium based on the conditions
+    let shouldBePremium = false;
+    
+    // Convert price to number if needed
+    const priceAsNumber = typeof book.price === 'string' 
+      ? parseFloat(book.price.replace(/[^0-9.-]+/g, '')) 
+      : book.price;
+    
+    // Check conditions (this matches how we determine premium status)
+    if (book.isPremium === true || book.isPremium === 'true') {
+      shouldBePremium = true;
+    } else if (priceAsNumber > 0) {
+      shouldBePremium = true;
+      console.log('Forced isPremium=true based on conditions');
     }
-  };
+    
+    // Previously showed an alert - now just log to console
+    console.log(`Book Premium Debug:
+      Raw isPremium: ${JSON.stringify(book.isPremium)}
+      Raw isPremium type: ${typeof book.isPremium}
+      Raw Price: ${JSON.stringify(book.price)}
+      Raw Price type: ${typeof book.price}
+      Price as Number: ${priceAsNumber}
+      Computed isPremiumBook: ${isPremiumBook}
+      Should be Premium: ${shouldBePremium}
+    `);
+    
+    // Update state
+    setBook(prevBook => ({
+      ...prevBook,
+      isPremium: shouldBePremium
+    }));
+  }, [book, isPremiumBook]);
 
   if (loading) {
     return (
@@ -653,6 +654,7 @@ Book Price: ${bookPrice}
           <button 
             onClick={forceCheckPremium}
             style={{
+              display: 'none', // Hide the debug button but keep it available
               marginLeft: '10px',
               padding: '8px 15px',
               background: '#ff5b5b',
@@ -664,6 +666,55 @@ Book Price: ${bookPrice}
           >
             Debug Premium Status
           </button>
+        </div>
+        
+        {/* Show API URL debug info */}
+        <div style={{ 
+          display: 'none', // Hide the debug info section
+          marginTop: '20px', 
+          padding: '10px', 
+          background: '#f8f8f8', 
+          border: '1px solid #ddd',
+          borderRadius: '4px',
+          fontSize: '0.8rem'
+        }}>
+          <h3>API Connection Debug Info</h3>
+          <p><strong>Book ID:</strong> {id}</p>
+          <p><strong>API URL:</strong> {API_ENDPOINTS.BOOKS.DETAILS(id)}</p>
+          <p><strong>Direct URL:</strong> https://ebookaura.onrender.com/api/books/{id}</p>
+          <p>
+            <button
+              onClick={() => window.open(`https://ebookaura.onrender.com/api/books/${id}`, '_blank')}
+              style={{
+                padding: '5px 10px',
+                background: '#4285f4',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                marginRight: '10px'
+              }}
+            >
+              Try Direct API
+            </button>
+            <button
+              onClick={() => {
+                // Force refresh the page with cache busting
+                const cacheBuster = Date.now();
+                window.location.href = `${window.location.pathname}?refresh=${cacheBuster}`;
+              }}
+              style={{
+                padding: '5px 10px',
+                background: '#34a853',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Force Refresh
+            </button>
+          </p>
         </div>
       </div>
     );
@@ -688,19 +739,20 @@ Book Price: ${bookPrice}
           <FaArrowLeft /> Back to Search
         </Link>
         
-        {/* Debug button */}
-        <button 
+        {/* Debug button in price section */}
+        <button
           onClick={forceCheckPremium}
           style={{
+            display: 'none', // Hide debug button
             marginLeft: '10px',
-            padding: '6px 12px',
-            background: isPremiumBook ? '#32cd32' : '#ff5b5b',
+            padding: '8px 15px',
+            background: '#5b89ff',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '0.8rem'
+            cursor: 'pointer'
           }}
+          className={styles.debugButton}
         >
           {isPremiumBook ? '✓ Premium Book' : 'Debug Premium'}
         </button>
@@ -790,20 +842,29 @@ Book Price: ${bookPrice}
             {/* More robust condition check for production environments */}
             {(isPremiumBook || book?.price > 0) && (
               <div className={styles.premiumPurchaseContainer}>
-                {/* Debug info - show in development or when debug mode is enabled */}
+                {/* Debug info - hidden but still available */}
                 {(process.env.NODE_ENV === 'development' || debugMode) && (
-                  <div style={{ fontSize: '10px', background: '#f0f0f0', padding: '5px', marginBottom: '10px', borderRadius: '4px' }}>
-                    <div>Debug: Raw isPremium={JSON.stringify(book?.isPremium)}</div>
-                    <div>Debug: book.isPremium={String(book?.isPremium)} ({typeof book?.isPremium})</div>
-                    <div>Debug: isPremiumBook={String(isPremiumBook)} ({typeof isPremiumBook})</div>
-                    <div>Debug: userHasPurchased={String(userHasPurchased)} ({typeof userHasPurchased})</div>
-                    <div>Debug: book.userHasAccess={String(book?.userHasAccess)} ({typeof book?.userHasAccess})</div>
-                    <div>Debug: purchaseSuccess={String(purchaseSuccess)}</div>
-                    <div>Debug: isLoggedIn={String(isLoggedIn)}</div>
-                    <div>Debug: user.coins={user ? String(user.coins) : 'undefined'}</div>
-                    <div>Debug: Raw price={JSON.stringify(book?.price)}</div>
-                    <div>Debug: book.price={String(book?.price)}</div>
-                    <div>Debug: bookPrice={String(bookPrice)}</div>
+                  <div style={{
+                    display: 'none', // Hide the debug info but keep it in the DOM
+                    marginTop: '20px',
+                    padding: '15px',
+                    background: '#f5f5f5',
+                    border: '1px solid #ddd',
+                    borderRadius: '5px',
+                    fontSize: '0.85rem'
+                  }}>
+                    <h3>Book Status Debug Information</h3>
+                    <ul style={{ listStyleType: 'none', padding: 0 }}>
+                      <li><strong>Book ID:</strong> {id}</li>
+                      <li><strong>Title:</strong> {book?.title}</li>
+                      <li><strong>Raw isPremium:</strong> {String(book?.isPremium)}</li>
+                      <li><strong>Raw price:</strong> {String(book?.price)}</li>
+                      <li><strong>Computed isPremiumBook:</strong> {String(isPremiumBook)}</li>
+                      <li><strong>User Premium Status:</strong> {isPremiumBook ? 'Premium User' : 'Standard User'}</li>
+                      <li><strong>Has Purchased:</strong> {userHasPurchased ? 'Yes' : 'No'}</li>
+                      <li><strong>Can Access:</strong> {isLoggedIn ? 'Yes' : 'No'}</li>
+                      <li><strong>PDF URL:</strong> {pdfUrl || 'Not loaded'}</li>
+                    </ul>
                   </div>
                 )}
                 

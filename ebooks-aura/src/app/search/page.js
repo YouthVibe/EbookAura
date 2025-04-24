@@ -545,13 +545,20 @@ export default function SearchPage() {
                         <div className={styles.coverImageContainer}>
                           <img 
                             src={book.coverImage} 
-                            alt={book.title} 
+                            alt={`${book.title} by ${book.author}`} 
                             className={styles.coverImage}
                             loading="lazy"
                           />
                           {isPremium && price > 0 && (
                             <div className={styles.premiumPrice}>
                               {price} <FaCoins className={styles.miniCoin} />
+                            </div>
+                          )}
+                          
+                          {/* Premium badge is always shown if book is premium */}
+                          {isPremium && (
+                            <div className={styles.premiumBadge}>
+                              <FaCrown className={styles.premiumIcon} /> Premium
                             </div>
                           )}
                         </div>
@@ -563,6 +570,13 @@ export default function SearchPage() {
                               {price} <FaCoins className={styles.miniCoin} />
                             </div>
                           )}
+                          
+                          {/* Premium badge for placeholder covers */}
+                          {isPremium && (
+                            <div className={styles.premiumBadge}>
+                              <FaCrown className={styles.premiumIcon} /> Premium
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -572,11 +586,6 @@ export default function SearchPage() {
                       {renderRatingStars(book.averageRating)}
                       <div className={styles.categoryInfo}>
                         <p className={styles.bookCategory}>{book.category}</p>
-                        {isPremium && (
-                          <span className={styles.bookPremiumTag}>
-                            <FaCrown className={styles.premiumIcon} /> Premium
-                          </span>
-                        )}
                       </div>
                       <div className={styles.bookStats}>
                         <span className={styles.stat}>

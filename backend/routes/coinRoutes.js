@@ -5,12 +5,16 @@ const {
   awardDailyCoins,
   awardAdCoins,
   awardDailyCoinsToAll,
-  purchaseBook
+  purchaseBook,
+  checkDailyCoinsStatus
 } = require('../controllers/coinController');
 const { protect, admin } = require('../middleware/auth');
 
 // Get user coins - requires authentication
 router.get('/', protect, getUserCoins);
+
+// Check if daily coins have been claimed - requires authentication
+router.get('/daily-status', protect, checkDailyCoinsStatus);
 
 // Award daily coins - requires authentication
 router.post('/daily', protect, awardDailyCoins);

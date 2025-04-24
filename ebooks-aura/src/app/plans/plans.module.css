@@ -1,0 +1,455 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-top: 4rem;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background-color: #f4f4f4;
+  color: #333;
+  border-radius: 50%;
+  margin-right: 1rem;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.backButton:hover {
+  background-color: #e0e0e0;
+  transform: translateX(-3px);
+}
+
+.title {
+  font-size: 2rem;
+  margin: 0;
+  color: #333;
+}
+
+.loading {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #666;
+  margin-top: 2rem;
+}
+
+.error {
+  background-color: #fee2e2;
+  color: #ef4444;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.success {
+  background-color: #ecfdf5;
+  color: #10b981;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.coinsBalance {
+  display: flex;
+  align-items: center;
+  background-color: #111;
+  color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 2.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.coinsBalance::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center, rgba(255, 215, 0, 0.2) 0%, rgba(0, 0, 0, 0) 70%);
+  pointer-events: none;
+}
+
+.coinIcon {
+  font-size: 1.8rem;
+  color: #ffd700;
+  margin-right: 0.75rem;
+}
+
+.coinCount {
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+  margin-right: 0.5rem;
+}
+
+.coinLabel {
+  font-size: 1.2rem;
+  color: #ccc;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-right: auto;
+}
+
+.getCoinsButton {
+  display: inline-block;
+  background-color: #ffd700;
+  color: #111;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.getCoinsButton:hover {
+  background-color: #f8c500;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+}
+
+.currentSubscription {
+  background-color: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.subscriptionHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  color: #0284c7;
+}
+
+.crownIcon {
+  color: #f59e0b;
+  font-size: 1.5rem;
+  margin-right: 0.75rem;
+}
+
+.subscriptionHeader h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.subscriptionDetails {
+  margin-bottom: 1.5rem;
+}
+
+.subscriptionDetails p {
+  margin: 0.5rem 0;
+  color: #334155;
+}
+
+.subscriptionActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.settingsButton {
+  display: inline-block;
+  background-color: #0284c7;
+  color: white;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.settingsButton:hover {
+  background-color: #0369a1;
+  transform: translateY(-2px);
+}
+
+.plansContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.planCard {
+  background-color: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e5e7eb;
+}
+
+.planCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+}
+
+.popularPlan {
+  border: 2px solid #f59e0b;
+  transform: scale(1.03);
+  z-index: 1;
+}
+
+.popularPlan:hover {
+  transform: translateY(-5px) scale(1.03);
+}
+
+.popularBadge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #f59e0b;
+  color: white;
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.planName {
+  font-size: 1.75rem;
+  margin: 0 0 0.5rem 0;
+  color: #111;
+  text-align: center;
+}
+
+.planDescription {
+  color: #6b7280;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  min-height: 3rem;
+}
+
+.planPrice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #f8fafc;
+  border-radius: 8px;
+}
+
+.planCoinIcon {
+  color: #f59e0b;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.priceValue {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #111;
+  line-height: 1;
+}
+
+.pricePeriod {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+}
+
+.featuresList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem 0;
+  flex-grow: 1;
+}
+
+.featureItem {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  color: #4b5563;
+}
+
+.checkIcon {
+  color: #10b981;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
+
+.subscribeButton {
+  width: 100%;
+  padding: 1rem;
+  border: none;
+  border-radius: 8px;
+  background-color: #3b82f6;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: auto;
+}
+
+.subscribeButton:hover {
+  background-color: #2563eb;
+  transform: translateY(-2px);
+}
+
+.disabledButton {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.disabledButton:hover {
+  background-color: #9ca3af;
+  transform: none;
+}
+
+.insufficientCoins {
+  text-align: center;
+  color: #ef4444;
+  font-size: 0.875rem;
+  margin-top: 0.75rem;
+}
+
+.noPlans {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 2rem;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  color: #6b7280;
+}
+
+.infoIcon {
+  font-size: 2rem;
+  color: #9ca3af;
+  margin-bottom: 1rem;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.modalContent h2 {
+  margin-top: 0;
+  color: #111;
+}
+
+.balanceInfo {
+  background-color: #f8fafc;
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 1.5rem 0;
+}
+
+.balanceInfo p {
+  margin: 0.5rem 0;
+  color: #4b5563;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.cancelButton, .confirmButton {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancelButton {
+  background-color: #e5e7eb;
+  color: #4b5563;
+}
+
+.cancelButton:hover {
+  background-color: #d1d5db;
+}
+
+.confirmButton {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.confirmButton:hover {
+  background-color: #2563eb;
+}
+
+.cancelButton:disabled, .confirmButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .header {
+    padding-top: 5rem;
+  }
+  
+  .title {
+    font-size: 1.75rem;
+  }
+  
+  .coinsBalance {
+    flex-wrap: wrap;
+  }
+  
+  .coinLabel {
+    margin-right: 0;
+    margin-bottom: 1rem;
+    width: 100%;
+    text-align: center;
+  }
+  
+  .getCoinsButton {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .planCard {
+    height: auto;
+  }
+  
+  .modalContent {
+    width: 95%;
+    padding: 1.5rem;
+  }
+} 

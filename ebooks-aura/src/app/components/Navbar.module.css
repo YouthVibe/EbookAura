@@ -411,4 +411,27 @@
     opacity: 1;
     pointer-events: auto;
   }
+}
+
+.plansButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  color: var(--text-color);
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  margin-left: 0.5rem;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.plansButton:hover {
+  color: #f59e0b;
+  transform: translateY(-2px);
+}
+
+.crownIcon {
+  font-size: 1.25rem;
+  color: #f59e0b;
 } 

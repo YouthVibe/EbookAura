@@ -3,9 +3,9 @@
  * This file centralizes API call functions and ensures they all use the configured API URL
  */
 
-// Use the production API URL directly
+// Production URL (commented out)
 const API_BASE_URL = 'https://ebookaura.onrender.com/api';
-// Fallback options commented out
+// // Use API URL from environment variables with fallback (commented out)
 // const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 /**
@@ -206,10 +206,26 @@ export async function deleteAPI(endpoint, options = {}) {
   });
 }
 
+/**
+ * Patch data to an API endpoint (partial update)
+ * @param {string} endpoint - API endpoint path (without base URL)
+ * @param {object} data - Data to send in request body
+ * @param {object} options - Additional fetch options
+ * @returns {Promise<any>} - Parsed JSON response
+ */
+export async function patchAPI(endpoint, data, options = {}) {
+  return fetchAPI(endpoint, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+    ...options
+  });
+}
+
 export default {
   fetchAPI,
   getAPI,
   postAPI,
   putAPI,
-  deleteAPI
+  deleteAPI,
+  patchAPI
 };

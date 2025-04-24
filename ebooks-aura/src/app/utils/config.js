@@ -5,9 +5,9 @@ import { getAPI, postAPI, putAPI, deleteAPI } from '../api/apiUtils';
  * This file centralizes configuration to ensure consistency across the application
  */
 
-// Use production URL directly
+// Production URL (active)
 export const API_BASE_URL = 'https://ebookaura.onrender.com/api';
-// Fallback options commented out
+// Development URL (active)
 // export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 // API endpoints

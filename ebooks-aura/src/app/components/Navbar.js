@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import styles from './Navbar.module.css';
-import { FaBars, FaTimes, FaChevronDown, FaSearch, FaBookmark, FaUser, FaSignInAlt, FaUserPlus, FaCoins } from 'react-icons/fa';
+import { FaBars, FaTimes, FaChevronDown, FaSearch, FaBookmark, FaUser, FaSignInAlt, FaUserPlus, FaCoins, FaCrown } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar() {
@@ -35,6 +35,7 @@ export default function Navbar() {
   const menuItems = [
     { name: 'Home', href: '/' },
     { name: 'About', href: '/about' },
+    { name: 'Plans', href: '/plans' },
   ];
 
   return (
@@ -54,10 +55,16 @@ export default function Navbar() {
           </Link>
 
           {user && (
-            <Link href="/coins" className={styles.coinsButton} title="Coins">
-              <FaCoins className={styles.coinIcon} />
-              <span className={styles.coinCount}>{user.coins || 0}</span>
-            </Link>
+            <>
+              <Link href="/coins" className={styles.coinsButton} title="Coins">
+                <FaCoins className={styles.coinIcon} />
+                <span className={styles.coinCount}>{user.coins || 0}</span>
+              </Link>
+              
+              <Link href="/plans" className={styles.plansButton} title="Subscription Plans">
+                <FaCrown className={styles.crownIcon} />
+              </Link>
+            </>
           )}
 
           {user ? (
@@ -77,6 +84,9 @@ export default function Navbar() {
                 </Link>
                 <Link href="/coins" className={styles.profileMenuItem} onClick={() => setIsProfileMenuOpen(false)}>
                   My Coins
+                </Link>
+                <Link href="/plans" className={styles.profileMenuItem} onClick={() => setIsProfileMenuOpen(false)}>
+                  Subscription Plans
                 </Link>
                 <button className={styles.profileMenuItem} onClick={() => { logout(); setIsProfileMenuOpen(false); }}>
                   Logout
@@ -139,10 +149,16 @@ export default function Navbar() {
             Bookmarks
           </Link>
           {user && (
-            <Link href="/coins" className={styles.mobileMenuItem}>
-              <FaCoins className={styles.mobileMenuIcon} />
-              Coins: {user.coins || 0}
-            </Link>
+            <>
+              <Link href="/coins" className={styles.mobileMenuItem}>
+                <FaCoins className={styles.mobileMenuIcon} />
+                Coins: {user.coins || 0}
+              </Link>
+              <Link href="/plans" className={styles.mobileMenuItem}>
+                <FaCrown className={styles.mobileMenuIcon} />
+                Subscription Plans
+              </Link>
+            </>
           )}
           {user ? (
             <>

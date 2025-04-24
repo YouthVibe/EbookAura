@@ -1,46 +1,64 @@
 /**
- * Script to check and fix a specific book's premium status
- * Provide the book ID as a command-line argument
- * Usage: node fix-specific-book.js <book_id>
+ * Script to fix a specific book's premium status and price
+ * This ensures the book has correct isPremium flag if price is set
+ * Usage: node fix-specific-book.js [bookId]
+ * If no bookId is provided, it will prompt for one
  */
 
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const readline = require('readline');
 const Book = require('../models/Book');
 
 // Load environment variables
 dotenv.config({ path: '../.env' });
 
-// Connect to database
+// Create readline interface for user input
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+// MongoDB connection
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    console.log('Connecting to MongoDB...');
     
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-    return true;
+    if (!process.env.MONGO_URI) {
+      console.error('MONGO_URI environment variable is not set.');
+      process.exit(1);
+    }
+    
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log('MongoDB connected successfully.');
   } catch (error) {
-    console.error(`Error connecting to MongoDB: ${error.message}`);
+    console.error('MongoDB connection error:', error.message);
     process.exit(1);
   }
 };
 
-const fixSpecificBook = async () => {
+// Get book ID from arguments or prompt
+const getBookId = async () => {
+  const bookId = process.argv[2];
+  
+  if (bookId) {
+    return bookId;
+  }
+  
+  return new Promise((resolve) => {
+    rl.question('Enter book ID to fix: ', (answer) => {
+      resolve(answer.trim());
+    });
+  });
+};
+
+// Fix the specific book
+const fixSpecificBook = async (bookId) => {
   try {
-    // Get book ID from command line argument
-    const bookId = process.argv[2];
-    
-    if (!bookId) {
-      console.error('Book ID is required. Usage: node fix-specific-book.js <book_id>');
-      process.exit(1);
-    }
-    
-    console.log(`Starting fix for book ID: ${bookId}`);
-    
-    // Connect to database
+    // Connect to MongoDB
     await connectDB();
+    
+    console.log(`Looking for book with ID: ${bookId}`);
     
     // Find the book
     const book = await Book.findById(bookId);
@@ -50,232 +68,88 @@ const fixSpecificBook = async () => {
       process.exit(1);
     }
     
-    console.log(`Found book: "${book.title}" (${book._id})`);
-    console.log(`Current state: isPremium=${book.isPremium}, price=${book.price}`);
+    console.log(`Found book: "${book.title}" by ${book.author}`);
+    console.log('Current status:');
+    console.log(`- isPremium: ${book.isPremium} (${typeof book.isPremium})`);
+    console.log(`- price: ${book.price} (${typeof book.price})`);
     
-    // Ask for confirmation
-    const readline = require('readline').createInterface({
-      input: process.stdin,
-      output: process.stdout
+    // Check if any fixes are needed
+    let needsFix = false;
+    
+    // If price > 0 but isPremium is not true, set isPremium to true
+    if (book.price > 0 && book.isPremium !== true) {
+      needsFix = true;
+      console.log('⚠️ Book has price but isPremium is not set to true');
+    }
+    
+    // If isPremium is true but price is 0, set a default price
+    if (book.isPremium === true && (!book.price || book.price <= 0)) {
+      needsFix = true;
+      console.log('⚠️ Book is marked as premium but has no price');
+    }
+    
+    if (!needsFix) {
+      console.log('✅ Book premium status is correct, no fixes needed');
+      process.exit(0);
+    }
+    
+    // Ask for confirmation before fixing
+    const confirmFix = await new Promise((resolve) => {
+      rl.question('Do you want to fix this book? (y/n): ', (answer) => {
+        resolve(answer.toLowerCase() === 'y');
+      });
     });
     
-    // Show options
-    console.log('\nWhat would you like to do?');
-    console.log('1. Mark as premium and set price (if no price exists)');
-    console.log('2. Remove premium status and price');
-    console.log('3. Only fix mismatched premium status (make premium if has price)');
-    console.log('4. Check relationship with users (find who purchased)');
+    if (!confirmFix) {
+      console.log('Operation cancelled.');
+      process.exit(0);
+    }
     
-    readline.question('Enter option (1-4): ', async (option) => {
-      try {
-        switch (option) {
-          case '1':
-            // Make premium and set price
-            book.isPremium = true;
-            
-            if (!book.price || book.price <= 0) {
-              readline.question('Enter price in coins: ', async (price) => {
-                try {
-                  const priceNum = parseInt(price);
-                  if (isNaN(priceNum) || priceNum <= 0) {
-                    console.error('Invalid price. Must be a positive number.');
-                    readline.close();
-                    process.exit(1);
-                  }
-                  
-                  book.price = priceNum;
-                  await book.save();
-                  
-                  console.log(`Book "${book.title}" updated:`);
-                  console.log(`  isPremium: ${book.isPremium}`);
-                  console.log(`  price: ${book.price}`);
-                  
-                  readline.close();
-                  process.exit(0);
-                } catch (err) {
-                  console.error('Error updating book:', err);
-                  readline.close();
-                  process.exit(1);
-                }
-              });
-            } else {
-              await book.save();
-              console.log(`Book "${book.title}" marked as premium with existing price ${book.price}`);
-              readline.close();
-              process.exit(0);
-            }
-            break;
-            
-          case '2':
-            // Remove premium status and price
-            book.isPremium = false;
-            book.price = 0;
-            await book.save();
-            
-            console.log(`Book "${book.title}" updated:`);
-            console.log(`  isPremium: ${book.isPremium}`);
-            console.log(`  price: ${book.price}`);
-            
-            readline.close();
-            process.exit(0);
-            break;
-            
-          case '3':
-            // Only fix mismatched status
-            if (book.price > 0 && !book.isPremium) {
-              book.isPremium = true;
-              await book.save();
-              console.log(`Book "${book.title}" marked as premium based on price ${book.price}`);
-            } else if (book.price <= 0 && book.isPremium) {
-              readline.question('This book is premium but has no price. Set a price? (y/n): ', async (answer) => {
-                if (answer.toLowerCase() === 'y') {
-                  readline.question('Enter price in coins: ', async (price) => {
-                    const priceNum = parseInt(price);
-                    if (isNaN(priceNum) || priceNum <= 0) {
-                      console.error('Invalid price. Must be a positive number.');
-                      readline.close();
-                      process.exit(1);
-                    }
-                    
-                    book.price = priceNum;
-                    await book.save();
-                    
-                    console.log(`Book "${book.title}" updated with price ${book.price}`);
-                    readline.close();
-                    process.exit(0);
-                  });
-                } else {
-                  console.log('No changes made to the book.');
-                  readline.close();
-                  process.exit(0);
-                }
-              });
-              return; // Let the nested readline handle the exit
-            } else {
-              console.log(`Book "${book.title}" already has consistent premium status and price.`);
-              readline.close();
-              process.exit(0);
-            }
-            break;
-            
-          case '4':
-            // Check relationship with users
-            const User = require('../models/User');
-            const Purchase = require('../models/Purchase');
-            
-            const usersWithBook = await User.find({ 
-              purchasedBooks: { $in: [book._id] } 
-            }).select('_id name email');
-            
-            const purchaseRecords = await Purchase.find({ book: book._id });
-            
-            console.log(`\nPurchase Information for "${book.title}":`);
-            console.log(`Users who purchased: ${usersWithBook.length}`);
-            console.log(`Purchase records: ${purchaseRecords.length}`);
-            
-            if (usersWithBook.length > 0) {
-              console.log('\nUsers who purchased this book:');
-              usersWithBook.forEach(user => {
-                console.log(`- ${user.name} (${user.email}), ID: ${user._id}`);
-              });
-            }
-            
-            if (purchaseRecords.length > 0) {
-              console.log('\nPurchase records:');
-              purchaseRecords.forEach(purchase => {
-                console.log(`- Date: ${purchase.purchaseDate.toISOString().split('T')[0]}, User: ${purchase.user}, Price: ${purchase.price}`);
-              });
-            }
-            
-            if (usersWithBook.length !== purchaseRecords.length) {
-              console.log('\nWARNING: Mismatch between user records and purchase records!');
-              console.log('Would you like to fix this inconsistency?');
-              readline.question('Fix inconsistency? (y/n): ', async (answer) => {
-                if (answer.toLowerCase() === 'y') {
-                  // Implement fix logic here
-                  console.log('Fixing inconsistencies...');
-                  
-                  // Create missing purchase records
-                  for (const user of usersWithBook) {
-                    const hasPurchaseRecord = purchaseRecords.some(
-                      p => p.user.toString() === user._id.toString()
-                    );
-                    
-                    if (!hasPurchaseRecord) {
-                      // Create purchase record
-                      const newPurchase = new Purchase({
-                        user: user._id,
-                        book: book._id,
-                        price: book.price || 0,
-                        purchaseDate: new Date(),
-                        bookDetails: {
-                          title: book.title,
-                          author: book.author,
-                          coverImage: book.coverImage
-                        }
-                      });
-                      
-                      await newPurchase.save();
-                      console.log(`Created purchase record for user ${user.name}`);
-                    }
-                  }
-                  
-                  // Check for any purchase records without corresponding user record
-                  for (const purchase of purchaseRecords) {
-                    const userHasBook = usersWithBook.some(
-                      u => u._id.toString() === purchase.user.toString()
-                    );
-                    
-                    if (!userHasBook) {
-                      try {
-                        // Add book to user's purchasedBooks
-                        const user = await User.findById(purchase.user);
-                        if (user) {
-                          if (!user.purchasedBooks.includes(book._id)) {
-                            user.purchasedBooks.push(book._id);
-                            await user.save();
-                            console.log(`Added book to user ${user.name}'s purchasedBooks array`);
-                          }
-                        } else {
-                          console.log(`Warning: Purchase record exists for non-existent user: ${purchase.user}`);
-                        }
-                      } catch (err) {
-                        console.error(`Error updating user for purchase ${purchase._id}:`, err);
-                      }
-                    }
-                  }
-                  
-                  console.log('Inconsistencies fixed.');
-                } else {
-                  console.log('No changes made to the records.');
-                }
-                readline.close();
-                process.exit(0);
-              });
-              return; // Let the nested readline handle the exit
-            } else {
-              console.log('\nPurchase records are consistent with user records.');
-              readline.close();
-              process.exit(0);
-            }
-            break;
-            
-          default:
-            console.log('Invalid option selected.');
-            readline.close();
-            process.exit(1);
-        }
-      } catch (err) {
-        console.error('Error processing option:', err);
-        readline.close();
-        process.exit(1);
-      }
-    });
+    // Fix the book
+    if (book.price > 0 && book.isPremium !== true) {
+      book.isPremium = true;
+      console.log('Setting isPremium to true');
+    }
+    
+    if (book.isPremium === true && (!book.price || book.price <= 0)) {
+      book.price = 25; // Default price
+      console.log('Setting price to 25 coins');
+    }
+    
+    // Save the book
+    await book.save();
+    
+    console.log('✅ Book fixed successfully!');
+    console.log('Updated status:');
+    console.log(`- isPremium: ${book.isPremium} (${typeof book.isPremium})`);
+    console.log(`- price: ${book.price} (${typeof book.price})`);
+    
   } catch (error) {
-    console.error('Error fixing specific book:', error);
+    console.error('Error:', error.message);
+    process.exit(1);
+  } finally {
+    rl.close();
+    // Allow time for database operations to complete
+    setTimeout(() => process.exit(0), 1000);
+  }
+};
+
+// Main function
+const main = async () => {
+  try {
+    const bookId = await getBookId();
+    
+    if (!bookId) {
+      console.error('No book ID provided.');
+      process.exit(1);
+    }
+    
+    await fixSpecificBook(bookId);
+  } catch (error) {
+    console.error('Error:', error.message);
     process.exit(1);
   }
 };
 
-// Run the function
-fixSpecificBook(); 
+// Run the main function
+main(); 

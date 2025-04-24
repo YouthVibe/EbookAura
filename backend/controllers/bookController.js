@@ -175,14 +175,29 @@ const getBook = asyncHandler(async (req, res) => {
   
   // IMPORTANT: Force proper types for premium-related properties with redundant checks
   // This ensures these fields are properly converted from MongoDB types
+  
+  // Log raw data for debugging
+  console.log(`Raw book data for ${book.title}:`);
+  console.log(`- Raw isPremium = ${book.isPremium} (${typeof book.isPremium})`);
+  console.log(`- Raw price = ${book.price} (${typeof book.price})`);
+  
+  // More robust checks for premium status
+  // First convert to proper boolean using strict comparison
   bookData.isPremium = book.isPremium === true;
-  bookData.price = book.price ? Number(book.price) : 0;
+  
+  // Convert price to proper number
+  bookData.price = typeof book.price === 'number' ? book.price : Number(book.price || 0);
   
   // Additional safeguards to ensure premium books are correctly identified
   // For premium books with price but no isPremium flag
   if (!bookData.isPremium && bookData.price > 0) {
     bookData.isPremium = true;
     console.log(`Setting isPremium=true for book with price ${bookData.price}`);
+    
+    // Also update the database for consistency
+    book.isPremium = true;
+    await book.save();
+    console.log(`Updated database record for book ${book._id} to set isPremium=true`);
   }
   
   // Force these to be proper JavaScript primitive types
@@ -206,6 +221,17 @@ const getBook = asyncHandler(async (req, res) => {
     console.log(`User ${req.user._id} has access to premium book ${book._id}: ${hasAccess}`);
   } else {
     bookData.userHasAccess = !bookData.isPremium; // Non-premium books are always accessible
+  }
+  
+  // Add the environment info to help with debugging
+  if (process.env.NODE_ENV === 'development') {
+    bookData._devInfo = {
+      env: 'development'
+    };
+  } else {
+    bookData._devInfo = {
+      env: process.env.NODE_ENV || 'production'
+    };
   }
   
   res.json(bookData);

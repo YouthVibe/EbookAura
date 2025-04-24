@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { FaCoins, FaArrowLeft, FaGift, FaAd, FaCalendar, FaHistory } from 'react-icons/fa';
+import { FaCoins, FaArrowLeft, FaGift, FaAd, FaCalendar } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import styles from './coins.module.css';
-import { getUserCoins, claimDailyCoins, claimAdRewardCoins } from '../api/coins';
+import { getUserCoins, claimDailyCoins, claimAdRewardCoins, checkDailyCoinsStatus } from '../api/coins';
 
 export default function CoinsPage() {
   const { user, updateUserCoins } = useAuth();
@@ -18,8 +18,8 @@ export default function CoinsPage() {
   const [success, setSuccess] = useState('');
   const [dailyClaimError, setDailyClaimError] = useState('');
   const [nextDailyClaimTime, setNextDailyClaimTime] = useState(null);
-  const [coinHistory, setCoinHistory] = useState([]);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [dailyCoinsClaimed, setDailyCoinsClaimed] = useState(false);
 
   useEffect(() => {
     // Only run once after component mounts and user is available
@@ -38,18 +38,25 @@ export default function CoinsPage() {
     setError('');
 
     try {
+      // Fetch coins balance
       const data = await getUserCoins();
       
       if (data && typeof data.coins === 'number') {
         updateUserCoins(data.coins);
       }
+
+      // Check daily coins status
+      const statusData = await checkDailyCoinsStatus();
       
-      // Add mock coin history for now
-      setCoinHistory([
-        { date: new Date(), amount: 10, type: 'Daily Reward' },
-        { date: new Date(Date.now() - 24 * 60 * 60 * 1000), amount: 25, type: 'Ad Reward' },
-        { date: new Date(Date.now() - 48 * 60 * 60 * 1000), amount: 10, type: 'Daily Reward' }
-      ]);
+      if (statusData) {
+        setDailyCoinsClaimed(statusData.hasClaimed);
+        
+        if (statusData.hasClaimed && statusData.nextRewardTime) {
+          setNextDailyClaimTime(new Date(statusData.nextRewardTime));
+        } else {
+          setNextDailyClaimTime(null);
+        }
+      }
     } catch (err) {
       console.error('Error fetching coins data:', err);
       setError(err.message || 'Failed to fetch coins data');
@@ -70,11 +77,13 @@ export default function CoinsPage() {
         updateUserCoins(result.coins);
         setSuccess(`Successfully claimed ${result.coinsAdded} daily coins!`);
         
-        // Add to history
-        setCoinHistory(prevHistory => [
-          { date: new Date(), amount: result.coinsAdded, type: 'Daily Reward' },
-          ...prevHistory
-        ]);
+        // Update state to reflect that daily coins have been claimed
+        setDailyCoinsClaimed(true);
+        
+        // Set next claim time to 24 hours from now
+        const nextReward = new Date();
+        nextReward.setHours(24, 0, 0, 0);
+        setNextDailyClaimTime(nextReward);
       }
     } catch (err) {
       console.error('Error claiming daily coins:', err);
@@ -83,6 +92,7 @@ export default function CoinsPage() {
       // Set next claim time if available in error response
       if (err.response && err.response.data && err.response.data.nextReward) {
         setNextDailyClaimTime(new Date(err.response.data.nextReward));
+        setDailyCoinsClaimed(true);
       }
     } finally {
       setDailyClaimLoading(false);
@@ -104,12 +114,6 @@ export default function CoinsPage() {
       if (result && typeof result.coins === 'number') {
         updateUserCoins(result.coins);
         setSuccess(`Successfully claimed ${result.coinsAdded} coins for watching an ad!`);
-        
-        // Add to history
-        setCoinHistory(prevHistory => [
-          { date: new Date(), amount: result.coinsAdded, type: 'Ad Reward' },
-          ...prevHistory
-        ]);
       }
     } catch (err) {
       console.error('Error claiming ad reward:', err);
@@ -117,6 +121,12 @@ export default function CoinsPage() {
     } finally {
       setAdRewardLoading(false);
     }
+  };
+
+  // Format the time nicely
+  const formatTime = (date) => {
+    if (!date) return '';
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   if (loading) {
@@ -161,17 +171,17 @@ export default function CoinsPage() {
             Claim your daily reward of 10 coins. Come back every day!
           </p>
           {dailyClaimError && <p className={styles.errorMessage}>{dailyClaimError}</p>}
-          {nextDailyClaimTime && (
+          {dailyCoinsClaimed && nextDailyClaimTime && (
             <p className={styles.nextClaimTime}>
-              Next claim available at: {nextDailyClaimTime.toLocaleTimeString()}
+              Next claim available at: {formatTime(nextDailyClaimTime)}
             </p>
           )}
           <button 
-            className={styles.claimButton}
+            className={`${styles.claimButton} ${dailyCoinsClaimed ? styles.disabledButton : ''}`}
             onClick={handleClaimDailyCoins}
-            disabled={dailyClaimLoading}
+            disabled={dailyClaimLoading || dailyCoinsClaimed}
           >
-            {dailyClaimLoading ? 'Claiming...' : 'Claim 10 Coins'}
+            {dailyClaimLoading ? 'Claiming...' : dailyCoinsClaimed ? 'Already Claimed Today' : 'Claim 10 Coins'}
             <FaGift className={styles.buttonIcon} />
           </button>
         </div>
@@ -192,27 +202,6 @@ export default function CoinsPage() {
             {adRewardLoading ? 'Loading Ad...' : 'Watch Ad & Earn 25 Coins'}
             <FaAd className={styles.buttonIcon} />
           </button>
-        </div>
-      </div>
-
-      <div className={styles.historySection}>
-        <h2 className={styles.historyTitle}>
-          <FaHistory /> Coins History
-        </h2>
-        <div className={styles.historyList}>
-          {coinHistory.length > 0 ? (
-            coinHistory.map((entry, index) => (
-              <div key={index} className={styles.historyItem}>
-                <div className={styles.historyDate}>
-                  {entry.date.toLocaleDateString()}
-                </div>
-                <div className={styles.historyType}>{entry.type}</div>
-                <div className={styles.historyAmount}>+{entry.amount}</div>
-              </div>
-            ))
-          ) : (
-            <p className={styles.emptyHistory}>No coin history available.</p>
-          )}
         </div>
       </div>
     </div>

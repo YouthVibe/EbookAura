@@ -3,14 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { FaArrowLeft, FaTrash, FaBookmark, FaStar, FaExclamationTriangle } from 'react-icons/fa';
+import { FaArrowLeft, FaTrash, FaBookmark, FaStar, FaExclamationTriangle, FaCrown, FaCoins } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import styles from './settings.module.css';
 import { API_BASE_URL } from '../utils/config';
 import { deleteAPI, postAPI } from '../api/apiUtils';
+import { getCurrentSubscription, getSubscriptionHistory, updateSubscription, cancelSubscription } from '../api/subscriptions';
 
 export default function Settings() {
-  const { user, logout, getToken } = useAuth();
+  const { user, logout, getToken, updateUserCoins } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -23,6 +24,13 @@ export default function Settings() {
   const [showDeleteBookmarksModal, setShowDeleteBookmarksModal] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
+  
+  // Add subscription-related state
+  const [currentSubscription, setCurrentSubscription] = useState(null);
+  const [subscriptionHistory, setSubscriptionHistory] = useState([]);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+  const [showCancelSubscriptionModal, setShowCancelSubscriptionModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
 
   useEffect(() => {
     // Redirect if not logged in
@@ -33,6 +41,9 @@ export default function Settings() {
 
     // Load user data
     fetchUserData();
+    
+    // Load subscription data
+    fetchSubscriptionData();
   }, [user, router]);
 
   const fetchUserData = async () => {
@@ -81,6 +92,51 @@ export default function Settings() {
       setError(err.message || 'An error occurred while fetching your data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSubscriptionData = async () => {
+    setSubscriptionLoading(true);
+    
+    try {
+      // Try to fetch current subscription
+      try {
+        const subscriptionData = await getCurrentSubscription();
+        
+        // Check if user has a subscription using the hasSubscription flag
+        if (subscriptionData && subscriptionData.hasSubscription && subscriptionData.subscription) {
+          setCurrentSubscription(subscriptionData.subscription);
+        } else {
+          // User doesn't have an active subscription
+          console.log('No active subscription found');
+          setCurrentSubscription(null);
+        }
+      } catch (err) {
+        // Handle unexpected errors
+        console.error('Error fetching subscription:', err);
+        setCurrentSubscription(null);
+      }
+      
+      // Fetch subscription history
+      try {
+        const historyData = await getSubscriptionHistory();
+        if (historyData && historyData.subscriptions) {
+          setSubscriptionHistory(historyData.subscriptions);
+        } else if (historyData && historyData.data) {
+          // Handle potential different response structure
+          setSubscriptionHistory(historyData.data);
+        } else {
+          setSubscriptionHistory([]);
+        }
+      } catch (err) {
+        console.error('Error fetching subscription history:', err);
+        setSubscriptionHistory([]);
+      }
+    } catch (err) {
+      console.error('Error fetching subscription data:', err);
+      setError(err.message || 'Failed to load subscription data');
+    } finally {
+      setSubscriptionLoading(false);
     }
   };
 
@@ -284,6 +340,71 @@ export default function Settings() {
     }
   };
 
+  const handleToggleAutoRenew = async () => {
+    if (!currentSubscription) return;
+    
+    setSubscriptionLoading(true);
+    setError('');
+    setSuccess('');
+    
+    try {
+      const result = await updateSubscription(
+        currentSubscription._id, 
+        { autoRenew: !currentSubscription.autoRenew }
+      );
+      
+      if (result && result.subscription) {
+        setCurrentSubscription(result.subscription);
+        setSuccess(`Auto-renew has been ${result.subscription.autoRenew ? 'enabled' : 'disabled'}`);
+      }
+    } catch (err) {
+      console.error('Error updating subscription:', err);
+      setError(err.message || 'Failed to update subscription');
+    } finally {
+      setSubscriptionLoading(false);
+    }
+  };
+  
+  const handleCancelSubscription = () => {
+    setShowCancelSubscriptionModal(true);
+  };
+  
+  const confirmCancelSubscription = async () => {
+    if (!currentSubscription) return;
+    
+    setShowCancelSubscriptionModal(false);
+    setSubscriptionLoading(true);
+    setError('');
+    setSuccess('');
+    
+    try {
+      const result = await cancelSubscription(currentSubscription._id, cancelReason);
+      
+      if (result && result.subscription) {
+        setCurrentSubscription(result.subscription);
+        setSuccess('Subscription has been canceled. You will have access until the end of your billing period.');
+        
+        // Refresh subscription history
+        fetchSubscriptionData();
+      }
+    } catch (err) {
+      console.error('Error canceling subscription:', err);
+      setError(err.message || 'Failed to cancel subscription');
+    } finally {
+      setSubscriptionLoading(false);
+    }
+  };
+  
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric'
+    });
+  };
+
   if (loading) {
     return (
       <div className={styles.container}>
@@ -420,6 +541,100 @@ export default function Settings() {
             </div>
           )}
         </div>
+
+        {/* Subscription Section */}
+        <div className={styles.settingsSection}>
+          <h2 className={styles.sectionTitle}>Subscription Management</h2>
+          <div className={styles.settingItem}>
+            <div className={styles.settingInfo}>
+              <h3 className={styles.settingTitle}>Current Subscription</h3>
+              <p className={styles.settingDescription}>
+                Manage your current subscription
+              </p>
+            </div>
+            {subscriptionLoading ? (
+              <div className={styles.loading}>Loading subscription data...</div>
+            ) : currentSubscription ? (
+              <div className={styles.subscriptionCard}>
+                <div className={styles.subscriptionHeader}>
+                  <h4 className={styles.subscriptionName}>{currentSubscription.plan?.name || 'Premium Plan'}</h4>
+                  <span className={`${styles.subscriptionStatus} ${styles[currentSubscription.status]}`}>
+                    {currentSubscription.status}
+                  </span>
+                </div>
+                
+                <div className={styles.subscriptionDetails}>
+                  <p>
+                    <strong>Started:</strong> {formatDate(currentSubscription.startDate)}
+                  </p>
+                  <p>
+                    <strong>Expires:</strong> {formatDate(currentSubscription.endDate)}
+                  </p>
+                  <p>
+                    <strong>Auto-Renew:</strong> {currentSubscription.autoRenew ? 'Enabled' : 'Disabled'}
+                  </p>
+                  {currentSubscription.nextPaymentDate && (
+                    <p>
+                      <strong>Next Payment:</strong> {formatDate(currentSubscription.nextPaymentDate)}
+                    </p>
+                  )}
+                  <p>
+                    <strong>Payment Method:</strong> {currentSubscription.paymentMethod?.replace('_', ' ')}
+                  </p>
+                </div>
+                
+                <div className={styles.subscriptionActions}>
+                  <button 
+                    className={styles.actionButton}
+                    onClick={handleToggleAutoRenew}
+                    disabled={subscriptionLoading || currentSubscription.status !== 'active'}
+                  >
+                    {currentSubscription.autoRenew ? 'Disable Auto-Renew' : 'Enable Auto-Renew'}
+                  </button>
+                  
+                  {currentSubscription.status === 'active' && (
+                    <button 
+                      className={`${styles.actionButton} ${styles.dangerButton}`}
+                      onClick={handleCancelSubscription}
+                      disabled={subscriptionLoading}
+                    >
+                      Cancel Subscription
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className={styles.noSubscription}>
+                <p>You don't have an active subscription.</p>
+                <Link href="/plans" className={styles.planButton}>
+                  View Subscription Plans
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Subscription History */}
+        {subscriptionHistory.length > 0 && (
+          <div className={styles.subscriptionHistory}>
+            <h3>Subscription History</h3>
+            <div className={styles.historyList}>
+              {subscriptionHistory.map((sub) => (
+                <div key={sub._id} className={styles.historyItem}>
+                  <div className={styles.historyHeader}>
+                    <span className={styles.historyPlan}>{sub.plan?.name || 'Premium Plan'}</span>
+                    <span className={`${styles.historyStatus} ${styles[sub.status]}`}>
+                      {sub.status}
+                    </span>
+                  </div>
+                  <div className={styles.historyPeriod}>
+                    {formatDate(sub.startDate)} - {formatDate(sub.endDate)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Delete Account Modal */}
@@ -526,6 +741,49 @@ export default function Settings() {
                 onClick={confirmDeleteAllBookmarks}
               >
                 Delete All Bookmarks
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Subscription Modal */}
+      {showCancelSubscriptionModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <h2>Cancel Subscription</h2>
+            <p>Are you sure you want to cancel your subscription?</p>
+            <p>You will continue to have access until {formatDate(currentSubscription?.endDate)}.</p>
+            
+            <div className={styles.formGroup}>
+              <label htmlFor="cancelReason">Reason for cancellation (optional):</label>
+              <select 
+                id="cancelReason"
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                className={styles.selectInput}
+              >
+                <option value="">Select a reason</option>
+                <option value="too expensive">Too expensive</option>
+                <option value="not using enough">Not using enough</option>
+                <option value="found alternative">Found an alternative</option>
+                <option value="missing features">Missing features</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            
+            <div className={styles.modalActions}>
+              <button 
+                className={styles.cancelButton}
+                onClick={() => setShowCancelSubscriptionModal(false)}
+              >
+                Keep Subscription
+              </button>
+              <button 
+                className={styles.confirmButton}
+                onClick={confirmCancelSubscription}
+              >
+                Confirm Cancellation
               </button>
             </div>
           </div>

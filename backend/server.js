@@ -21,6 +21,7 @@ const bookRoutes = require('./routes/bookRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const apiKeyRoutes = require('./routes/apiKeyRoutes');
 const coinRoutes = require('./routes/coinRoutes');
+const subscriptionRoutes = require('./routes/subscriptionRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -97,6 +98,7 @@ app.use('/api/books', bookRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/api-keys', apiKeyRoutes);
 app.use('/api/coins', coinRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
 
 // Find the static files directory
 // Try multiple possible locations to handle different deployment environments

@@ -44,6 +44,7 @@ export default function BookClientWrapper({ params: serverParams }) {
   
   // Debug auth state
   useEffect(() => {
+    // Keep the console log for developers but not visible to users
     console.log('BookClientWrapper - Auth State:', { 
       isLoggedIn, 
       user: user ? 'exists' : 'null',
@@ -90,16 +91,33 @@ export default function BookClientWrapper({ params: serverParams }) {
       // Fallback: try to extract from URL path
       try {
         const pathParts = pathname.split('/');
-        const idFromPath = pathParts[pathParts.length - 1];
+        // Find the first non-empty string after 'books' in the path
+        let idFromPath = '';
+        
+        // Loop through parts to find the book ID
+        for (let i = 0; i < pathParts.length; i++) {
+          if (pathParts[i] === 'books' && i + 1 < pathParts.length) {
+            idFromPath = pathParts[i + 1];
+            break;
+          }
+        }
+        
+        console.log('Path parts:', pathParts);
+        console.log('Raw ID from path:', idFromPath);
         
         // Remove trailing slash if present
-        const cleanId = idFromPath.endsWith('/') 
+        const cleanId = idFromPath?.endsWith('/') 
           ? idFromPath.substring(0, idFromPath.length - 1) 
           : idFromPath;
         
-        if (cleanId && cleanId !== '' && cleanId !== 'not-found') {
-          console.log('Using ID extracted from path:', cleanId);
-          setBookId(cleanId);
+        // Remove any query parameters
+        const finalId = cleanId?.split('?')[0];
+        
+        console.log('Clean ID after processing:', finalId);
+        
+        if (finalId && finalId !== '' && finalId !== 'not-found' && finalId !== 'undefined') {
+          console.log('Using ID extracted from path:', finalId);
+          setBookId(finalId);
         } else {
           throw new Error('Could not extract valid book ID from path');
         }
@@ -122,29 +140,150 @@ export default function BookClientWrapper({ params: serverParams }) {
   }
 
   if (error) {
-    return <div className="error-container">
-      <h2>Error</h2>
+    return <div className="error-container" style={{
+      padding: "20px",
+      maxWidth: "800px",
+      margin: "0 auto",
+      backgroundColor: "#f8f9fa",
+      borderRadius: "8px",
+      boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+    }}>
+      <h2 style={{ color: "#dc3545" }}>Error</h2>
       <p>{error}</p>
-      <button 
-        onClick={() => router.back()} 
-        className="back-button"
-      >
-        Go Back
-      </button>
+      
+      <div style={{ 
+        margin: "20px 0",
+        padding: "10px",
+        backgroundColor: "#e9ecef",
+        borderRadius: "4px",
+        fontSize: "14px",
+        display: "none" // Hide debug information
+      }}>
+        <h3>Debug Information</h3>
+        <p><strong>Current Path:</strong> {pathname}</p>
+        <p><strong>Server Params ID:</strong> {serverParams?.id || 'none'}</p>
+        <p><strong>Client Params ID:</strong> {clientParams?.id || 'none'}</p>
+        <p><strong>Extracted Book ID:</strong> {bookId || 'none'}</p>
+      </div>
+      
+      <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
+        <button 
+          onClick={() => router.back()} 
+          style={{
+            padding: "8px 16px",
+            backgroundColor: "#6c757d",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer"
+          }}
+        >
+          Go Back
+        </button>
+        <button 
+          onClick={() => router.push('/search')} 
+          style={{
+            padding: "8px 16px",
+            backgroundColor: "#007bff",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer"
+          }}
+        >
+          Browse Books
+        </button>
+        <button 
+          onClick={() => window.location.reload()} 
+          style={{
+            padding: "8px 16px",
+            backgroundColor: "#28a745",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer"
+          }}
+        >
+          Reload Page
+        </button>
+      </div>
     </div>;
   }
 
   // Only render the BookPageClient if we have a valid ID
   if (!bookId || bookId === 'not-found') {
-    return <div className="error-container">
-      <h2>Book Not Found</h2>
-      <p>The requested book could not be found.</p>
-      <button 
-        onClick={() => router.push('/search')} 
-        className="back-button"
-      >
-        Browse Books
-      </button>
+    return <div className="error-container" style={{
+      padding: "20px",
+      maxWidth: "800px",
+      margin: "0 auto",
+      backgroundColor: "#f8f9fa",
+      borderRadius: "8px",
+      boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+    }}>
+      <h2 style={{ color: "#dc3545" }}>Book Not Found</h2>
+      <p>The requested book could not be found or the ID is invalid.</p>
+      
+      <div style={{ 
+        margin: "20px 0",
+        padding: "10px",
+        backgroundColor: "#e9ecef",
+        borderRadius: "4px",
+        fontSize: "14px",
+        display: "none" // Hide debug information
+      }}>
+        <h3>Debug Information</h3>
+        <p><strong>Current Path:</strong> {pathname}</p>
+        <p><strong>Server Params ID:</strong> {serverParams?.id || 'none'}</p>
+        <p><strong>Client Params ID:</strong> {clientParams?.id || 'none'}</p>
+        <p><strong>Extracted Book ID:</strong> {bookId || 'none'}</p>
+      </div>
+      
+      <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
+        <button 
+          onClick={() => router.back()} 
+          style={{
+            padding: "8px 16px",
+            backgroundColor: "#6c757d",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer"
+          }}
+        >
+          Go Back
+        </button>
+        <button 
+          onClick={() => router.push('/search')} 
+          style={{
+            padding: "8px 16px",
+            backgroundColor: "#007bff",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer"
+          }}
+        >
+          Browse Books
+        </button>
+        <button 
+          onClick={() => {
+            const newId = prompt("Enter a valid book ID to try:");
+            if (newId) {
+              router.push(`/books/${newId}`);
+            }
+          }} 
+          style={{
+            padding: "8px 16px",
+            backgroundColor: "#28a745",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer"
+          }}
+        >
+          Try Another ID
+        </button>
+      </div>
     </div>;
   }
 

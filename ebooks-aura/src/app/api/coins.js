@@ -23,6 +23,26 @@ export const getUserCoins = async () => {
   }
 };
 
+// Check if daily coins have been claimed already
+export const checkDailyCoinsStatus = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+    
+    return await getAPI('/coins/daily-status', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+  } catch (error) {
+    console.error('Error checking daily coins status:', error);
+    throw error;
+  }
+};
+
 // Claim daily coins
 export const claimDailyCoins = async () => {
   try {
