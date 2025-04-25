@@ -11,16 +11,29 @@ if %ERRORLEVEL% NEQ 0 (
   exit /b 1
 )
 
-REM Run the fix script
-echo Running fix script...
-node scripts/fix-all-premium-issues.js
+REM Run the premium books fix first
+echo Step 1: Running general premium book fix...
+echo.
+node fix-premium-production.js
 
-if %ERRORLEVEL% EQU 0 (
-  echo.
-  echo Script completed successfully!
-) else (
-  echo.
+if %ERRORLEVEL% NEQ 0 (
   echo An error occurred while fixing premium books.
+  pause
+  exit /b 1
 )
 
+echo.
+echo Step 2: Running purchase records premium fix...
+echo.
+node fix-purchase-premium-books.js
+
+if %ERRORLEVEL% NEQ 0 (
+  echo An error occurred while fixing purchased books.
+  pause
+  exit /b 1
+)
+
+echo.
+echo All premium book fixes completed successfully!
+echo.
 pause 

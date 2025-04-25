@@ -1,0 +1,26 @@
+.adContainer {
+  margin: 1.5rem auto;
+  width: 100%;
+  max-width: 100%;
+  position: relative;
+  background-color: var(--card-background, #ffffff);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 0.5rem;
+}
+
+.adLabel {
+  font-size: 0.7rem;
+  color: var(--text-secondary, #6c757d);
+  text-align: center;
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+@media (max-width: 768px) {
+  .adContainer {
+    margin: 1rem auto;
+  }
+} 

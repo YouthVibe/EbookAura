@@ -86,3 +86,29 @@ a {
     color-scheme: dark;
   }
 }
+
+/* Android-specific adjustments for bottom toolbar */
+@media (max-width: 768px) {
+  body[data-android="true"] {
+    padding-bottom: 70px !important;
+  }
+  
+  body[data-android="true"] main {
+    padding-bottom: calc(1rem + 65px) !important;
+  }
+  
+  /* Ensure footers don't overlap with the toolbar */
+  footer {
+    margin-bottom: 70px;
+  }
+  
+  /* Add spacing for fixed position elements at the bottom */
+  .fixed-bottom {
+    bottom: 70px !important;
+  }
+  
+  /* For pages with sticky footers */
+  body[data-android="true"] .page-with-bottom-actions {
+    margin-bottom: 70px !important;
+  }
+}

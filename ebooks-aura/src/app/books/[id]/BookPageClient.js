@@ -10,10 +10,11 @@ import styles from './book.module.css';
 import { API_ENDPOINTS } from '../../utils/config';
 import { createDownloadablePdf } from '../../utils/pdfUtils';
 import { useAuth } from '../../context/AuthContext';
-import { purchaseBook, checkBookPurchase } from '../../api/coins';
+import { purchaseBook, checkBookPurchase } from '../../api/coins.js';
 import { toast } from 'react-toastify';
 import { getAPI, postAPI } from '../../api/apiUtils';
 import { normalizeMongoDocument } from '../../utils/mongoUtils';
+import AdComponent from '../../components/AdComponent';
 
 // Dynamically import PdfViewer with no SSR to avoid the Promise.withResolvers error
 const PdfViewer = dynamic(() => import('../../components/PdfViewer'), {
@@ -41,12 +42,14 @@ export default function BookPageClient({ id }) {
   const [purchaseError, setPurchaseError] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
+  const [hasPurchased, setHasPurchased] = useState(false);
   const router = useRouter();
   const { user, isLoggedIn, getToken, getApiKey, updateUserCoins } = useAuth();
   
   // Refs to help with race conditions
   const prevIsLoggedInRef = useRef(false);
   const isFetchingRef = useRef(false);
+  const lastRefreshTimeRef = useRef(0); // Track last refresh time
   
   // Check URL for debug parameter
   useEffect(() => {
@@ -84,8 +87,6 @@ export default function BookPageClient({ id }) {
     }
   }, []);
   
-  // Computed properties for better readability and premium status handling
-  // Using explicit boolean conversion for consistent behavior in all environments
   // More robust premium detection to handle various data types from the API
   const isPremiumBook = book ? (
     // Explicitly check all possible truthy representations that might come from different environments
@@ -97,12 +98,16 @@ export default function BookPageClient({ id }) {
     (book.price && Number(book.price) > 0)
   ) : false;
   
-  const userHasPurchased = book ? (
+  // Computed property to check if user has access from book data
+  const bookUserHasAccess = book ? (
     book.userHasAccess === true || 
     book.userHasAccess === 'true' ||
     book.userHasAccess === 1 ||
     String(book.userHasAccess).toLowerCase() === 'true'
   ) : false;
+  
+  // Use both the state and computed property for determining if user has purchased
+  const hasUserPurchased = hasPurchased || bookUserHasAccess;
   
   const userHasEnoughCoins = user && book ? (
     Number(user.coins || 0) >= Number(book.price || 0)
@@ -115,29 +120,88 @@ export default function BookPageClient({ id }) {
   
   // Check if user has purchased the book
   const checkPurchaseStatus = useCallback(async () => {
-    if (!isLoggedIn || !id || !isPremiumBook) {
+    if (!id) {
+      console.log('Cannot check purchase status: Book ID is missing');
       return;
     }
     
+    // Skip checks for non-premium books or when user is not logged in
+    if (!isPremiumBook) {
+      console.log('Skipping purchase check for non-premium book');
+      return;
+    }
+    
+    if (!isLoggedIn) {
+      console.log('Skipping purchase check - user not logged in');
+      return;
+    }
+    
+    console.log(`Checking purchase status for book ID: ${id}`);
+    
     try {
+      // First check if the book already has userHasAccess set to true
+      if (book && book.userHasAccess === true) {
+        console.log('Book already marked as purchased in local state');
+        setPurchaseSuccess(true);
+        return;
+      }
+      
+      // Call the API to verify purchase status
+      console.log('Calling API to verify purchase status...');
       const result = await checkBookPurchase(id);
+      
+      console.log('Purchase check API response:', result);
       
       if (result && result.success) {
         // Update book with purchase status
+        const hasPurchased = result.hasPurchased;
+        console.log(`API confirms user ${hasPurchased ? 'has' : 'has not'} purchased this book`);
+        
         setBook(prevBook => ({
           ...prevBook,
-          userHasAccess: result.hasPurchased
+          userHasAccess: hasPurchased
         }));
         
-        if (result.hasPurchased) {
+        if (hasPurchased) {
+          setHasPurchased(true);
           setPurchaseSuccess(true);
+        } else {
+          setHasPurchased(false);
+          // Do not reset purchaseSuccess here as it might have been set by a just-completed purchase
         }
+      } else {
+        console.warn('Purchase check API returned success:false or invalid response');
       }
     } catch (err) {
       console.error('Error checking book purchase status:', err);
-      // Don't show an error UI to the user for this check
+      
+      // If the server is down or there's a network error, check local storage as fallback
+      try {
+        // As a fallback, we can check if the book ID exists in the user data
+        const userInfo = localStorage.getItem('userInfo');
+        if (userInfo) {
+          const userData = JSON.parse(userInfo);
+          if (userData.purchasedBooks && Array.isArray(userData.purchasedBooks)) {
+            const hasPurchased = userData.purchasedBooks.includes(id);
+            console.log(`Fallback: Local storage indicates user ${hasPurchased ? 'has' : 'has not'} purchased this book`);
+            
+            if (hasPurchased) {
+              setHasPurchased(true);
+              setPurchaseSuccess(true);
+              
+              // Also update the book state
+              setBook(prevBook => ({
+                ...prevBook,
+                userHasAccess: true
+              }));
+            }
+          }
+        }
+      } catch (storageErr) {
+        console.error('Error checking local storage for purchase status:', storageErr);
+      }
     }
-  }, [isLoggedIn, id, isPremiumBook, setPurchaseSuccess, setBook]);
+  }, [isLoggedIn, id, isPremiumBook, book, setPurchaseSuccess, setHasPurchased, setBook]);
   
   // Check purchase status when auth state changes or after purchase
   useEffect(() => {
@@ -146,6 +210,47 @@ export default function BookPageClient({ id }) {
     }
   }, [isLoggedIn, id, isPremiumBook, checkPurchaseStatus]);
   
+  // Function to refresh the user's coin balance
+  const refreshUserCoins = useCallback(async () => {
+    if (!isLoggedIn || !user) {
+      console.log('Cannot refresh coins: User not logged in');
+      return;
+    }
+    
+    // Check if we've refreshed recently (within the last 5 seconds)
+    const now = Date.now();
+    const timeSinceLastRefresh = now - lastRefreshTimeRef.current;
+    
+    if (timeSinceLastRefresh < 5000) {
+      console.log(`Skipping coin refresh - last refresh was ${timeSinceLastRefresh}ms ago (< 5000ms)`);
+      return;
+    }
+    
+    // Update the last refresh time
+    lastRefreshTimeRef.current = now;
+    console.log('Refreshing user coin balance...');
+    
+    try {
+      const { getUserCoins } = await import('../../api/coins.js');
+      const coinsData = await getUserCoins();
+      
+      if (coinsData && typeof coinsData.coins === 'number') {
+        console.log(`Updating user coins from ${user.coins} to ${coinsData.coins}`);
+        updateUserCoins(coinsData.coins);
+      }
+    } catch (err) {
+      console.error('Error refreshing coin balance:', err);
+    }
+  }, [isLoggedIn, user, updateUserCoins]);
+  
+  // Refresh coin balance when component mounts or when user logs in
+  useEffect(() => {
+    if (isLoggedIn && isPremiumBook) {
+      console.log('Component mounted or premium status changed - refreshing coin balance');
+      refreshUserCoins();
+    }
+  }, [isLoggedIn, isPremiumBook, refreshUserCoins]);
+
   // Combined useEffect to handle both initial load and auth changes
   useEffect(() => {
     // Don't fetch if ID is missing
@@ -164,6 +269,12 @@ export default function BookPageClient({ id }) {
       // Only fetch again if authentication just happened (we went from not logged in to logged in)
       // or if we're still waiting for book data
       shouldFetch = (isLoggedIn && !prevIsLoggedInRef.current) || !book;
+      
+      // If user just logged in, refresh their coin balance
+      if (isLoggedIn && !prevIsLoggedInRef.current) {
+        console.log('User just logged in - refreshing coin balance');
+        refreshUserCoins();
+      }
     }
 
     // Track previous auth state for future comparison
@@ -173,7 +284,7 @@ export default function BookPageClient({ id }) {
       // Use a setTimeout to ensure this executes after any auth token checks complete
       setTimeout(() => fetchBookDetails(id), 50);
     }
-  }, [id, isLoggedIn, user]);
+  }, [id, isLoggedIn, user, refreshUserCoins]);
 
   // Clean up PDF blob URL when component unmounts or when PDF viewer is closed
   useEffect(() => {
@@ -322,7 +433,7 @@ export default function BookPageClient({ id }) {
     }
     
     // Check if user has purchased this premium content
-    if (isPremiumBook && isLoggedIn && !userHasPurchased && !purchaseSuccess) {
+    if (isPremiumBook && isLoggedIn && !hasUserPurchased && !purchaseSuccess) {
       setPremiumError('You need to purchase this book to access it.');
       return;
     }
@@ -344,7 +455,7 @@ export default function BookPageClient({ id }) {
     }
     
     // Check if user has purchased this premium content
-    if (isPremiumBook && isLoggedIn && !userHasPurchased && !purchaseSuccess) {
+    if (isPremiumBook && isLoggedIn && !hasUserPurchased && !purchaseSuccess) {
       setPremiumError('You need to purchase this book to download it.');
       return;
     }
@@ -507,7 +618,7 @@ export default function BookPageClient({ id }) {
     }
     
     // Check if user already owns the book
-    if (userHasPurchased || purchaseSuccess) {
+    if (hasUserPurchased || purchaseSuccess) {
       toast.info('You already own this book');
       return;
     }
@@ -529,31 +640,77 @@ export default function BookPageClient({ id }) {
       setPurchaseError(null);
       setShowConfirmation(false);
       
+      console.log(`Attempting to purchase book ${id} with coins...`);
+      
       const result = await purchaseBook(id);
       
-      // Update user's coins
+      console.log('Purchase API response:', result);
+      
+      // Update user's coins - ensure we're getting the updated value from the server
       if (result && typeof result.coins === 'number') {
+        console.log(`Updating user coins to ${result.coins} (spent ${result.coinsSpent || 'unknown'} coins)`);
         updateUserCoins(result.coins);
         
         // Check purchase status to update UI
         await checkPurchaseStatus();
         
         setPurchaseSuccess(true);
+        toast.success(`Book purchased successfully for ${result.coinsSpent || book.price} coins!`);
+      } else if (result && result.alreadyOwned) {
+        // Handle the case where the book was already owned
+        console.log('User already owns this book');
+        setPurchaseSuccess(true);
+        toast.info('You already own this book');
+        await checkPurchaseStatus();
+      } else {
+        // Generic success if we don't have exact coin details
+        setPurchaseSuccess(true);
         toast.success('Book purchased successfully!');
+        
+        // Refresh coin balance using our throttled function
+        refreshUserCoins();
       }
     } catch (err) {
       console.error('Error purchasing book:', err);
       
       // Extract error message from the response if available
       let errorMessage = 'Failed to purchase book. Please try again.';
-      if (err.response && err.response.data && err.response.data.message) {
-        errorMessage = err.response.data.message;
+      let errorType = null;
+      
+      if (err.response && err.response.data) {
+        const responseData = err.response.data;
+        
+        if (responseData.message) {
+          errorMessage = responseData.message;
+        }
+        
+        // Check for specific error cases
+        if (responseData.required && responseData.available) {
+          errorType = 'insufficient_coins';
+          errorMessage = `You need ${responseData.required - responseData.available} more coins to purchase this book.`;
+        } else if (responseData.alreadyOwned) {
+          errorType = 'already_owned';
+          errorMessage = 'You already own this book';
+          // If already owned, we can still consider it a "success"
+          setPurchaseSuccess(true);
+          await checkPurchaseStatus();
+        }
       } else if (err.message) {
         errorMessage = err.message;
       }
       
+      // Set appropriate UI state based on error type
       setPurchaseError(errorMessage);
-      toast.error(errorMessage);
+      
+      // Show toast with the error
+      if (errorType === 'already_owned') {
+        toast.info(errorMessage);
+      } else {
+        toast.error(errorMessage);
+      }
+      
+      // Refresh user's coin balance using our throttled function
+      refreshUserCoins();
     } finally {
       setPurchasing(false);
     }
@@ -869,6 +1026,15 @@ export default function BookPageClient({ id }) {
               <p>{book.description}</p>
             </div>
 
+            {/* Google AdSense Ad */}
+            <div className={styles.adContainer}>
+              <AdComponent 
+                slot="3954381527" 
+                format="auto" 
+                style={{ display: 'block' }}
+              />
+            </div>
+
             <div className={styles.tags}>
               <h2>Tags</h2>
               <div className={styles.tagList}>
@@ -908,7 +1074,7 @@ export default function BookPageClient({ id }) {
                       <li><strong>price type:</strong> {typeof book?.price}</li>
                       <li><strong>Computed isPremiumBook:</strong> {String(isPremiumBook)}</li>
                       <li><strong>Premium Status:</strong> {isPremiumBook ? 'Premium Book' : 'Free Book'}</li>
-                      <li><strong>Has Purchased:</strong> {userHasPurchased ? 'Yes' : 'No'}</li>
+                      <li><strong>Has Purchased:</strong> {hasUserPurchased ? 'Yes' : 'No'}</li>
                       <li><strong>Is Logged In:</strong> {isLoggedIn ? 'Yes' : 'No'}</li>
                       <li><strong>User Coins:</strong> {user?.coins || 0}</li>
                       <li><strong>Book Price:</strong> {bookPrice}</li>
@@ -1006,7 +1172,7 @@ export default function BookPageClient({ id }) {
                 </div>
                 
                 {/* Purchase section for logged in users */}
-                {isLoggedIn && !userHasPurchased && bookPrice > 0 && !purchaseSuccess && (
+                {isLoggedIn && !hasUserPurchased && bookPrice > 0 && !purchaseSuccess && (
                   <>
                     {purchaseError && (
                       <div className={styles.purchaseError}>
@@ -1039,7 +1205,7 @@ export default function BookPageClient({ id }) {
                 )}
                 
                 {/* Success message after purchase - show for both userHasPurchased or purchaseSuccess */}
-                {(userHasPurchased === true || purchaseSuccess === true) && (
+                {(hasUserPurchased === true || purchaseSuccess === true) && (
                   <div className={styles.purchaseSuccess}>
                     <FaCheck /> You own this book! You can now access the full content.
                   </div>
@@ -1080,8 +1246,8 @@ export default function BookPageClient({ id }) {
                 // For custom URL PDFs, show a single "Open PDF" button that redirects to the URL
                 <button 
                   onClick={handleOpenCustomUrl}
-                  className={`${styles.openUrlButton} ${(isPremiumBook && !userHasPurchased && !purchaseSuccess) ? styles.disabledButton : ''}`}
-                  disabled={openingCustomUrl || (isPremiumBook && !userHasPurchased && !purchaseSuccess)}
+                  className={`${styles.openUrlButton} ${(isPremiumBook && !hasUserPurchased && !purchaseSuccess) ? styles.disabledButton : ''}`}
+                  disabled={openingCustomUrl || (isPremiumBook && !hasUserPurchased && !purchaseSuccess)}
                 >
                   <FaFileAlt /> {openingCustomUrl ? 'Opening...' : 'Open PDF'}
                 </button>
@@ -1090,16 +1256,16 @@ export default function BookPageClient({ id }) {
                 <>
                   <button 
                     onClick={handleViewPdf} 
-                    className={`${styles.viewButton} ${(isPremiumBook && !userHasPurchased && !purchaseSuccess) ? styles.disabledButton : ''}`}
-                    disabled={viewing || (isPremiumBook && !userHasPurchased && !purchaseSuccess)}
+                    className={`${styles.viewButton} ${(isPremiumBook && !hasUserPurchased && !purchaseSuccess) ? styles.disabledButton : ''}`}
+                    disabled={viewing || (isPremiumBook && !hasUserPurchased && !purchaseSuccess)}
                   >
                     <FaFileAlt /> {viewing ? 'Opening...' : 'View PDF'}
                   </button>
                   
                   <button 
                     onClick={handleDownload} 
-                    className={`${styles.downloadButton} ${(isPremiumBook && !userHasPurchased && !purchaseSuccess) ? styles.disabledButton : ''}`}
-                    disabled={downloading || (isPremiumBook && !userHasPurchased && !purchaseSuccess)}
+                    className={`${styles.downloadButton} ${(isPremiumBook && !hasUserPurchased && !purchaseSuccess) ? styles.disabledButton : ''}`}
+                    disabled={downloading || (isPremiumBook && !hasUserPurchased && !purchaseSuccess)}
                   >
                     <FaDownload /> {downloading ? 'Downloading...' : 'Download PDF'}
                   </button>

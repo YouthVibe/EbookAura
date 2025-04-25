@@ -134,78 +134,222 @@ const purchaseBook = async (req, res) => {
     if (!bookId) {
       return res.status(400).json({ message: 'Book ID is required' });
     }
+    
+    console.log(`[COIN PURCHASE] User ${req.user._id} attempting to purchase book ${bookId}`);
 
     // Find the book
     const book = await Book.findById(bookId);
     
     if (!book) {
+      console.log(`[COIN PURCHASE] Book ${bookId} not found`);
       return res.status(404).json({ message: 'Book not found' });
     }
     
-    // Check if the book is premium
-    if (!book.isPremium) {
+    // FIXED: Use the robust premium check that handles serialization issues 
+    // Similar to what we have in bookController.js
+    
+    // Check if the book is premium using multiple methods
+    let isPremiumBook = false;
+    
+    // Method 1: Direct boolean check
+    if (book.isPremium === true) {
+      isPremiumBook = true;
+    }
+    
+    // Method 2: Check price (if price > 0, it's premium)
+    if (typeof book.price === 'number' && book.price > 0) {
+      isPremiumBook = true;
+    }
+    
+    // Method 3: String conversion check for different serialization formats
+    if (String(book.isPremium).toLowerCase() === 'true') {
+      isPremiumBook = true;
+    }
+    
+    // Method 4: Perform a direct database query to bypass serialization
+    if (!isPremiumBook) {
+      try {
+        // Use a lean query for raw data
+        const premiumCheck = await Book.findById(bookId)
+          .select('isPremium price')
+          .lean();
+        
+        if (premiumCheck) {
+          if (premiumCheck.isPremium === true) {
+            isPremiumBook = true;
+          }
+          
+          if (typeof premiumCheck.price === 'number' && premiumCheck.price > 0) {
+            isPremiumBook = true;
+          }
+        }
+      } catch (err) {
+        console.error(`Error in direct premium check for book ${bookId}:`, err);
+      }
+    }
+    
+    // Log premium status for debugging
+    console.log(`[COIN PURCHASE] Book premium check for purchase - ID: ${bookId}, isPremiumBook: ${isPremiumBook}`);
+    console.log(`[COIN PURCHASE] - Raw isPremium: ${book.isPremium} (${typeof book.isPremium})`);
+    console.log(`[COIN PURCHASE] - Raw price: ${book.price} (${typeof book.price})`);
+    
+    // If the book is not premium after all checks, return an error
+    if (!isPremiumBook) {
+      console.log(`[COIN PURCHASE] Book ${bookId} is not premium, cannot purchase`);
       return res.status(400).json({ message: 'This book is not a premium book' });
     }
+    
+    // Ensure the price is a number
+    const bookPrice = typeof book.price === 'number' ? book.price : 
+                     (isPremiumBook && (!book.price || book.price <= 0) ? 25 : 0);
+    
+    console.log(`[COIN PURCHASE] Book price determined to be ${bookPrice} coins`);
     
     // Find the user
     const user = await User.findById(req.user._id);
     
     if (!user) {
+      console.log(`[COIN PURCHASE] User ${req.user._id} not found`);
       return res.status(404).json({ message: 'User not found' });
     }
     
+    console.log(`[COIN PURCHASE] User ${user._id} current coin balance: ${user.coins}`);
+    
     // Check if the user already owns the book
     if (user.purchasedBooks.includes(bookId)) {
-      return res.status(400).json({ message: 'You already own this book. No need to purchase it again.' });
+      console.log(`[COIN PURCHASE] User ${user._id} already owns book ${bookId}`);
+      return res.status(400).json({ 
+        message: 'You already own this book. No need to purchase it again.',
+        alreadyOwned: true
+      });
+    }
+    
+    // ADDED: Check if purchase record already exists (double check for duplicate purchase)
+    const existingPurchase = await Purchase.findOne({ user: user._id, book: bookId });
+    if (existingPurchase) {
+      console.log(`[COIN PURCHASE] Found existing purchase record for user ${user._id} and book ${bookId}`);
+      
+      // Fix user's purchased books if the book isn't in their list but a purchase record exists
+      if (!user.purchasedBooks.includes(bookId)) {
+        console.log(`[COIN PURCHASE] Fixing user's purchased books list - adding missing book ${bookId}`);
+        user.purchasedBooks.push(bookId);
+        await user.save();
+        console.log(`[COIN PURCHASE] Fixed user's purchased books list - added missing book ${bookId}`);
+      }
+      
+      return res.status(400).json({ 
+        message: 'You already own this book. No need to purchase it again.',
+        alreadyOwned: true
+      });
     }
     
     // Check if the user has enough coins
-    if (user.coins < book.price) {
+    if (user.coins < bookPrice) {
+      console.log(`[COIN PURCHASE] User ${user._id} has insufficient coins: ${user.coins} < ${bookPrice}`);
       return res.status(400).json({ 
         message: 'Not enough coins to purchase this book',
-        required: book.price,
+        required: bookPrice,
         available: user.coins
       });
+    }
+    
+    // If the book is premium but doesn't have a price set properly, update it
+    if (isPremiumBook && (!book.isPremium || book.price <= 0)) {
+      console.log(`[COIN PURCHASE] Fixing premium book data for "${book.title}" (${book._id}) in purchase flow`);
+      book.isPremium = true;
+      book.price = bookPrice > 0 ? bookPrice : 25; // Default to 25 if no price
+      await book.save();
+      console.log(`[COIN PURCHASE] Updated premium book: isPremium=${book.isPremium}, price=${book.price}`);
     }
     
     // Generate a transaction ID
     const transactionId = uuidv4();
     const balanceBefore = user.coins;
     
+    console.log(`[COIN PURCHASE] Starting transaction ${transactionId} - deducting ${bookPrice} coins from user ${user._id}`);
+    
     // Deduct coins and add book to user's purchased books
-    user.coins -= book.price;
+    user.coins -= bookPrice;
     user.purchasedBooks.push(bookId);
-    await user.save();
     
-    // Create purchase record
-    const purchase = new Purchase({
-      user: user._id,
-      book: book._id,
-      price: book.price,
-      purchaseDate: new Date(),
-      bookDetails: {
-        title: book.title,
-        author: book.author,
-        category: book.category,
-        coverImage: book.coverImage
-      },
-      transactionId,
-      balanceBefore,
-      balanceAfter: user.coins
-    });
+    // Save changes to user in a try/catch block
+    try {
+      await user.save();
+      console.log(`[COIN PURCHASE] Successfully deducted coins - new balance: ${user.coins}`);
+    } catch (saveErr) {
+      console.error(`[COIN PURCHASE] Failed to save user after coin deduction:`, saveErr);
+      throw saveErr; // Re-throw to be caught by outer catch
+    }
     
-    await purchase.save();
+    // Create purchase record with try-catch for duplicate key errors
+    try {
+      const purchase = new Purchase({
+        user: user._id,
+        book: book._id,
+        price: bookPrice,
+        purchaseDate: new Date(),
+        bookDetails: {
+          title: book.title,
+          author: book.author,
+          category: book.category,
+          coverImage: book.coverImage
+        },
+        transactionId,
+        balanceBefore,
+        balanceAfter: user.coins
+      });
+      
+      await purchase.save();
+      console.log(`[COIN PURCHASE] Purchase record created with ID: ${purchase._id}`);
+    } catch (err) {
+      if (err.code === 11000 && err.keyPattern && err.keyPattern.user && err.keyPattern.book) {
+        // This is a duplicate key error on the user-book index
+        // It means the user has already purchased this book
+        console.log(`[COIN PURCHASE] Duplicate purchase detected - User ${user._id} had already purchased book ${bookId}`);
+        
+        // No need to roll back since we checked for existing purchase earlier
+        // Just return success since the user now has the book
+        return res.status(200).json({
+          message: 'Book is now in your library',
+          coins: user.coins,
+          bookId: book._id,
+          bookTitle: book.title,
+          alreadyPurchased: true
+        });
+      } else {
+        // For other errors, we need to roll back the coin deduction
+        console.error('[COIN PURCHASE] Error saving purchase record:', err);
+        
+        // Roll back changes to user
+        console.log(`[COIN PURCHASE] Rolling back coin deduction - restoring balance from ${user.coins} to ${balanceBefore}`);
+        user.coins = balanceBefore;
+        user.purchasedBooks = user.purchasedBooks.filter(id => id.toString() !== bookId);
+        
+        try {
+          await user.save();
+          console.log(`[COIN PURCHASE] Successfully rolled back changes to user`);
+        } catch (rollbackErr) {
+          console.error(`[COIN PURCHASE] Failed to roll back changes to user:`, rollbackErr);
+          // Continue with the error flow even if rollback fails
+        }
+        
+        throw err; // Re-throw to be caught by outer catch
+      }
+    }
+    
+    // If we got here, the purchase was successful
+    console.log(`[COIN PURCHASE] ✅ Purchase successful - User ${user._id} purchased book ${bookId} for ${bookPrice} coins`);
     
     res.status(200).json({
       message: 'Book purchased successfully',
       coins: user.coins,
-      coinsSpent: book.price,
+      coinsSpent: bookPrice,
       bookId: book._id,
       bookTitle: book.title,
       transactionId
     });
   } catch (error) {
-    console.error('Error purchasing book:', error);
+    console.error('[COIN PURCHASE] ❌ Error purchasing book:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };

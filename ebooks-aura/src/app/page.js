@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import styles from './page.module.css';
 import { FaSearch, FaBookmark, FaGithub, FaInstagram, FaYoutube } from 'react-icons/fa';
+import AdComponent from './components/AdComponent';
+import FooterAd from './components/FooterAd';
 
 export default function Home() {
   return (
@@ -29,6 +31,15 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Ad Component */}
+      <div className={styles.adSection}>
+        <AdComponent 
+          slot="5873370034" 
+          format="auto" 
+          style={{ display: 'block', width: '100%' }}
+        />
+      </div>
+
       <div className={styles.socialSection}>
         <h2 className={styles.socialTitle}>Connect With Us</h2>
         <div className={styles.socialLinks}>
@@ -46,6 +57,9 @@ export default function Home() {
           </a>
         </div>
       </div>
+      
+      {/* Footer Ad */}
+      <FooterAd />
     </div>
   );
 }

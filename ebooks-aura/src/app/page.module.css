@@ -315,3 +315,10 @@ a.secondary {
     gap: 1.5rem;
   }
 }
+
+.adSection {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}

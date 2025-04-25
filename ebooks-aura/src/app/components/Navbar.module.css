@@ -293,6 +293,22 @@
   font-size: 1.5rem;
   cursor: pointer;
   padding: 0.5rem;
+  position: relative;
+  transition: all 0.3s ease;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobileMenuButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.mobileMenuButton:active {
+  transform: scale(0.95);
 }
 
 @media (min-width: 769px) {
@@ -315,6 +331,11 @@
   opacity: 0;
   transition: all 0.3s ease;
   pointer-events: none;
+  z-index: 999;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
+  will-change: transform, opacity;
 }
 
 @media (min-width: 769px) {
@@ -336,16 +357,26 @@
   color: #ffffff;
   text-decoration: none;
   padding: 0.75rem 1rem;
-  border-radius: 4px;
-  transition: all 0.3s ease;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.mobileMenuItem:hover,
+.mobileMenuItem:active {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateX(3px);
+}
+
+.mobileMenuItem:active {
+  background-color: rgba(255, 68, 68, 0.2);
 }
 
 .mobileMenuIcon {
   font-size: 1.2rem;
-}
-
-.mobileMenuItem:hover {
-  background-color: #ff4444;
+  min-width: 24px;
+  text-align: center;
 }
 
 .navLinks {
@@ -434,4 +465,86 @@
 .crownIcon {
   font-size: 1.25rem;
   color: #f59e0b;
+}
+
+/* Android-specific bottom toolbar */
+.androidToolbar {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #1a1a1a;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  padding: 0.5rem 0.25rem;
+  justify-content: space-around;
+  align-items: center;
+  height: 65px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Only display the toolbar on Android devices with smaller screens */
+@media (max-width: 768px) {
+  .androidToolbar {
+    display: flex;
+  }
+}
+
+.androidToolbarItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  text-decoration: none;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  width: 18%;
+  position: relative;
+}
+
+.androidToolbarItem:hover,
+.androidToolbarItem:active {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.androidToolbarIcon {
+  font-size: 1.5rem;
+  margin-bottom: 0.2rem;
+}
+
+/* Style specific icons with nth-child */
+.androidToolbarItem:global(:nth-child(1)) .androidToolbarIcon {
+  color: #ffffff; /* Home icon */
+}
+
+.androidToolbarItem:global(:nth-child(2)) .androidToolbarIcon {
+  color: #79c7ff; /* Search icon */
+}
+
+.androidToolbarItem:global(:nth-child(3)) .androidToolbarIcon {
+  color: #ffd700; /* Gold color for coins */
+}
+
+.androidToolbarItem:global(:nth-child(4)) .androidToolbarIcon {
+  color: #ff4444; /* Red color for premium */
+}
+
+.androidToolbarItem:global(:nth-child(5)) .androidToolbarIcon {
+  color: #88ff88; /* Profile icon */
+}
+
+.androidToolbarText {
+  font-size: 0.7rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Add a highlight for the coins value using :global for nth-child */
+.androidToolbarItem:global(:nth-child(3)) .androidToolbarText {
+  background-color: rgba(255, 215, 0, 0.2);
+  border-radius: 10px;
+  padding: 0 0.4rem;
 } 
