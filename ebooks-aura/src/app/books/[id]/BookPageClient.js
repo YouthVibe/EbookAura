@@ -14,7 +14,6 @@ import { purchaseBook, checkBookPurchase } from '../../api/coins.js';
 import { toast } from 'react-toastify';
 import { getAPI, postAPI } from '../../api/apiUtils';
 import { normalizeMongoDocument } from '../../utils/mongoUtils';
-import AdComponent from '../../components/AdComponent';
 
 // Dynamically import PdfViewer with no SSR to avoid the Promise.withResolvers error
 const PdfViewer = dynamic(() => import('../../components/PdfViewer'), {
@@ -1024,15 +1023,6 @@ export default function BookPageClient({ id }) {
             <div className={styles.description}>
               <h2>Description</h2>
               <p>{book.description}</p>
-            </div>
-
-            {/* Google AdSense Ad */}
-            <div className={styles.adContainer}>
-              <AdComponent 
-                slot="3954381527" 
-                format="auto" 
-                style={{ display: 'block' }}
-              />
             </div>
 
             <div className={styles.tags}>

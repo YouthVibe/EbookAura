@@ -38,15 +38,6 @@ export default function RootLayout({ children }) {
         style={{ backgroundColor: '#ffffff' }}
         suppressHydrationWarning
       >
-        {/* Google AdSense Script */}
-        <Script
-          id="google-adsense"
-          strategy="afterInteractive"
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2456537810743091"
-          crossOrigin="anonymous"
-        />
-
         {/* Script to detect Android and set data attribute */}
         <Script id="detect-android" strategy="beforeInteractive">
           {`

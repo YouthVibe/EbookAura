@@ -8,8 +8,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import SearchInput from '../components/SearchInput';
 import { getAPI, postAPI } from '../api/apiUtils';
-import AdComponent from '../components/AdComponent';
-import FooterAd from '../components/FooterAd';
 
 // Add a simple toast notification component
 const Toast = ({ message, type, onClose }) => {
@@ -525,15 +523,6 @@ export default function SearchPage() {
             </div>
           )}
           
-          {/* Google AdSense Ad */}
-          <div className={styles.adSection}>
-            <AdComponent 
-              slot="1849217326" 
-              format="auto" 
-              style={{ display: 'block', width: '100%' }}
-            />
-          </div>
-          
           <div className={styles.resultsCount}>
             Found {totalBooks > 0 ? totalBooks : books.length} {totalBooks === 1 ? 'book' : 'books'}
             {showPremiumOnly && ' (Premium Only)'}
@@ -662,7 +651,6 @@ export default function SearchPage() {
           )}
         </>
       )}
-      <FooterAd />
     </div>
   );
 } 
