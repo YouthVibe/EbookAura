@@ -5,6 +5,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Script from "next/script";
+import Head from 'next/head';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,6 +20,7 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "EbookAura",
   description: "Your digital library companion",
+  // You can add verification meta tags here if needed
 };
 
 export const viewport = {
@@ -32,21 +34,22 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
+        {/* AdSense verification code goes in the head section for site verification */}
+        <Script
+          id="adsense-verification"
+          strategy="beforeInteractive"
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2456537810743091"
+          crossOrigin="anonymous"
+        />
       </head>
       <body 
         className={`${geistSans.variable} ${geistMono.variable}`} 
         style={{ backgroundColor: '#ffffff' }}
         suppressHydrationWarning
       >
-        {/* AdSense Script - moved from head to avoid data-nscript warning */}
-        <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2456537810743091"
-          crossOrigin="anonymous"
-          strategy="afterInteractive"
-          data-nscript="lazyOnload"
-        />
-
+        {/* No need for duplicate AdSense script in body, the one in head is sufficient */}
+        
         {/* Script to detect Android and set data attribute */}
         <Script id="detect-android" strategy="beforeInteractive">
           {`
