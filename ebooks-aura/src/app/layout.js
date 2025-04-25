@@ -19,25 +19,34 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "EbookAura",
   description: "Your digital library companion",
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-  }
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
       </head>
       <body 
         className={`${geistSans.variable} ${geistMono.variable}`} 
         style={{ backgroundColor: '#ffffff' }}
         suppressHydrationWarning
       >
+        {/* AdSense Script - moved from head to avoid data-nscript warning */}
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2456537810743091"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+          data-nscript="lazyOnload"
+        />
+
         {/* Script to detect Android and set data attribute */}
         <Script id="detect-android" strategy="beforeInteractive">
           {`

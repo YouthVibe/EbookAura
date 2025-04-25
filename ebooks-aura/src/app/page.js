@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import styles from './page.module.css';
 import { FaSearch, FaBookmark, FaGithub, FaInstagram, FaYoutube } from 'react-icons/fa';
+import HomeAdComponent from './components/AdComponent';
 
 export default function Home() {
   return (
@@ -46,6 +47,7 @@ export default function Home() {
           </a>
         </div>
       </div>
+      <HomeAdComponent />
     </div>
   );
 }
