@@ -21,6 +21,10 @@ export const metadata = {
   title: "EbookAura",
   description: "Your digital library companion",
   // You can add verification meta tags here if needed
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://ebooks-aura.com'),
+  other: {
+    'google-adsense-account': 'ca-pub-2456537810743091',
+  }
 };
 
 export const viewport = {
