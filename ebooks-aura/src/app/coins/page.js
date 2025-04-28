@@ -3,23 +3,42 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { FaCoins, FaArrowLeft, FaGift, FaAd, FaCalendar } from 'react-icons/fa';
+import { FaCoins, FaArrowLeft, FaGift, FaClock, FaCalendar } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import styles from './coins.module.css';
-import { getUserCoins, claimDailyCoins, claimAdRewardCoins, checkDailyCoinsStatus } from '../api/coins';
+import { 
+  getUserCoins, 
+  claimDailyCoins, 
+  checkDailyCoinsStatus, 
+  getSessionStatus, 
+  updateSessionTime,
+  claimActivityRewardCoins
+} from '../api/coins';
 
 export default function CoinsPage() {
   const { user, updateUserCoins } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [dailyClaimLoading, setDailyClaimLoading] = useState(false);
-  const [adRewardLoading, setAdRewardLoading] = useState(false);
+  const [activityRewardLoading, setActivityRewardLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [dailyClaimError, setDailyClaimError] = useState('');
+  const [activityClaimError, setActivityClaimError] = useState('');
   const [nextDailyClaimTime, setNextDailyClaimTime] = useState(null);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [dailyCoinsClaimed, setDailyCoinsClaimed] = useState(false);
+  const [sessionInfo, setSessionInfo] = useState({
+    sessionTimeToday: 0,
+    requiredTime: 60,
+    hasClaimedReward: false,
+    progress: 0,
+    canClaimReward: false,
+    nextRewardTime: null,
+    minutesAccumulated: 0,
+    coinsAvailable: 0
+  });
+  const [sessionUpdateInterval, setSessionUpdateInterval] = useState(null);
 
   useEffect(() => {
     // Only run once after component mounts and user is available
@@ -27,11 +46,67 @@ export default function CoinsPage() {
       // Fetch initial coins data
       fetchCoinsData();
       setHasInitialized(true);
+      
+      // Set up session tracking
+      setupSessionTracking();
     } else if (!user) {
       // Redirect if not logged in
       router.push('/login');
     }
+    
+    // Clean up interval on unmount
+    return () => {
+      if (sessionUpdateInterval) {
+        clearInterval(sessionUpdateInterval);
+      }
+    };
   }, [user, router, hasInitialized]);
+
+  // Set up session tracking to update server every 30 seconds
+  const setupSessionTracking = () => {
+    // Initial fetch of session status
+    fetchSessionStatus();
+    
+    // Set up interval to update session time (every 30 seconds)
+    const intervalId = setInterval(() => {
+      // Send an update with 30 seconds (the interval time)
+      updateSessionTime(30)
+        .then(data => {
+          setSessionInfo(prevInfo => ({
+            ...prevInfo,
+            sessionTimeToday: data.sessionTimeToday,
+            canClaimReward: data.canClaimReward,
+            progress: Math.floor((data.sessionTimeToday % 60) / 60 * 100),
+            minutesAccumulated: data.minutesAccumulated || 0,
+            coinsAvailable: data.minutesAccumulated || 0
+          }));
+        })
+        .catch(err => console.error('Error updating session time:', err));
+    }, 30000); // 30 seconds
+    
+    setSessionUpdateInterval(intervalId);
+  };
+
+  const fetchSessionStatus = async () => {
+    try {
+      const sessionData = await getSessionStatus();
+      
+      if (sessionData) {
+        setSessionInfo({
+          sessionTimeToday: sessionData.sessionTimeToday || 0,
+          requiredTime: sessionData.requiredTime || 60,
+          hasClaimedReward: false, // Always allow claiming
+          progress: sessionData.progress || 0,
+          canClaimReward: sessionData.canClaimReward || false,
+          nextRewardTime: null,
+          minutesAccumulated: sessionData.minutesAccumulated || 0,
+          coinsAvailable: sessionData.coinsAvailable || 0
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching session status:', err);
+    }
+  };
 
   const fetchCoinsData = async () => {
     setLoading(true);
@@ -57,6 +132,9 @@ export default function CoinsPage() {
           setNextDailyClaimTime(null);
         }
       }
+      
+      // Also fetch session status
+      await fetchSessionStatus();
     } catch (err) {
       console.error('Error fetching coins data:', err);
       setError(err.message || 'Failed to fetch coins data');
@@ -99,27 +177,47 @@ export default function CoinsPage() {
     }
   };
 
-  const handleWatchAd = async () => {
-    setAdRewardLoading(true);
-    setError('');
+  const handleClaimActivityReward = async () => {
+    setActivityRewardLoading(true);
+    setActivityClaimError('');
     setSuccess('');
 
     try {
-      // Simulate ad loading and watching
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // After "watching" the ad, claim the reward
-      const result = await claimAdRewardCoins();
+      const result = await claimActivityRewardCoins();
       
       if (result && typeof result.coins === 'number') {
         updateUserCoins(result.coins);
-        setSuccess(`Successfully claimed ${result.coinsAdded} coins for watching an ad!`);
+        setSuccess(`Successfully claimed ${result.coinsAdded} coins for ${result.minutesSpent} minute(s) of site activity!`);
+        
+        // Update session info to reflect claimed reward but don't disable claiming
+        setSessionInfo(prevInfo => ({
+          ...prevInfo,
+          hasClaimedReward: false, // Still allow claiming
+          sessionTimeToday: 0,
+          progress: 0,
+          canClaimReward: false,
+          minutesAccumulated: 0,
+          coinsAvailable: 0
+        }));
+        
+        // Clear success message after 5 seconds
+        setTimeout(() => {
+          setSuccess('');
+        }, 5000);
       }
     } catch (err) {
-      console.error('Error claiming ad reward:', err);
-      setError(err.message || 'Failed to claim ad reward');
+      console.error('Error claiming activity reward:', err);
+      setActivityClaimError(err.message || 'Failed to claim activity reward');
+      
+      // Refresh session status in case of error
+      fetchSessionStatus();
+      
+      // Clear error message after 5 seconds
+      setTimeout(() => {
+        setActivityClaimError('');
+      }, 5000);
     } finally {
-      setAdRewardLoading(false);
+      setActivityRewardLoading(false);
     }
   };
 
@@ -127,6 +225,13 @@ export default function CoinsPage() {
   const formatTime = (date) => {
     if (!date) return '';
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+  
+  // Format seconds to minutes:seconds
+  const formatTimeSpent = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
   };
 
   if (loading) {
@@ -188,19 +293,38 @@ export default function CoinsPage() {
 
         <div className={styles.rewardCard}>
           <div className={styles.rewardHeader}>
-            <FaAd className={styles.rewardIcon} />
-            <h2 className={styles.rewardTitle}>Watch Ad</h2>
+            <FaClock className={styles.rewardIcon} />
+            <h2 className={styles.rewardTitle}>Time Rewards</h2>
           </div>
           <p className={styles.rewardDescription}>
-            Watch an advertisement to earn 25 coins. You can watch multiple ads per day.
+            Get 1 coin for each minute you spend on our site. Claim anytime!
           </p>
+          {activityClaimError && <p className={styles.errorMessage}>{activityClaimError}</p>}
+          
+          <div className={styles.progressContainer}>
+            <div 
+              className={styles.progressBar} 
+              style={{ width: `${sessionInfo.progress}%` }}
+            ></div>
+            <span className={styles.progressText}>
+              {formatTimeSpent(sessionInfo.sessionTimeToday % 60)} / {formatTimeSpent(60)} to next coin
+            </span>
+          </div>
+          
+          <p className={styles.coinsAvailable}>
+            <FaCoins className={styles.smallCoinIcon} />
+            <span>{sessionInfo.coinsAvailable} coins available to claim</span>
+          </p>
+          
           <button 
-            className={styles.adButton}
-            onClick={handleWatchAd}
-            disabled={adRewardLoading}
+            className={`${styles.activityButton} ${!sessionInfo.canClaimReward ? styles.disabledButton : ''}`}
+            onClick={handleClaimActivityReward}
+            disabled={activityRewardLoading || !sessionInfo.canClaimReward}
           >
-            {adRewardLoading ? 'Loading Ad...' : 'Watch Ad & Earn 25 Coins'}
-            <FaAd className={styles.buttonIcon} />
+            {activityRewardLoading ? 'Claiming...' : 
+             !sessionInfo.canClaimReward ? 'Keep browsing for coins' : 
+             `Claim ${sessionInfo.coinsAvailable} Coin${sessionInfo.coinsAvailable !== 1 ? 's' : ''}`}
+            <FaClock className={styles.buttonIcon} />
           </button>
         </div>
       </div>

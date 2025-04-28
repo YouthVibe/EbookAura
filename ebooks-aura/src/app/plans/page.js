@@ -46,6 +46,12 @@ export default function PlansPage() {
         } else {
           // User doesn't have an active subscription, which is expected for many users
           console.log('No active subscription found');
+          
+          // If the subscription was expired, show a message
+          if (subscriptionData && subscriptionData.wasExpired) {
+            setError('Your subscription has expired. Please renew to continue enjoying premium benefits.');
+          }
+          
           setCurrentSubscription(null);
         }
       } catch (err) {
@@ -105,6 +111,8 @@ export default function PlansPage() {
         
         // Close modal
         setShowConfirmModal(false);
+        // Restore body scrolling
+        document.body.style.overflow = '';
         
         // Scroll to top to show success message
         window.scrollTo(0, 0);
@@ -132,6 +140,13 @@ export default function PlansPage() {
     
     setSelectedPlan(plan);
     setShowConfirmModal(true);
+    
+    // Ensure proper scroll position for the modal, especially on Android
+    setTimeout(() => {
+      window.scrollTo(0, 0);
+      // Force body to be non-scrollable when modal is open
+      document.body.style.overflow = 'hidden';
+    }, 10);
   };
 
   const formatDuration = (plan) => {
@@ -142,6 +157,13 @@ export default function PlansPage() {
       return `${value} ${unit.slice(0, -1)}`; // Remove 's' from plural unit
     }
     return `${value} ${unit}`;
+  };
+
+  // Add this function to handle modal closing properly
+  const closeConfirmModal = () => {
+    setShowConfirmModal(false);
+    // Restore body scrolling
+    document.body.style.overflow = '';
   };
 
   if (loading) {
@@ -186,14 +208,11 @@ export default function PlansPage() {
             <p>
               <strong>Active Until:</strong> {new Date(currentSubscription.endDate).toLocaleDateString()}
             </p>
-            <p>
-              <strong>Auto-Renew:</strong> {currentSubscription.autoRenew ? 'Enabled' : 'Disabled'}
-            </p>
           </div>
           <div className={styles.subscriptionActions}>
-            <Link href="/settings" className={styles.settingsButton}>
-              Manage Subscription
-            </Link>
+            <p className={styles.nonCancelableNotice}>
+              <FaInfoCircle className={styles.infoIcon} /> Subscriptions are non-refundable and cannot be canceled once purchased.
+            </p>
           </div>
         </div>
       )}
@@ -307,19 +326,50 @@ export default function PlansPage() {
       {showConfirmModal && selectedPlan && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
-            <h2>Confirm Subscription</h2>
-            <p>You are about to subscribe to <strong>{selectedPlan.name}</strong>.</p>
-            <p>This will cost <strong>{selectedPlan.price} coins</strong> from your balance.</p>
+            <div className={styles.modalHeader}>
+              <h2>Confirm Subscription</h2>
+              <button 
+                className={styles.closeModalButton}
+                onClick={closeConfirmModal}
+                aria-label="Close modal"
+              >
+                ✕
+              </button>
+            </div>
             
-            <div className={styles.balanceInfo}>
-              <p>Current Balance: {user?.coins} coins</p>
-              <p>Balance After: {user?.coins - selectedPlan.price} coins</p>
+            <div className={styles.modalBody}>
+              <p>You are about to subscribe to <strong>{selectedPlan.name}</strong>.</p>
+              <p>This will cost <strong>{selectedPlan.price} coins</strong> from your balance.</p>
+              
+              <div className={styles.balanceInfo}>
+                <div className={styles.balanceRow}>
+                  <span>Current Balance:</span>
+                  <strong>{user?.coins} coins</strong>
+                </div>
+                <div className={styles.balanceRow}>
+                  <span>Balance After:</span>
+                  <strong>{user?.coins - selectedPlan.price} coins</strong>
+                </div>
+              </div>
+              
+              <div className={styles.nonRefundableWarning}>
+                <div className={styles.warningHeader}>
+                  <FaInfoCircle className={styles.warningIcon} />
+                  <p>Important Information</p>
+                </div>
+                <p>By purchasing this subscription, you acknowledge that:</p>
+                <ul>
+                  <li>Subscriptions are <strong>non-refundable</strong></li>
+                  <li>Subscriptions <strong>cannot be canceled</strong> once purchased</li>
+                  <li>Your subscription will be active until the end date</li>
+                </ul>
+              </div>
             </div>
             
             <div className={styles.modalActions}>
               <button 
                 className={styles.cancelButton}
-                onClick={() => setShowConfirmModal(false)}
+                onClick={closeConfirmModal}
                 disabled={purchaseLoading}
               >
                 Cancel

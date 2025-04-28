@@ -98,10 +98,13 @@ const checkExpiredSubscriptions = async () => {
         // Update user's subscription status if needed
         const user = await User.findById(subscription.user._id);
         if (user) {
-          // You may want to update user roles or other related fields
-          // user.roles = user.roles.filter(role => role !== 'premium');
-          // await user.save();
-          console.log(`User ${user.email} subscription status updated.`);
+          // Update user status to remove premium benefits
+          user.isPremium = false;
+          user.isSubscribed = false;
+          // Keep the subscription tier for record purposes but mark it as expired
+          user.subscriptionTier = `Expired ${user.subscriptionTier || 'Premium'}`;
+          await user.save();
+          console.log(`User ${user.email} subscription status updated: premium access removed.`);
         }
       }
     }

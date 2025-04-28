@@ -11,6 +11,7 @@ import { API_ENDPOINTS } from '../../utils/config';
 import { createDownloadablePdf } from '../../utils/pdfUtils';
 import { useAuth } from '../../context/AuthContext';
 import { purchaseBook, checkBookPurchase } from '../../api/coins.js';
+import { getCurrentSubscription } from '../../api/subscriptions.js';
 import { toast } from 'react-toastify';
 import { getAPI, postAPI } from '../../api/apiUtils';
 import { normalizeMongoDocument } from '../../utils/mongoUtils';
@@ -25,6 +26,23 @@ const PdfViewer = dynamic(() => import('../../components/PdfViewer'), {
     </div>
   ),
 });
+
+// Add a utility function to track API call times
+const API_CALL_TRACKER = {};
+
+const shouldMakeApiCall = (apiName, minIntervalMs = 300000) => { // Default: 5 minutes
+  const now = Date.now();
+  const lastCallTime = API_CALL_TRACKER[apiName] || 0;
+  
+  if (now - lastCallTime < minIntervalMs) {
+    console.log(`Skipping ${apiName} API call, last call was ${(now - lastCallTime) / 1000}s ago (min interval: ${minIntervalMs / 1000}s)`);
+    return false;
+  }
+  
+  // Update the tracker with current time
+  API_CALL_TRACKER[apiName] = now;
+  return true;
+};
 
 export default function BookPageClient({ id }) {
   const [book, setBook] = useState(null);
@@ -42,6 +60,8 @@ export default function BookPageClient({ id }) {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
   const [hasPurchased, setHasPurchased] = useState(false);
+  const [hasSubscription, setHasSubscription] = useState(false);
+  const [subscriptionCheckerActive, setSubscriptionCheckerActive] = useState(false);
   const router = useRouter();
   const { user, isLoggedIn, getToken, getApiKey, updateUserCoins } = useAuth();
   
@@ -49,6 +69,7 @@ export default function BookPageClient({ id }) {
   const prevIsLoggedInRef = useRef(false);
   const isFetchingRef = useRef(false);
   const lastRefreshTimeRef = useRef(0); // Track last refresh time
+  const subscriptionCheckTimerRef = useRef(null);
   
   // Check URL for debug parameter
   useEffect(() => {
@@ -105,8 +126,9 @@ export default function BookPageClient({ id }) {
     String(book.userHasAccess).toLowerCase() === 'true'
   ) : false;
   
-  // Use both the state and computed property for determining if user has purchased
-  const hasUserPurchased = hasPurchased || bookUserHasAccess;
+  // Use both the state and computed property for determining if user has access
+  // Now considering subscription status as well
+  const hasUserPurchased = hasPurchased || bookUserHasAccess || hasSubscription;
   
   const userHasEnoughCoins = user && book ? (
     Number(user.coins || 0) >= Number(book.price || 0)
@@ -135,9 +157,60 @@ export default function BookPageClient({ id }) {
       return;
     }
     
+    // Skip check if subscription already grants access
+    if (hasSubscription) {
+      console.log('User already has access through subscription, skipping purchase check');
+      return;
+    }
+    
+    // Avoid concurrent requests
+    if (isFetchingRef.current) {
+      console.log('Already fetching data, skipping duplicate purchase check');
+      return;
+    }
+    
+    // Check if enough time has passed since last API call (5 minutes minimum)
+    if (!shouldMakeApiCall('checkPurchase_' + id, 300000)) {
+      return;
+    }
+    
+    // Check if we've recently checked the purchase status (using localStorage)
+    try {
+      const cachedPurchaseData = localStorage.getItem('purchaseCheckData_' + id);
+      if (cachedPurchaseData) {
+        const parsedData = JSON.parse(cachedPurchaseData);
+        const lastCheckTime = new Date(parsedData.timestamp);
+        const now = new Date();
+        
+        // If we've checked in the last 5 minutes, use the cached result
+        const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
+        if (lastCheckTime > fiveMinutesAgo) {
+          console.log('Using cached purchase data from', lastCheckTime);
+          
+          if (parsedData.hasPurchased) {
+            console.log('Cached data indicates user has purchased this book');
+            setHasPurchased(true);
+            setPurchaseSuccess(true);
+            
+            // Update book state to reflect access
+            setBook(prevBook => ({
+              ...prevBook,
+              userHasAccess: true
+            }));
+            
+            return;
+          }
+        }
+      }
+    } catch (cacheError) {
+      console.error('Error checking cached purchase data:', cacheError);
+    }
+    
     console.log(`Checking purchase status for book ID: ${id}`);
     
     try {
+      isFetchingRef.current = true;
+      
       // First check if the book already has userHasAccess set to true
       if (book && book.userHasAccess === true) {
         console.log('Book already marked as purchased in local state');
@@ -148,6 +221,16 @@ export default function BookPageClient({ id }) {
       // Call the API to verify purchase status
       console.log('Calling API to verify purchase status...');
       const result = await checkBookPurchase(id);
+      
+      // Cache the result in localStorage with a timestamp
+      try {
+        localStorage.setItem('purchaseCheckData_' + id, JSON.stringify({
+          hasPurchased: result?.success && result?.hasPurchased === true,
+          timestamp: new Date().toISOString()
+        }));
+      } catch (cacheError) {
+        console.error('Error caching purchase data:', cacheError);
+      }
       
       console.log('Purchase check API response:', result);
       
@@ -164,6 +247,14 @@ export default function BookPageClient({ id }) {
         if (hasPurchased) {
           setHasPurchased(true);
           setPurchaseSuccess(true);
+          
+          // If book is purchased, we can disable subscription checks
+          if (subscriptionCheckTimerRef.current) {
+            console.log('Book purchased, disabling subscription checks');
+            clearInterval(subscriptionCheckTimerRef.current);
+            subscriptionCheckTimerRef.current = null;
+            setSubscriptionCheckerActive(false);
+          }
         } else {
           setHasPurchased(false);
           // Do not reset purchaseSuccess here as it might have been set by a just-completed purchase
@@ -193,14 +284,265 @@ export default function BookPageClient({ id }) {
                 ...prevBook,
                 userHasAccess: true
               }));
+              
+              // If book is purchased (from local storage), we can disable subscription checks
+              if (subscriptionCheckTimerRef.current) {
+                console.log('Book purchased (local storage), disabling subscription checks');
+                clearInterval(subscriptionCheckTimerRef.current);
+                subscriptionCheckTimerRef.current = null;
+                setSubscriptionCheckerActive(false);
+              }
             }
           }
         }
       } catch (storageErr) {
         console.error('Error checking local storage for purchase status:', storageErr);
       }
+    } finally {
+      isFetchingRef.current = false;
     }
-  }, [isLoggedIn, id, isPremiumBook, book, setPurchaseSuccess, setHasPurchased, setBook]);
+  }, [isLoggedIn, id, isPremiumBook, book, hasSubscription, setPurchaseSuccess, setHasPurchased, setBook]);
+  
+  // Function to check user's subscription status
+  const checkSubscriptionStatus = useCallback(async () => {
+    if (!isLoggedIn || !isPremiumBook) {
+      return;
+    }
+    
+    // Skip if user already has purchased the book (avoids double request)
+    if (hasPurchased || bookUserHasAccess) {
+      console.log('User already has access through purchase, skipping subscription check');
+      return;
+    }
+    
+    // Avoid concurrent requests
+    if (isFetchingRef.current) {
+      console.log('Already fetching data, skipping duplicate subscription check');
+      return;
+    }
+    
+    console.log('Subscription check starting for premium book');
+    
+    // Check if enough time has passed since last API call (reduced to 1 minute for more frequent checks)
+    if (!shouldMakeApiCall('checkSubscription', 60000)) {
+      return;
+    }
+    
+    // Check if we've recently checked the subscription status (using localStorage)
+    try {
+      const cachedSubscriptionData = localStorage.getItem('subscriptionCheckData');
+      if (cachedSubscriptionData) {
+        try {
+          const parsedData = JSON.parse(cachedSubscriptionData);
+          const lastCheckTime = new Date(parsedData.timestamp);
+          const now = new Date();
+          
+          // If we've checked in the last 2 minutes, use the cached result
+          const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
+          if (lastCheckTime > twoMinutesAgo) {
+            console.log('Using cached subscription data from', lastCheckTime);
+            
+            if (parsedData.hasSubscription) {
+              console.log('Cached data indicates user has active subscription');
+              setHasSubscription(true);
+              
+              // Update book state to reflect access
+              setBook(prevBook => ({
+                ...prevBook,
+                userHasAccess: true
+              }));
+              
+              // Disable subscription checks since we have confirmed access
+              if (subscriptionCheckTimerRef.current) {
+                clearInterval(subscriptionCheckTimerRef.current);
+                subscriptionCheckTimerRef.current = null;
+                setSubscriptionCheckerActive(false);
+              }
+              
+              return;
+            } else {
+              console.log('Cached data indicates user has no subscription');
+            }
+          } else {
+            console.log('Cached subscription data is stale, checking again');
+          }
+        } catch (parseError) {
+          console.error('Error parsing cached subscription data:', parseError);
+          // Continue with fresh API call
+        }
+      }
+    } catch (cacheError) {
+      console.error('Error checking cached subscription data:', cacheError);
+    }
+    
+    try {
+      console.log('Checking subscription status from API...');
+      isFetchingRef.current = true;
+      
+      // Use fresh token to avoid token issues
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No authentication token found for subscription check');
+        setHasSubscription(false);
+        isFetchingRef.current = false;
+        return;
+      }
+
+      // Force a fresh check by passing forceFresh = true to avoid stale data
+      const result = await getCurrentSubscription(true);
+      
+      console.log('Subscription check result:', result);
+      
+      // Enhanced validation of subscription data
+      const isActive = Boolean(
+        result && 
+        result.hasSubscription === true && 
+        result.subscription && 
+        result.subscription.status === 'active' &&
+        new Date(result.subscription.endDate) > new Date() // Ensure end date is in the future
+      );
+      
+      // Cache the result in localStorage with a timestamp
+      try {
+        localStorage.setItem('subscriptionCheckData', JSON.stringify({
+          hasSubscription: isActive,
+          timestamp: new Date().toISOString(),
+          // Store additional data for debugging
+          details: {
+            planName: result?.subscription?.plan?.name || 'Unknown',
+            endDate: result?.subscription?.endDate || null,
+            status: result?.subscription?.status || 'unknown'
+          }
+        }));
+      } catch (cacheError) {
+        console.error('Error caching subscription data:', cacheError);
+      }
+      
+      if (isActive) {
+        console.log('User has active subscription, granting access to premium book');
+        console.log('Subscription details:', {
+          plan: result.subscription.plan?.name,
+          endDate: result.subscription.endDate,
+          status: result.subscription.status
+        });
+        
+        setHasSubscription(true);
+        
+        // Also update the book state to reflect access
+        setBook(prevBook => ({
+          ...prevBook,
+          userHasAccess: true
+        }));
+        
+        // If subscription is found, we can disable periodic checks
+        if (subscriptionCheckTimerRef.current) {
+          console.log('Subscription found, disabling periodic checks');
+          clearInterval(subscriptionCheckTimerRef.current);
+          subscriptionCheckTimerRef.current = null;
+          setSubscriptionCheckerActive(false);
+        }
+      } else {
+        console.log('User does not have an active subscription');
+        setHasSubscription(false);
+        
+        // If we had a subscription before but now we don't, we should update the UI
+        setBook(prevBook => ({
+          ...prevBook,
+          userHasAccess: hasPurchased || bookUserHasAccess
+        }));
+      }
+    } catch (error) {
+      console.error('Error checking subscription status:', error);
+      setHasSubscription(false);
+      
+      // Try to gracefully recover using local storage as fallback
+      try {
+        const userInfo = localStorage.getItem('userInfo');
+        if (userInfo) {
+          const userData = JSON.parse(userInfo);
+          if (userData.isSubscribed === true && userData.isPremium === true) {
+            console.log('Fallback: User info in localStorage indicates active subscription');
+            setHasSubscription(true);
+            setBook(prevBook => ({
+              ...prevBook,
+              userHasAccess: true
+            }));
+          }
+        }
+      } catch (fallbackError) {
+        console.error('Error checking fallback subscription data:', fallbackError);
+      }
+    } finally {
+      isFetchingRef.current = false;
+    }
+  }, [isLoggedIn, isPremiumBook, hasPurchased, bookUserHasAccess, setBook]);
+  
+  // Set up subscription checker with 5-minute interval (significantly slower than before)
+  useEffect(() => {
+    // Initial check when component mounts or when login/premium status changes
+    if (isLoggedIn && isPremiumBook && !subscriptionCheckerActive) {
+      // Skip if user already has purchased the book
+      if (hasPurchased || bookUserHasAccess) {
+        console.log('User already has access through purchase, not setting up subscription checker');
+        return;
+      }
+      
+      console.log('Starting subscription checker...');
+      
+      // Check if we need to run the initial check by checking localStorage cache
+      let skipInitialCheck = false;
+      try {
+        const cachedSubscriptionData = localStorage.getItem('subscriptionCheckData');
+        if (cachedSubscriptionData) {
+          const parsedData = JSON.parse(cachedSubscriptionData);
+          const lastCheckTime = new Date(parsedData.timestamp);
+          const now = new Date();
+          
+          // If we've checked in the last 5 minutes, use the cached result
+          const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
+          if (lastCheckTime > fiveMinutesAgo) {
+            console.log('Using cached subscription data for initial check');
+            skipInitialCheck = true;
+            
+            if (parsedData.hasSubscription) {
+              setHasSubscription(true);
+              
+              // Update book state to reflect access
+              setBook(prevBook => ({
+                ...prevBook,
+                userHasAccess: true
+              }));
+            }
+          }
+        }
+      } catch (cacheError) {
+        console.error('Error checking cached subscription data:', cacheError);
+      }
+      
+      // Only run the initial check if we don't have recent cached data
+      if (!skipInitialCheck) {
+        checkSubscriptionStatus();
+      }
+      
+      // We only need one check, so we won't set up an interval anymore
+      // This one check is sufficient and the cached data will be used
+      // on subsequent page views within 5 minutes
+      
+      // Marking subscription checker as active but we won't actually 
+      // set up a timer, avoiding unnecessary API calls
+      setSubscriptionCheckerActive(true);
+    }
+    
+    // Clean up if needed
+    return () => {
+      if (subscriptionCheckTimerRef.current) {
+        console.log('Clearing subscription checker...');
+        clearInterval(subscriptionCheckTimerRef.current);
+        subscriptionCheckTimerRef.current = null;
+        setSubscriptionCheckerActive(false);
+      }
+    };
+  }, [isLoggedIn, isPremiumBook, checkSubscriptionStatus, subscriptionCheckerActive, hasPurchased, bookUserHasAccess]);
   
   // Check purchase status when auth state changes or after purchase
   useEffect(() => {
@@ -209,136 +551,118 @@ export default function BookPageClient({ id }) {
     }
   }, [isLoggedIn, id, isPremiumBook, checkPurchaseStatus]);
   
-  // Function to refresh the user's coin balance
-  const refreshUserCoins = useCallback(async () => {
-    if (!isLoggedIn || !user) {
-      console.log('Cannot refresh coins: User not logged in');
-      return;
-    }
-    
-    // Check if we've refreshed recently (within the last 5 seconds)
-    const now = Date.now();
-    const timeSinceLastRefresh = now - lastRefreshTimeRef.current;
-    
-    if (timeSinceLastRefresh < 5000) {
-      console.log(`Skipping coin refresh - last refresh was ${timeSinceLastRefresh}ms ago (< 5000ms)`);
-      return;
-    }
-    
-    // Update the last refresh time
-    lastRefreshTimeRef.current = now;
-    console.log('Refreshing user coin balance...');
-    
-    try {
-      const { getUserCoins } = await import('../../api/coins.js');
-      const coinsData = await getUserCoins();
-      
-      if (coinsData && typeof coinsData.coins === 'number') {
-        console.log(`Updating user coins from ${user.coins} to ${coinsData.coins}`);
-        updateUserCoins(coinsData.coins);
-      }
-    } catch (err) {
-      console.error('Error refreshing coin balance:', err);
-    }
-  }, [isLoggedIn, user, updateUserCoins]);
-  
-  // Refresh coin balance when component mounts or when user logs in
-  useEffect(() => {
-    if (isLoggedIn && isPremiumBook) {
-      console.log('Component mounted or premium status changed - refreshing coin balance');
-      refreshUserCoins();
-    }
-  }, [isLoggedIn, isPremiumBook, refreshUserCoins]);
-
-  // Combined useEffect to handle both initial load and auth changes
-  useEffect(() => {
-    // Don't fetch if ID is missing
-    if (!id) {
-      console.error('BookPageClient: Book ID is missing or undefined');
-      setError('Book ID is missing. Please go back and try again.');
-      setLoading(false);
-      return;
-    }
-
-    // Flag to track if we should fetch based on auth state
-    let shouldFetch = true;
-
-    // If this is an auth state change (not initial load)
-    if (loading === false) {
-      // Only fetch again if authentication just happened (we went from not logged in to logged in)
-      // or if we're still waiting for book data
-      shouldFetch = (isLoggedIn && !prevIsLoggedInRef.current) || !book;
-      
-      // If user just logged in, refresh their coin balance
-      if (isLoggedIn && !prevIsLoggedInRef.current) {
-        console.log('User just logged in - refreshing coin balance');
-        refreshUserCoins();
-      }
-    }
-
-    // Track previous auth state for future comparison
-    prevIsLoggedInRef.current = isLoggedIn;
-
-    if (shouldFetch) {
-      // Use a setTimeout to ensure this executes after any auth token checks complete
-      setTimeout(() => fetchBookDetails(id), 50);
-    }
-  }, [id, isLoggedIn, user, refreshUserCoins]);
-
-  // Clean up PDF blob URL when component unmounts or when PDF viewer is closed
-  useEffect(() => {
-    return () => {
-      // Only clean up if pdfUrl is a string that starts with 'blob:'
-      if (pdfUrl && typeof pdfUrl === 'string' && pdfUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(pdfUrl);
-      }
-    };
-  }, [pdfUrl]);
-  
   // Function to fetch book details
-  const fetchBookDetails = async (bookId) => {
-    if (isFetchingRef.current) {
+  const fetchBookDetails = useCallback(async (bookId) => {
+    if (!bookId) {
       return;
     }
 
-    isFetchingRef.current = true;
+    console.log(`Fetching book details for book ID ${bookId}`);
     
+    // Check if enough time has passed since last API call (30 seconds minimum for book details)
+    if (!shouldMakeApiCall('fetchBook_' + bookId, 30000)) {
+      // Even if we don't fetch, we should check purchase/subscription status
+      // Run these after a short delay to avoid component re-render issues
+      setTimeout(() => {
+        checkPurchaseStatus();
+        checkSubscriptionStatus();
+      }, 100);
+      return;
+    }
+
     try {
       setLoading(true);
+      setError(null);
       
-      // Use our API utility to fetch book details
-      const bookData = await getAPI(`/books/${bookId}`);
+      const token = isLoggedIn ? await getToken() : null;
       
-      // Debug log book data to diagnose issues
-      console.log('Raw book data structure:', JSON.stringify(bookData).substring(0, 500) + '...');
-      console.log('Raw isPremium value:', String(bookData.isPremium), 'type:', typeof bookData.isPremium);
-      console.log('Raw price value:', String(bookData.price), 'type:', typeof bookData.price);
-      
-      // Normalize the MongoDB document to ensure consistent types
-      const normalizedBookData = normalizeMongoDocument(bookData);
-      
-      // Add an additional safeguard - if there's a price, it must be premium
-      if (!normalizedBookData.isPremium && normalizedBookData.price > 0) {
-        console.log(`Force setting isPremium=true for book with price ${normalizedBookData.price}`);
-        normalizedBookData.isPremium = true;
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
       
-      console.log('Normalized book data:', {
-        isPremium: normalizedBookData.isPremium,
-        userHasAccess: normalizedBookData.userHasAccess,
-        price: normalizedBookData.price
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      const response = await fetch(`${apiUrl}/books/${bookId}`, {
+        headers
       });
       
-      setBook(normalizedBookData);
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching book details:', err);
-      setError(`Failed to fetch book details: ${err.message}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch book: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Book data received:', data);
+      
+      // Normalize the data to ensure consistent structure
+      const normalizedData = normalizeMongoDocument(data);
+      
+      setBook(normalizedData);
+      
+      // Check if the book is premium and if the user already has access
+      const isPremium = normalizedData.isPremium || (normalizedData.price && normalizedData.price > 0);
+      const userHasAccess = normalizedData.userHasAccess;
+      
+      // Coordinate purchase and subscription checks
+      if (isLoggedIn && isPremium) {
+        console.log('Book is premium and user is logged in, checking access rights');
+        
+        let accessVerified = false;
+        
+        // First check if the book response already indicates access
+        if (normalizedData.userHasAccess === true) {
+          console.log('API response indicates user already has access');
+          setHasPurchased(true);
+          setPurchaseSuccess(true);
+          accessVerified = true;
+        }
+        
+        if (!accessVerified) {
+          // Check purchase status first
+          try {
+            await checkPurchaseStatus();
+            
+            // If purchase check granted access, we can skip subscription check
+            if (hasPurchased || bookUserHasAccess) {
+              console.log('Purchase check confirmed access');
+              accessVerified = true;
+            }
+          } catch (purchaseError) {
+            console.error('Error in purchase check:', purchaseError);
+          }
+        }
+        
+        // If still no access, check subscription
+        if (!accessVerified) {
+          try {
+            console.log('Checking subscription status for premium content');
+            await checkSubscriptionStatus();
+            
+            // After subscription check, update access flag if we got access
+            if (hasSubscription) {
+              console.log('Subscription check confirmed access');
+              accessVerified = true;
+            }
+          } catch (subscriptionError) {
+            console.error('Error in subscription check:', subscriptionError);
+          }
+        }
+        
+        // Final update of book access state based on all checks
+        if (accessVerified) {
+          console.log('Access verified through any method, updating book state');
+          setBook(prevBook => ({
+            ...prevBook,
+            userHasAccess: true
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching book details:', error);
+      setError('Failed to load book details. Please try again later.');
     } finally {
       setLoading(false);
-      isFetchingRef.current = false;
     }
-  };
+  }, [isLoggedIn, getToken, checkPurchaseStatus, checkSubscriptionStatus, hasPurchased, bookUserHasAccess]);
 
   const fetchPdfForViewing = async () => {
     if (!book || !id) {
@@ -622,6 +946,12 @@ export default function BookPageClient({ id }) {
       return;
     }
     
+    // Check if user has an active subscription
+    if (hasSubscription) {
+      toast.info('You already have access to this book through your subscription');
+      return;
+    }
+    
     // Check if user has enough coins
     if (!userHasEnoughCoins) {
       setPurchaseError(`You need ${bookPrice - user.coins} more coins to purchase this book`);
@@ -635,81 +965,68 @@ export default function BookPageClient({ id }) {
   // Function to actually purchase the book after confirmation
   const handlePurchase = async () => {
     try {
-      setPurchasing(true);
-      setPurchaseError(null);
+      // First close the confirmation modal
       setShowConfirmation(false);
       
-      console.log(`Attempting to purchase book ${id} with coins...`);
+      // Show the purchase is in progress
+      setPurchasing(true);
+      setPurchaseError(null);
       
+      console.log(`Initiating book purchase for ID: ${id}`);
+      
+      // Call the purchase API
       const result = await purchaseBook(id);
       
-      console.log('Purchase API response:', result);
-      
-      // Update user's coins - ensure we're getting the updated value from the server
-      if (result && typeof result.coins === 'number') {
-        console.log(`Updating user coins to ${result.coins} (spent ${result.coinsSpent || 'unknown'} coins)`);
-        updateUserCoins(result.coins);
+      if (result && result.success) {
+        console.log('Purchase successful:', result);
+        
+        // Update user's coin balance
+        if (user && result.coins !== undefined) {
+          console.log(`Updating user coins from ${user.coins} to ${result.coins}`);
+          updateUserCoins(result.coins);
+        }
         
         // Check purchase status to update UI
         await checkPurchaseStatus();
         
         setPurchaseSuccess(true);
-        toast.success(`Book purchased successfully for ${result.coinsSpent || book.price} coins!`);
-      } else if (result && result.alreadyOwned) {
-        // Handle the case where the book was already owned
-        console.log('User already owns this book');
-        setPurchaseSuccess(true);
-        toast.info('You already own this book');
-        await checkPurchaseStatus();
-      } else {
-        // Generic success if we don't have exact coin details
-        setPurchaseSuccess(true);
-        toast.success('Book purchased successfully!');
-        
-        // Refresh coin balance using our throttled function
-        refreshUserCoins();
-      }
-    } catch (err) {
-      console.error('Error purchasing book:', err);
-      
-      // Extract error message from the response if available
-      let errorMessage = 'Failed to purchase book. Please try again.';
-      let errorType = null;
-      
-      if (err.response && err.response.data) {
-        const responseData = err.response.data;
-        
-        if (responseData.message) {
-          errorMessage = responseData.message;
+        toast.success(result.message || 'Book purchased successfully!');
+      } else if (result && result.message) {
+        // It's possible the book was already purchased, check that case
+        if (result.message.includes('already purchased') || result.message.includes('already own')) {
+          console.log('Book was already purchased');
+          setPurchaseSuccess(true);
+          toast.info('You already own this book');
+          await checkPurchaseStatus();
+        } else {
+          // Generic success if we don't have exact coin details
+          toast.success(result.message);
+          setPurchaseSuccess(true);
         }
+      } else {
+        // Handle strange success case with no message
+        console.warn('Purchase returned success but without details');
+        toast.success('Book purchase successful!');
         
-        // Check for specific error cases
-        if (responseData.required && responseData.available) {
-          errorType = 'insufficient_coins';
-          errorMessage = `You need ${responseData.required - responseData.available} more coins to purchase this book.`;
-        } else if (responseData.alreadyOwned) {
-          errorType = 'already_owned';
-          errorMessage = 'You already own this book';
+        // Check if we can refresh book state
+        try {
           // If already owned, we can still consider it a "success"
           setPurchaseSuccess(true);
           await checkPurchaseStatus();
+        } catch (err) {
+          console.error('Error refreshing purchase status:', err);
         }
-      } else if (err.message) {
-        errorMessage = err.message;
       }
+    } catch (err) {
+      console.error('Purchase error:', err);
       
-      // Set appropriate UI state based on error type
-      setPurchaseError(errorMessage);
-      
-      // Show toast with the error
-      if (errorType === 'already_owned') {
-        toast.info(errorMessage);
+      if (err.message) {
+        setPurchaseError(err.message);
+        toast.error(err.message);
       } else {
-        toast.error(errorMessage);
+        setPurchaseError('An unknown error occurred during purchase');
+        toast.error('Failed to purchase book. Please try again later.');
       }
-      
-      // Refresh user's coin balance using our throttled function
-      refreshUserCoins();
     } finally {
       setPurchasing(false);
     }
@@ -752,6 +1069,8 @@ export default function BookPageClient({ id }) {
     console.log(`- isPremium = ${String(book.isPremium)} (${typeof book.isPremium})`);
     console.log(`- price = ${String(book.price)} (${typeof book.price})`);
     console.log(`- Current computed isPremiumBook: ${isPremiumBook}`);
+    console.log(`- Has user purchased: ${hasUserPurchased}`);
+    console.log(`- Has subscription: ${hasSubscription}`);
     
     // Safeguard raw values - create fixed copies with proper types
     let fixedIsPremium = false;
@@ -819,7 +1138,7 @@ export default function BookPageClient({ id }) {
         console.error('Error refreshing book data:', err);
       }
     }, 1000);
-  }, [book, isPremiumBook, id, fetchBookDetails]);
+  }, [book, isPremiumBook, hasUserPurchased, hasSubscription, id, fetchBookDetails]);
 
   // Improved debug logging for premium detection
   useEffect(() => {
@@ -833,6 +1152,157 @@ export default function BookPageClient({ id }) {
       });
     }
   }, [book, isPremiumBook]);
+
+  // Function to refresh the user's coin balance
+  const refreshUserCoins = useCallback(async () => {
+    if (!isLoggedIn || !user) {
+      console.log('Cannot refresh coins: User not logged in');
+      return;
+    }
+    
+    // Check if we've refreshed recently (within the last 5 seconds)
+    const now = Date.now();
+    const timeSinceLastRefresh = now - lastRefreshTimeRef.current;
+    
+    if (timeSinceLastRefresh < 5000) {
+      console.log(`Skipping coin refresh - last refresh was ${timeSinceLastRefresh}ms ago (< 5000ms)`);
+      return;
+    }
+    
+    // Update the last refresh time
+    lastRefreshTimeRef.current = now;
+    console.log('Refreshing user coin balance...');
+    
+    try {
+      const { getUserCoins } = await import('../../api/coins.js');
+      const coinsData = await getUserCoins();
+      
+      if (coinsData && typeof coinsData.coins === 'number') {
+        console.log(`Updating user coins from ${user.coins} to ${coinsData.coins}`);
+        updateUserCoins(coinsData.coins);
+      }
+    } catch (err) {
+      console.error('Error refreshing coin balance:', err);
+    }
+  }, [isLoggedIn, user, updateUserCoins]);
+  
+  // Refresh coin balance when component mounts or when user logs in
+  useEffect(() => {
+    if (isLoggedIn && isPremiumBook) {
+      console.log('Component mounted or premium status changed - refreshing coin balance');
+      refreshUserCoins();
+    }
+  }, [isLoggedIn, isPremiumBook, refreshUserCoins]);
+
+  // Combined useEffect to handle both initial load and auth changes
+  useEffect(() => {
+    // Don't fetch if ID is missing
+    if (!id) {
+      console.error('BookPageClient: Book ID is missing or undefined');
+      setError('Book ID is missing. Please go back and try again.');
+      setLoading(false);
+      return;
+    }
+
+    // Flag to track if we should fetch based on auth state
+    let shouldFetch = true;
+
+    // If this is an auth state change (not initial load)
+    if (loading === false) {
+      // Only fetch again if authentication just happened (we went from not logged in to logged in)
+      // or if we're still waiting for book data
+      shouldFetch = (isLoggedIn && !prevIsLoggedInRef.current) || !book;
+      
+      // If user just logged in, refresh their coin balance
+      if (isLoggedIn && !prevIsLoggedInRef.current) {
+        console.log('User just logged in - refreshing coin balance');
+        refreshUserCoins();
+      }
+    }
+
+    // Track previous auth state for future comparison
+    prevIsLoggedInRef.current = isLoggedIn;
+
+    if (shouldFetch) {
+      // Use a setTimeout to ensure this executes after any auth token checks complete
+      setTimeout(() => fetchBookDetails(id), 50);
+    }
+  }, [id, isLoggedIn, user, refreshUserCoins]);
+
+  // Clean up PDF blob URL when component unmounts or when PDF viewer is closed
+  useEffect(() => {
+    return () => {
+      // Only clean up if pdfUrl is a string that starts with 'blob:'
+      if (pdfUrl && typeof pdfUrl === 'string' && pdfUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(pdfUrl);
+      }
+    };
+  }, [pdfUrl]);
+
+  // Initial component mount check for cached data and auth state
+  useEffect(() => {
+    if (isLoggedIn && isPremiumBook) {
+      console.log('Component mounted - checking cached data and auth state');
+      
+      // First, try to retrieve relevant data from cache
+      try {
+        // First check localStorage for cached subscription data
+        const cachedSubscriptionData = localStorage.getItem('subscriptionCheckData');
+        if (cachedSubscriptionData) {
+          try {
+            const parsedData = JSON.parse(cachedSubscriptionData);
+            const lastCheckTime = new Date(parsedData.timestamp);
+            const now = new Date();
+            
+            // Use cached data if less than 1 minute old
+            const oneMinuteAgo = new Date(now.getTime() - 60 * 1000);
+            if (lastCheckTime > oneMinuteAgo && parsedData.hasSubscription) {
+              console.log('Using fresh cached subscription data on initial mount');
+              setHasSubscription(true);
+              
+              setBook(prevBook => ({
+                ...prevBook,
+                userHasAccess: true
+              }));
+              
+              // Still continue with the fresh API call in the background to verify
+            } else {
+              console.log('Cached subscription data is not fresh enough or inactive');
+            }
+          } catch (e) {
+            console.error('Error parsing cached subscription data:', e);
+          }
+        }
+        
+        // Also check for cached purchase data for this specific book
+        const cachedPurchaseData = localStorage.getItem('purchaseCheckData_' + id);
+        if (cachedPurchaseData) {
+          try {
+            const parsedData = JSON.parse(cachedPurchaseData);
+            if (parsedData.hasPurchased) {
+              console.log('Using cached purchase data on initial mount');
+              setHasPurchased(true);
+              setPurchaseSuccess(true);
+              setBook(prevBook => ({
+                ...prevBook,
+                userHasAccess: true
+              }));
+            }
+          } catch (e) {
+            console.error('Error parsing cached purchase data:', e);
+          }
+        }
+      } catch (err) {
+        console.error('Error checking cached data on mount:', err);
+      }
+      
+      // Always run a fresh subscription check on component mount
+      // Using a slight delay to allow state initialization and avoid overwrites
+      setTimeout(() => {
+        checkSubscriptionStatus();
+      }, 300);
+    }
+  }, [isLoggedIn, isPremiumBook, id, checkSubscriptionStatus]);
 
   if (loading) {
     return (
@@ -1162,7 +1632,7 @@ export default function BookPageClient({ id }) {
                 </div>
                 
                 {/* Purchase section for logged in users */}
-                {isLoggedIn && !hasUserPurchased && bookPrice > 0 && !purchaseSuccess && (
+                {isLoggedIn && !hasUserPurchased && !hasSubscription && bookPrice > 0 && !purchaseSuccess && (
                   <>
                     {purchaseError && (
                       <div className={styles.purchaseError}>
@@ -1236,8 +1706,8 @@ export default function BookPageClient({ id }) {
                 // For custom URL PDFs, show a single "Open PDF" button that redirects to the URL
                 <button 
                   onClick={handleOpenCustomUrl}
-                  className={`${styles.openUrlButton} ${(isPremiumBook && !hasUserPurchased && !purchaseSuccess) ? styles.disabledButton : ''}`}
-                  disabled={openingCustomUrl || (isPremiumBook && !hasUserPurchased && !purchaseSuccess)}
+                  className={`${styles.openUrlButton} ${(isPremiumBook && !hasUserPurchased && !hasSubscription && !purchaseSuccess) ? styles.disabledButton : ''}`}
+                  disabled={openingCustomUrl || (isPremiumBook && !hasUserPurchased && !hasSubscription && !purchaseSuccess)}
                 >
                   <FaFileAlt /> {openingCustomUrl ? 'Opening...' : 'Open PDF'}
                 </button>
@@ -1246,16 +1716,16 @@ export default function BookPageClient({ id }) {
                 <>
                   <button 
                     onClick={handleViewPdf} 
-                    className={`${styles.viewButton} ${(isPremiumBook && !hasUserPurchased && !purchaseSuccess) ? styles.disabledButton : ''}`}
-                    disabled={viewing || (isPremiumBook && !hasUserPurchased && !purchaseSuccess)}
+                    className={`${styles.viewButton} ${(isPremiumBook && !hasUserPurchased && !hasSubscription && !purchaseSuccess) ? styles.disabledButton : ''}`}
+                    disabled={viewing || (isPremiumBook && !hasUserPurchased && !hasSubscription && !purchaseSuccess)}
                   >
                     <FaFileAlt /> {viewing ? 'Opening...' : 'View PDF'}
                   </button>
                   
                   <button 
                     onClick={handleDownload} 
-                    className={`${styles.downloadButton} ${(isPremiumBook && !hasUserPurchased && !purchaseSuccess) ? styles.disabledButton : ''}`}
-                    disabled={downloading || (isPremiumBook && !hasUserPurchased && !purchaseSuccess)}
+                    className={`${styles.downloadButton} ${(isPremiumBook && !hasUserPurchased && !hasSubscription && !purchaseSuccess) ? styles.disabledButton : ''}`}
+                    disabled={downloading || (isPremiumBook && !hasUserPurchased && !hasSubscription && !purchaseSuccess)}
                   >
                     <FaDownload /> {downloading ? 'Downloading...' : 'Download PDF'}
                   </button>
@@ -1290,6 +1760,86 @@ export default function BookPageClient({ id }) {
           allowDownload={true}
           onDownload={handleDownload}
         />
+      )}
+
+      {/* Add subscription banner when debug mode is on */}
+      {isLoggedIn && debugMode && (
+        <div className={styles.debugSection} style={{ margin: '10px 0', padding: '10px', background: '#f8f9fa', borderRadius: '4px' }}>
+          <strong>Debug Info:</strong>
+          <div>Premium Book: {isPremiumBook ? 'Yes' : 'No'}</div>
+          <div>Price: {bookPrice} coins</div>
+          <div>User Purchased: {hasUserPurchased ? 'Yes' : 'No'}</div>
+          <div>Has Subscription: {hasSubscription ? 'Yes' : 'No'}</div>
+          <div>Has Access: {hasUserPurchased ? 'Yes' : 'No'}</div>
+        </div>
+      )}
+      
+      {/* Add subscription notification if relevant */}
+      {isLoggedIn && isPremiumBook && hasSubscription && (
+        <div className={`${styles.subscriptionNotice} ${styles.accessNotice}`} style={{ 
+          margin: '10px 0', 
+          padding: '15px', 
+          background: '#e9f7ff', 
+          borderRadius: '8px',
+          border: '1px solid #4c9aff',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+          fontWeight: '500'
+        }}>
+          <FaCrown style={{ color: '#ffd700', fontSize: '24px' }} />
+          <div>
+            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Premium Access</div>
+            <span>You have access to this book through your active subscription. Enjoy reading!</span>
+          </div>
+        </div>
+      )}
+
+      {/* Show purchase success message */}
+      {isLoggedIn && isPremiumBook && (hasUserPurchased === true || purchaseSuccess === true) && !hasSubscription && (
+        <div className={`${styles.purchaseSuccess} ${styles.accessNotice}`} style={{
+          margin: '10px 0', 
+          padding: '15px', 
+          background: '#e9fae9', 
+          borderRadius: '8px',
+          border: '1px solid #4caf50',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+          fontWeight: '500'
+        }}>
+          <FaCheck style={{ color: '#4caf50', fontSize: '24px' }} />
+          <div>
+            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Purchased</div>
+            <span>You own this book! You've purchased this premium content.</span>
+          </div>
+        </div>
+      )}
+
+      {/* Add status indicator for debugging if enabled */}
+      {debugMode && (
+        <div style={{
+          position: 'fixed',
+          bottom: '10px',
+          right: '10px',
+          background: 'rgba(0,0,0,0.7)',
+          color: 'white',
+          padding: '8px 12px',
+          borderRadius: '4px',
+          fontSize: '12px',
+          zIndex: 9999,
+          maxWidth: '300px'
+        }}>
+          <div><strong>API Status:</strong> {isFetchingRef.current ? '🔄 Fetching...' : '✅ Idle'}</div>
+          <div><strong>Book Premium:</strong> {isPremiumBook ? '✅ Yes' : '❌ No'}</div>
+          <div><strong>Access:</strong> {hasUserPurchased ? '✅ Yes' : '❌ No'}</div>
+          {hasUserPurchased && (
+            <div><strong>Access Type:</strong> {hasSubscription ? '🔑 Subscription' : (hasPurchased ? '💰 Purchased' : '❓ Unknown')}</div>
+          )}
+          <div><strong>Subscription Check:</strong> {subscriptionCheckerActive ? '🔄 Active' : '⏹️ Inactive'}</div>
+        </div>
       )}
     </div>
   );

@@ -6,7 +6,10 @@ const {
   awardAdCoins,
   awardDailyCoinsToAll,
   purchaseBook,
-  checkDailyCoinsStatus
+  checkDailyCoinsStatus,
+  updateSessionTime,
+  awardActivityCoins,
+  getSessionStatus
 } = require('../controllers/coinController');
 const { protect, admin } = require('../middleware/auth');
 
@@ -16,8 +19,17 @@ router.get('/', protect, getUserCoins);
 // Check if daily coins have been claimed - requires authentication
 router.get('/daily-status', protect, checkDailyCoinsStatus);
 
+// Get session time status - requires authentication
+router.get('/session-status', protect, getSessionStatus);
+
 // Award daily coins - requires authentication
 router.post('/daily', protect, awardDailyCoins);
+
+// Update session time - requires authentication
+router.post('/update-session', protect, updateSessionTime);
+
+// Award coins for site activity - requires authentication
+router.post('/activity-reward', protect, awardActivityCoins);
 
 // Award coins for watching ad - requires authentication
 router.post('/ad-reward', protect, awardAdCoins);

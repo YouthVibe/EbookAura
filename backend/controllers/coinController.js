@@ -2,6 +2,7 @@ const User = require('../models/User');
 const Book = require('../models/Book');
 const Purchase = require('../models/Purchase');
 const { v4: uuidv4 } = require('uuid');
+const mongoose = require('mongoose');
 
 // @desc    Get user's coin balance
 // @route   GET /api/coins
@@ -59,6 +60,128 @@ const awardDailyCoins = async (req, res) => {
   }
 };
 
+// @desc    Award coins for time spent on site (1 coin per minute)
+// @route   POST /api/coins/activity-reward
+// @access  Private
+const awardActivityCoins = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Get current time
+    const currentTime = new Date();
+    
+    // Calculate coins to award: 1 coin per minute (60 seconds)
+    // Minimum 1 coin, even if less than a minute
+    const minutesSpent = Math.max(1, Math.floor(user.sessionTimeToday / 60));
+    const coinsToAward = minutesSpent;
+
+    // Award coins based on minutes spent
+    user.coins += coinsToAward;
+    user.lastSessionReward = currentTime;
+    // Reset the session time after claiming reward
+    user.sessionTimeToday = 0;
+    await user.save();
+
+    res.status(200).json({ 
+      message: `Activity reward: ${coinsToAward} coins awarded for ${minutesSpent} minute(s) of activity!`, 
+      coins: user.coins,
+      coinsAdded: coinsToAward,
+      minutesSpent: minutesSpent
+    });
+  } catch (error) {
+    console.error('Error awarding activity reward coins:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// @desc    Update user session time
+// @route   POST /api/coins/update-session
+// @access  Private
+const updateSessionTime = async (req, res) => {
+  try {
+    const { sessionDuration } = req.body; // Duration in seconds
+    
+    if (!sessionDuration || typeof sessionDuration !== 'number' || sessionDuration <= 0) {
+      return res.status(400).json({ message: 'Invalid session duration' });
+    }
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Get today's date with time set to midnight
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // If it's a new day, reset the session time
+    if (user.lastSessionStart && new Date(user.lastSessionStart) < today) {
+      user.sessionTimeToday = 0;
+    }
+
+    // Update session time
+    user.sessionTimeToday += sessionDuration;
+    user.lastSessionStart = new Date();
+    await user.save();
+
+    // Calculate minutes accumulated and allow claim at any time
+    const minutesAccumulated = Math.floor(user.sessionTimeToday / 60);
+    
+    // User can claim reward if they have accumulated at least 1 minute
+    const canClaimReward = minutesAccumulated > 0;
+
+    res.status(200).json({
+      message: 'Session time updated successfully',
+      sessionTimeToday: user.sessionTimeToday,
+      canClaimReward,
+      requiredTime: 60, // 1 minute in seconds
+      minutesAccumulated
+    });
+  } catch (error) {
+    console.error('Error updating session time:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// @desc    Get user's session time stats
+// @route   GET /api/coins/session-status
+// @access  Private
+const getSessionStatus = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Calculate minutes accumulated (1 minute = 60 seconds)
+    const minutesAccumulated = Math.floor(user.sessionTimeToday / 60);
+    
+    // Calculate progress percentage towards next minute
+    const secondsTowardsNextMinute = user.sessionTimeToday % 60;
+    const progressPercentage = Math.floor((secondsTowardsNextMinute / 60) * 100);
+
+    res.status(200).json({
+      sessionTimeToday: user.sessionTimeToday,
+      requiredTime: 60, // 1 minute in seconds
+      hasClaimedReward: false, // Always allow claiming
+      progress: progressPercentage,
+      canClaimReward: minutesAccumulated > 0,
+      nextRewardTime: null, // No restriction on next reward
+      minutesAccumulated,
+      coinsAvailable: minutesAccumulated
+    });
+  } catch (error) {
+    console.error('Error getting session status:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 // @desc    Award coins for watching ad (25 coins)
 // @route   POST /api/coins/ad-reward
 // @access  Private
@@ -85,38 +208,47 @@ const awardAdCoins = async (req, res) => {
   }
 };
 
-// @desc    Award daily coins to all users automatically (called by cron job or admin)
-// @route   POST /api/coins/reward-all (protected by admin middleware)
-// @access  Private/Admin
+// @desc    Award daily coins to all users (10 coins)
+// @route   POST /api/coins/reward-all
+// @access  Admin
 const awardDailyCoinsToAll = async (req, res) => {
   try {
+    // Check if an amount was specified, default to 10
+    const { amount = 10 } = req.body;
+    
+    // Find all users
+    const users = await User.find({});
+    
+    if (!users || users.length === 0) {
+      return res.status(404).json({ message: 'No users found' });
+    }
+    
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
-    // Find all users who have not received coins today
-    const usersToReward = await User.find({
-      $or: [
-        { lastCoinReward: { $lt: today } },
-        { lastCoinReward: null }
-      ]
-    });
-
-    if (usersToReward.length === 0) {
-      return res.status(200).json({ message: 'No users to reward' });
-    }
-
-    // Award coins to each user
-    const updatePromises = usersToReward.map(user => {
-      user.coins += 10;
+    
+    let rewardedCount = 0;
+    let alreadyRewardedCount = 0;
+    
+    // Loop through each user and award coins
+    for (const user of users) {
+      // Skip users who already claimed today
+      if (user.lastCoinReward && new Date(user.lastCoinReward) >= today) {
+        alreadyRewardedCount++;
+        continue;
+      }
+      
+      // Award coins and update last reward date
+      user.coins += amount;
       user.lastCoinReward = new Date();
-      return user.save();
-    });
-
-    await Promise.all(updatePromises);
-
+      await user.save();
+      rewardedCount++;
+    }
+    
     res.status(200).json({ 
-      message: 'Daily coins awarded to all eligible users', 
-      usersRewarded: usersToReward.length
+      message: `Daily coins awarded to ${rewardedCount} users. ${alreadyRewardedCount} users already claimed today.`,
+      rewardedCount,
+      alreadyRewardedCount,
+      totalUsers: users.length
     });
   } catch (error) {
     console.error('Error awarding daily coins to all users:', error);
@@ -124,7 +256,46 @@ const awardDailyCoinsToAll = async (req, res) => {
   }
 };
 
-// @desc    Purchase a premium book using coins
+// @desc    Check if user has claimed daily coins
+// @route   GET /api/coins/daily-status
+// @access  Private
+const checkDailyCoinsStatus = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Get today's date with time set to midnight
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Calculate next reward time (next day at midnight)
+    const nextRewardTime = new Date(today);
+    nextRewardTime.setDate(nextRewardTime.getDate() + 1);
+
+    // Check if user already claimed daily coins
+    const hasClaimed = user.lastCoinReward && new Date(user.lastCoinReward) >= today;
+
+    // If claimed, calculate when they can claim again
+    let claimAgainTime = null;
+    if (hasClaimed) {
+      claimAgainTime = nextRewardTime.toISOString();
+    }
+
+    res.status(200).json({
+      hasClaimed,
+      nextRewardTime: claimAgainTime,
+      lastClaimTime: user.lastCoinReward ? new Date(user.lastCoinReward).toISOString() : null
+    });
+  } catch (error) {
+    console.error('Error checking daily coins status:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// @desc    Purchase a book with coins
 // @route   POST /api/coins/purchase/:bookId
 // @access  Private
 const purchaseBook = async (req, res) => {
@@ -243,6 +414,110 @@ const purchaseBook = async (req, res) => {
       });
     }
     
+    // NEW: Check if user has Pro plan access (free access to all premium books)
+    let hasProAccess = false;
+    
+    // Get the registered Subscription model if it exists
+    let SubscriptionToUse;
+    
+    // First, check if either model is already registered with mongoose
+    if (mongoose.models.Subscription) {
+      SubscriptionToUse = mongoose.models.Subscription;
+    } else {
+      // If not found, try to require one of the models
+      try {
+        SubscriptionToUse = require('../models/Subscription');
+      } catch (mainErr) {
+        try {
+          SubscriptionToUse = require('../models/subscriptionModel');
+        } catch (altErr) {
+          console.error('Could not load any Subscription model:', altErr);
+        }
+      }
+    }
+    
+    if (SubscriptionToUse) {
+      try {
+        // Check for active Pro subscription
+        const subscription = await SubscriptionToUse.findOne({
+          user: user._id,
+          status: 'active'
+        }).populate('plan');
+        
+        if (subscription && subscription.plan) {
+          hasProAccess = (subscription.plan.name && 
+                          subscription.plan.name.toLowerCase().includes('pro')) || 
+                         (subscription.plan.benefits && 
+                          subscription.plan.benefits.maxPremiumBooks === Infinity);
+        }
+        
+        // If no active subscription with Pro access, check for past Pro subscriptions
+        if (!hasProAccess) {
+          const pastProSubscription = await SubscriptionToUse.findOne({
+            user: user._id,
+            status: { $in: ['expired', 'canceled'] }
+          }).populate('plan');
+          
+          if (pastProSubscription && pastProSubscription.plan) {
+            hasProAccess = (pastProSubscription.plan.name && 
+                            pastProSubscription.plan.name.toLowerCase().includes('pro')) || 
+                           (pastProSubscription.plan.benefits && 
+                            pastProSubscription.plan.benefits.maxPremiumBooks === Infinity);
+          }
+        }
+      } catch (err) {
+        console.error('[COIN PURCHASE] Error checking for Pro plan:', err);
+      }
+    } else {
+      console.warn('[COIN PURCHASE] No Subscription model available to check for Pro plan');
+    }
+    
+    // If user has Pro access, add book to their library without charging coins
+    if (hasProAccess) {
+      console.log(`[COIN PURCHASE] User ${user._id} has Pro plan access, granting free access to book ${bookId}`);
+      
+      // Add book to user's purchased books
+      user.purchasedBooks.push(bookId);
+      
+      // Save changes to user
+      try {
+        await user.save();
+        console.log(`[COIN PURCHASE] Successfully added book to Pro user's library`);
+        
+        // Create a $0 purchase record for the Pro user
+        const purchase = new Purchase({
+          user: user._id,
+          book: book._id,
+          price: 0, // $0 purchase because of Pro plan
+          purchaseDate: new Date(),
+          bookDetails: {
+            title: book.title,
+            author: book.author,
+            category: book.category,
+            coverImage: book.coverImage
+          },
+          transactionId: uuidv4(),
+          balanceBefore: user.coins,
+          balanceAfter: user.coins,
+          purchaseMethod: 'pro_plan' // Indicate this was through Pro plan
+        });
+        
+        await purchase.save();
+        console.log(`[COIN PURCHASE] Pro plan access purchase record created with ID: ${purchase._id}`);
+        
+        return res.status(200).json({
+          message: 'Book added to your library (Pro plan benefit)',
+          coins: user.coins,
+          bookId: book._id,
+          bookTitle: book.title,
+          proPlanBenefit: true
+        });
+      } catch (err) {
+        console.error('[COIN PURCHASE] Error processing Pro plan access:', err);
+        return res.status(500).json({ message: 'Error processing your request' });
+      }
+    }
+    
     // Check if the user has enough coins
     if (user.coins < bookPrice) {
       console.log(`[COIN PURCHASE] User ${user._id} has insufficient coins: ${user.coins} < ${bookPrice}`);
@@ -354,50 +629,38 @@ const purchaseBook = async (req, res) => {
   }
 };
 
-// @desc    Check if user has claimed daily coins
-// @route   GET /api/coins/daily-status
-// @access  Private
-const checkDailyCoinsStatus = async (req, res) => {
+// @desc    Reset daily session time at midnight (for cron job)
+// @route   N/A - Called by scheduled job
+// @access  Private (system only)
+const resetDailySessionTime = async () => {
   try {
-    const user = await User.findById(req.user._id);
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Get today's date with time set to midnight
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Calculate next reward time (next day at midnight)
-    const nextRewardTime = new Date(today);
-    nextRewardTime.setDate(nextRewardTime.getDate() + 1);
-
-    // Check if user already claimed daily coins
-    const hasClaimed = user.lastCoinReward && new Date(user.lastCoinReward) >= today;
-
-    // If claimed, calculate when they can claim again
-    let claimAgainTime = null;
-    if (hasClaimed) {
-      claimAgainTime = nextRewardTime.toISOString();
-    }
-
-    res.status(200).json({
-      hasClaimed,
-      nextRewardTime: claimAgainTime,
-      lastClaimTime: user.lastCoinReward ? new Date(user.lastCoinReward).toISOString() : null
-    });
+    console.log('Starting daily session time reset...');
+    const result = await User.updateMany(
+      {}, // update all users
+      { 
+        $set: { 
+          sessionTimeToday: 0 
+        } 
+      }
+    );
+    
+    console.log(`Session time reset for ${result.modifiedCount} users.`);
+    return { success: true, message: `Session time reset for ${result.modifiedCount} users.` };
   } catch (error) {
-    console.error('Error checking daily coins status:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Error resetting session time:', error);
+    return { success: false, error: error.message };
   }
 };
 
 module.exports = {
   getUserCoins,
   awardDailyCoins,
+  awardActivityCoins,
+  updateSessionTime,
+  getSessionStatus,
   awardAdCoins,
   awardDailyCoinsToAll,
+  checkDailyCoinsStatus,
   purchaseBook,
-  checkDailyCoinsStatus
+  resetDailySessionTime
 }; 

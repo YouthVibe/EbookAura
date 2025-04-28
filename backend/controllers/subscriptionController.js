@@ -45,6 +45,29 @@ const getUserSubscription = asyncHandler(async (req, res) => {
     });
   }
   
+  // Check if the subscription has expired based on endDate
+  const now = new Date();
+  if (new Date(subscription.endDate) < now) {
+    // Update the subscription status to expired in the database
+    subscription.status = 'expired';
+    await subscription.save();
+    
+    // Also update user's premium status
+    await User.findByIdAndUpdate(userId, { 
+      isPremium: false,
+      isSubscribed: false
+    });
+    
+    // Return a message indicating the subscription has expired
+    return res.status(200).json({
+      success: true,
+      hasSubscription: false,
+      message: 'Your subscription has expired',
+      wasExpired: true,
+      subscription: subscription
+    });
+  }
+  
   res.status(200).json({
     success: true,
     hasSubscription: true,
@@ -89,13 +112,40 @@ const purchaseSubscription = asyncHandler(async (req, res) => {
     throw new Error('You already have an active subscription');
   }
   
-  // Process payment (this would connect to a payment provider like Stripe)
-  // For now, we'll simulate a successful payment
-  const paymentSuccessful = true;
-  
-  if (!paymentSuccessful) {
-    res.status(400);
-    throw new Error('Payment failed. Please try again.');
+  // If payment method is 'coins', check if user has enough coins and deduct them
+  if (paymentMethod === 'coins') {
+    // Find the user
+    const user = await User.findById(req.user.id);
+    
+    if (!user) {
+      res.status(404);
+      throw new Error('User not found');
+    }
+    
+    // Check if user has enough coins
+    if (user.coins < plan.price) {
+      res.status(400);
+      throw new Error(`Not enough coins. You need ${plan.price} coins but have ${user.coins}`);
+    }
+    
+    // Store the current balance for records
+    const balanceBefore = user.coins;
+    
+    // Deduct coins from user balance
+    user.coins -= plan.price;
+    await user.save();
+    
+    // Log the transaction
+    console.log(`Deducted ${plan.price} coins from user ${user._id} for subscription purchase. New balance: ${user.coins}`);
+  } else {
+    // For other payment methods (would connect to payment processors like Stripe)
+    // For now, we'll simulate a successful payment
+    const paymentSuccessful = true;
+    
+    if (!paymentSuccessful) {
+      res.status(400);
+      throw new Error('Payment failed. Please try again.');
+    }
   }
   
   // Calculate expiration date based on plan duration
@@ -119,33 +169,40 @@ const purchaseSubscription = asyncHandler(async (req, res) => {
     autoRenew: true,
     status: 'active',
     paymentMethod,
-    paymentHistory: [{
-      amount: plan.price,
-      currency: plan.currency,
-      date: now,
-      status: 'completed'
-    }]
+    paymentAmount: plan.price,
+    currency: paymentMethod === 'coins' ? 'COINS' : plan.currency,
+    transactionId: uuidv4()
   });
   
   // Update user's subscription status
   await User.findByIdAndUpdate(req.user.id, {
     isSubscribed: true,
-    subscriptionTier: plan.name
+    subscriptionTier: plan.name,
+    isPremium: true
   });
   
   res.status(201).json({
     success: true,
     message: 'Subscription purchased successfully',
-    data: subscription
+    data: subscription,
+    subscription: subscription
   });
 });
 
 /**
- * @desc    Cancel subscription
+ * @desc    Cancel subscription (disabled)
  * @route   PUT /api/subscriptions/cancel
  * @access  Private
  */
 const cancelSubscription = asyncHandler(async (req, res) => {
+  // Prevent cancellation
+  return res.status(403).json({
+    success: false,
+    message: 'Subscription cancellation is not allowed. Subscriptions are non-refundable once purchased.'
+  });
+  
+  // Original functionality commented out
+  /*
   const subscription = await Subscription.findOne({ 
     user: req.user.id,
     status: { $in: ['active', 'pending', 'grace_period'] }
@@ -169,15 +226,16 @@ const cancelSubscription = asyncHandler(async (req, res) => {
     message: 'Subscription cancelled. You will have access until your current period ends.',
     data: subscription
   });
+  */
 });
 
 /**
- * @desc    Toggle auto-renew setting
- * @route   PUT /api/subscriptions/toggle-auto-renew
+ * @desc    Toggle auto-renew for subscription
+ * @route   PATCH /api/subscriptions/auto-renew
  * @access  Private
  */
 const toggleAutoRenew = asyncHandler(async (req, res) => {
-  const subscription = await Subscription.findOne({ 
+  const subscription = await Subscription.findOne({
     user: req.user.id,
     status: 'active'
   });
@@ -189,13 +247,14 @@ const toggleAutoRenew = asyncHandler(async (req, res) => {
     });
   }
   
-  // Toggle auto-renew setting
+  // Toggle auto renew
   subscription.autoRenew = !subscription.autoRenew;
   await subscription.save();
   
   res.status(200).json({
     success: true,
-    message: `Auto-renew is now ${subscription.autoRenew ? 'enabled' : 'disabled'}`,
+    message: `Auto-renew has been ${subscription.autoRenew ? 'enabled' : 'disabled'}`,
+    autoRenew: subscription.autoRenew,
     data: subscription
   });
 });
@@ -206,16 +265,13 @@ const toggleAutoRenew = asyncHandler(async (req, res) => {
  * @access  Private
  */
 const getSubscriptionHistory = asyncHandler(async (req, res) => {
-  const userId = req.user.id || req.user._id;
-  
-  const subscriptions = await Subscription.find({ 
-    user: userId 
-  }).populate('plan').sort({ createdAt: -1 });
+  const subscriptions = await Subscription.find({
+    user: req.user.id
+  }).sort({ createdAt: -1 }).populate('plan');
   
   res.status(200).json({
     success: true,
     count: subscriptions.length,
-    subscriptions: subscriptions,
     data: subscriptions
   });
 });
@@ -251,6 +307,33 @@ const createSubscription = asyncHandler(async (req, res) => {
     throw new Error('User already has an active subscription');
   }
 
+  // If payment method is 'coins', check if user has enough coins and deduct them
+  if (paymentMethod === 'coins') {
+    // Find the user
+    const user = await User.findById(req.user._id);
+    
+    if (!user) {
+      res.status(404);
+      throw new Error('User not found');
+    }
+    
+    // Check if user has enough coins
+    if (user.coins < plan.price) {
+      res.status(400);
+      throw new Error(`Not enough coins. You need ${plan.price} coins but have ${user.coins}`);
+    }
+    
+    // Store the current balance for records
+    const balanceBefore = user.coins;
+    
+    // Deduct coins from user balance
+    user.coins -= plan.price;
+    await user.save();
+    
+    // Log the transaction
+    console.log(`Deducted ${plan.price} coins from user ${user._id} for subscription purchase. New balance: ${user.coins}`);
+  }
+
   // Calculate end date based on plan duration
   const startDate = new Date();
   const endDate = addDuration(startDate, plan.duration.value, plan.duration.unit);
@@ -263,13 +346,17 @@ const createSubscription = asyncHandler(async (req, res) => {
     endDate,
     paymentMethod,
     paymentAmount: plan.price,
-    currency: plan.currency,
+    currency: paymentMethod === 'coins' ? 'COINS' : plan.currency,
     nextPaymentDate: endDate,
-    transactionId
+    transactionId: transactionId || uuidv4()
   });
 
   // Update user to premium status
-  await User.findByIdAndUpdate(req.user._id, { isPremium: true });
+  await User.findByIdAndUpdate(req.user._id, { 
+    isPremium: true,
+    isSubscribed: true,
+    subscriptionTier: plan.name
+  });
 
   res.status(201).json({
     success: true,
@@ -297,6 +384,29 @@ const getCurrentSubscription = asyncHandler(async (req, res) => {
       success: true,
       hasSubscription: false,
       message: 'No active subscription found'
+    });
+  }
+
+  // Check if the subscription has expired based on endDate
+  const now = new Date();
+  if (new Date(subscription.endDate) < now) {
+    // Update the subscription status to expired in the database
+    subscription.status = 'expired';
+    await subscription.save();
+    
+    // Also update user's premium status
+    await User.findByIdAndUpdate(userId, { 
+      isPremium: false,
+      isSubscribed: false
+    });
+    
+    // Return a message indicating the subscription has expired
+    return res.status(200).json({
+      success: true,
+      hasSubscription: false,
+      message: 'Your subscription has expired',
+      wasExpired: true,
+      subscription: subscription
     });
   }
 
@@ -349,13 +459,19 @@ const updateSubscription = asyncHandler(async (req, res) => {
 });
 
 /**
- * @desc    Cancel subscription
- * @route   POST /api/subscriptions/:id/cancel
+ * @desc    Cancel subscription by ID (disabled)
+ * @route   DELETE /api/subscriptions/:id
  * @access  Private
  */
 const cancelSubscriptionById = asyncHandler(async (req, res) => {
-  const { cancelReason } = req.body;
-
+  // Prevent cancellation
+  return res.status(403).json({
+    success: false,
+    message: 'Subscription cancellation is not allowed. Subscriptions are non-refundable once purchased.'
+  });
+  
+  // Original functionality commented out
+  /*
   const subscription = await Subscription.findById(req.params.id);
 
   if (!subscription) {
@@ -369,108 +485,23 @@ const cancelSubscriptionById = asyncHandler(async (req, res) => {
     throw new Error('User not authorized to cancel this subscription');
   }
 
-  // Only allow canceling active subscriptions
+  // Only allow cancelling active subscriptions
   if (subscription.status !== 'active') {
     res.status(400);
-    throw new Error('Only active subscriptions can be canceled');
+    throw new Error('Only active subscriptions can be cancelled');
   }
 
-  subscription.status = 'canceled';
+  subscription.status = 'cancelled';
   subscription.autoRenew = false;
-  subscription.canceledAt = new Date();
-  subscription.cancelReason = cancelReason || 'User canceled';
-  
+  subscription.cancelledAt = new Date();
   await subscription.save();
-
-  // User still has premium until the end of the billing period
-  // If we want immediate removal of premium status, uncomment below:
-  // await User.findByIdAndUpdate(req.user._id, { isPremium: false });
 
   res.status(200).json({
     success: true,
-    message: 'Subscription canceled successfully',
+    message: 'Subscription cancelled successfully. You will have access until the end date.',
     subscription
   });
-});
-
-/**
- * @desc    Retry a failed subscription payment
- * @route   POST /api/subscriptions/:id/retry-payment
- * @access  Private
- */
-const retryPayment = asyncHandler(async (req, res) => {
-  const subscriptionId = req.params.id;
-  
-  // Find the subscription
-  const subscription = await Subscription.findById(subscriptionId);
-  
-  if (!subscription) {
-    res.status(404);
-    throw new Error('Subscription not found');
-  }
-  
-  // Verify the subscription belongs to the user
-  if (subscription.user.toString() !== req.user._id.toString()) {
-    res.status(403);
-    throw new Error('User not authorized to retry payment for this subscription');
-  }
-  
-  // Check if the subscription is in a valid state for retry
-  if (!['pending', 'grace_period'].includes(subscription.status)) {
-    res.status(400);
-    throw new Error('This subscription is not eligible for payment retry');
-  }
-  
-  // Process the payment (in a real-world scenario, this would connect to a payment processor)
-  // Here we'll simulate a successful payment
-  const paymentSuccessful = true;
-  const paymentAmount = subscription.paymentAmount;
-  const paymentCurrency = subscription.currency;
-  const transactionId = uuidv4();
-  
-  if (paymentSuccessful) {
-    // Update subscription status
-    subscription.status = 'active';
-    subscription.lastPaymentDate = new Date();
-    
-    // Calculate next payment date based on the subscription plan
-    const plan = await SubscriptionPlan.findById(subscription.plan);
-    subscription.nextPaymentDate = addDuration(new Date(), plan.duration.value, plan.duration.unit);
-    
-    // Add payment to history (would be implemented in a real app)
-    // subscription.paymentHistory.push({
-    //   amount: paymentAmount,
-    //   currency: paymentCurrency,
-    //   date: new Date(),
-    //   status: 'completed',
-    //   transactionId
-    // });
-    
-    await subscription.save();
-    
-    // Update user's premium status
-    await User.findByIdAndUpdate(subscription.user, { isPremium: true });
-    
-    return res.status(200).json({
-      success: true,
-      message: 'Payment processed successfully and subscription reactivated',
-      data: {
-        subscription,
-        transaction: {
-          id: transactionId,
-          amount: paymentAmount,
-          currency: paymentCurrency,
-          date: new Date()
-        }
-      }
-    });
-  } else {
-    // Handle failed payment
-    return res.status(400).json({
-      success: false,
-      message: 'Payment processing failed. Please try again or use a different payment method.',
-    });
-  }
+  */
 });
 
 module.exports = {
@@ -483,6 +514,5 @@ module.exports = {
   createSubscription,
   getCurrentSubscription,
   updateSubscription,
-  cancelSubscriptionById,
-  retryPayment
+  cancelSubscriptionById
 }; 

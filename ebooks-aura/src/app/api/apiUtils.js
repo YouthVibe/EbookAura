@@ -7,6 +7,65 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://ebookaura.onrender.com/api';
 
 /**
+ * In-memory cache for tracking API call timestamps
+ * Structure: { 
+ *   [cacheKey]: { 
+ *     timestamp: number, 
+ *     data: any 
+ *   } 
+ * }
+ */
+const apiCallCache = {};
+
+/**
+ * Determines if an API call should be made based on the time since the last call
+ * and provides cached data if available and valid.
+ * 
+ * @param {string} cacheKey - Unique identifier for this API call
+ * @param {number} throttleMs - Minimum time between API calls in milliseconds
+ * @param {boolean} forceFresh - Force a fresh API call even if cached data exists
+ * @returns {object} - { shouldMakeCall: boolean, cachedData: any }
+ */
+export function shouldMakeApiCall(cacheKey, throttleMs = 5000, forceFresh = false) {
+  // Always make the call if forcing fresh data
+  if (forceFresh) {
+    return { shouldMakeCall: true, cachedData: null };
+  }
+  
+  const now = Date.now();
+  const cachedItem = apiCallCache[cacheKey];
+  
+  // If no cached data exists, make the call
+  if (!cachedItem) {
+    return { shouldMakeCall: true, cachedData: null };
+  }
+  
+  // If enough time has passed since the last call, make a new call
+  if (now - cachedItem.timestamp > throttleMs) {
+    return { shouldMakeCall: true, cachedData: null };
+  }
+  
+  // Return cached data and don't make the call
+  return { 
+    shouldMakeCall: false, 
+    cachedData: cachedItem.data 
+  };
+}
+
+/**
+ * Stores API call result in the cache
+ * 
+ * @param {string} cacheKey - Unique identifier for this API call
+ * @param {any} data - Data to cache
+ */
+export function cacheApiCallResult(cacheKey, data) {
+  apiCallCache[cacheKey] = {
+    timestamp: Date.now(),
+    data
+  };
+}
+
+/**
  * Make a fetch request to the API with appropriate headers and error handling
  * @param {string} endpoint - API endpoint path (without base URL)
  * @param {object} options - Fetch options (method, headers, body, etc.)

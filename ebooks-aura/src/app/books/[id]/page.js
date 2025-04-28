@@ -18,10 +18,105 @@ import STATIC_BOOKS from '../../utils/STATIC_BOOKS';
 // Set revalidation time for static pages (in seconds)
 export const revalidate = 3600;
 
-export const metadata = {
+// Define default metadata for the book page (used internally only)
+const defaultMetadata = {
   title: 'Book Details - EbookAura',
   description: 'View book details, read and download PDFs',
 };
+
+// Dynamic metadata generation for social media previews
+export async function generateMetadata(props) {
+  // Properly await the params object before accessing properties
+  const params = await Promise.resolve(props.params);
+
+  try {
+    const id = params?.id;
+    if (!id || id === 'not-found') {
+      return defaultMetadata;
+    }
+
+    // Get the API URL with localhost fallback
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ebooks-aura.com';
+    
+    // Fetch book details for metadata
+    const response = await fetch(`${apiUrl}/books/${id}`, {
+      next: { revalidate: 3600 }, // Revalidate cache every hour
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch book: ${response.status}`);
+    }
+    
+    const book = await response.json();
+
+    // Format the file size
+    const formatFileSize = (sizeInBytes) => {
+      if (!sizeInBytes) return 'Unknown size';
+      
+      const kb = sizeInBytes / 1024;
+      if (kb < 1024) {
+        return `${Math.round(kb * 10) / 10} KB`;
+      }
+      const mb = kb / 1024;
+      return `${Math.round(mb * 10) / 10} MB`;
+    };
+
+    // Get the book cover URL (ensure it's an absolute URL)
+    const coverUrl = book.coverImage && book.coverImage.startsWith('http')
+      ? book.coverImage
+      : `${siteUrl}${book.coverImage && book.coverImage.startsWith('/') ? '' : '/'}${book.coverImage || '/images/default-cover.jpg'}`;
+
+    // Create description with book details
+    const description = `${book.title || 'Book'} by ${book.author || 'Unknown Author'}. ${book.description ? book.description.substring(0, 150) + '...' : ''} Format: PDF, Size: ${formatFileSize(book.fileSize)}, Rating: ${book.averageRating ? book.averageRating.toFixed(1) + '/5' : 'Not rated'}`;
+
+    return {
+      title: `${book.title || 'Book'} by ${book.author || 'Unknown Author'} - EbookAura`,
+      description,
+      openGraph: {
+        title: `${book.title || 'Book'} by ${book.author || 'Unknown Author'}`,
+        description,
+        url: `${siteUrl}/books/${id}`,
+        siteName: 'EbookAura',
+        images: [
+          {
+            url: coverUrl,
+            width: 600,
+            height: 900,
+            alt: `Cover of ${book.title || 'book'}`,
+          },
+        ],
+        locale: 'en_US',
+        type: 'book',
+        book: {
+          authors: [book.author || 'Unknown Author'],
+          isbn: book.isbn || '',
+          releaseDate: book.publicationDate || '',
+        },
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: `${book.title || 'Book'} by ${book.author || 'Unknown Author'}`,
+        description,
+        images: [coverUrl],
+      },
+      other: {
+        'book:author': book.author || 'Unknown Author',
+        'book:isbn': book.isbn || '',
+        'book:page_count': book.pageCount || '',
+        'book:release_date': book.publicationDate || '',
+        'og:price:amount': book.price || '0',
+        'og:price:currency': 'Coins',
+      },
+    };
+  } catch (error) {
+    console.error('Error generating book metadata:', error);
+    return defaultMetadata;
+  }
+}
 
 // Server Component using proper params handling for Next.js 13+
 export default function BookPage({ params }) {

@@ -163,6 +163,23 @@
   justify-content: flex-end;
 }
 
+.nonCancelableNotice {
+  color: #ef4444;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  margin: 0;
+  background-color: #fee2e2;
+  padding: 0.75rem;
+  border-radius: 8px;
+  width: 100%;
+}
+
+.nonCancelableNotice .infoIcon {
+  margin-right: 0.5rem;
+  flex-shrink: 0;
+}
+
 .settingsButton {
   display: inline-block;
   background-color: #0284c7;
@@ -177,6 +194,36 @@
 .settingsButton:hover {
   background-color: #0369a1;
   transform: translateY(-2px);
+}
+
+.nonRefundableWarning {
+  background-color: #fee2e2;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+  color: #b91c1c;
+}
+
+.nonRefundableWarning p {
+  margin: 0.5rem 0;
+  font-weight: 500;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.nonRefundableWarning ul {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.nonRefundableWarning li {
+  margin-bottom: 0.25rem;
+}
+
+.warningIcon {
+  float: left;
+  margin-right: 0.75rem;
+  font-size: 1.25rem;
 }
 
 .plansContainer {
@@ -351,48 +398,66 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  overflow-y: auto;
+  padding: 1rem;
 }
 
 .modalContent {
   background-color: white;
-  padding: 2rem;
+  padding: 1.5rem;
   border-radius: 12px;
   max-width: 500px;
-  width: 90%;
+  width: 92%;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  margin: auto;
+  position: relative;
+  overflow: hidden;
 }
 
 .modalContent h2 {
   margin-top: 0;
+  margin-bottom: 1rem;
   color: #111;
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+.modalContent p {
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+  line-height: 1.4;
 }
 
 .balanceInfo {
   background-color: #f8fafc;
   padding: 1rem;
   border-radius: 8px;
-  margin: 1.5rem 0;
+  margin: 1.25rem 0;
 }
 
 .balanceInfo p {
   margin: 0.5rem 0;
   color: #4b5563;
+  font-size: 0.9rem;
 }
 
 .modalActions {
   display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 2rem;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
 }
 
 .cancelButton, .confirmButton {
-  padding: 0.75rem 1.5rem;
+  padding: 0.75rem 1rem;
   border: none;
   border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  min-width: 40%;
+  text-align: center;
+  font-size: 0.9rem;
 }
 
 .cancelButton {
@@ -421,11 +486,11 @@
 /* Responsive styles */
 @media (max-width: 768px) {
   .header {
-    padding-top: 5rem;
+    padding-top: 4rem;
   }
   
   .title {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
   }
   
   .coinsBalance {
@@ -449,7 +514,163 @@
   }
   
   .modalContent {
-    width: 95%;
-    padding: 1.5rem;
+    width: 100%;
+    padding: 1.25rem;
+    margin: 0.5rem;
+    max-height: 90vh;
   }
+  
+  .modalContent h2 {
+    font-size: 1.3rem;
+  }
+  
+  .modalActions {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+  }
+  
+  .cancelButton, .confirmButton {
+    width: 100%;
+    padding: 0.9rem 1rem;
+    font-size: 1rem;
+  }
+  
+  .confirmButton {
+    margin-bottom: 0.25rem;
+  }
+  
+  .nonRefundableWarning {
+    padding: 0.75rem;
+    margin: 0.75rem 0;
+  }
+  
+  .balanceInfo {
+    padding: 0.75rem;
+    margin: 0.75rem 0;
+  }
+}
+
+/* Android-specific fixes */
+@media screen and (max-width: 768px) and (-webkit-min-device-pixel-ratio: 1.5) {
+  .modalOverlay {
+    align-items: flex-start;
+    padding-top: 3rem;
+  }
+  
+  .cancelButton, .confirmButton {
+    padding: 1rem;
+    touch-action: manipulation;
+  }
+  
+  .modalContent {
+    -webkit-overflow-scrolling: touch;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+}
+
+/* Modal Header */
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+/* Close Modal Button */
+.closeModalButton {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.closeModalButton:hover {
+  background-color: #f3f4f6;
+  color: #111;
+}
+
+/* Modal Body */
+.modalBody {
+  margin-bottom: 1rem;
+}
+
+/* Balance Row */
+.balanceRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0.5rem 0;
+}
+
+/* Warning Header */
+.warningHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.warningHeader p {
+  margin: 0 !important;
+}
+
+.warningIcon {
+  margin-right: 0.5rem;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  float: none;
+}
+
+/* Android-specific modal styles */
+.modalOverlay:global(.android-modal) {
+  /* Android-specific modal overlay styles */
+  position: fixed !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  display: flex;
+  align-items: flex-start !important;
+  justify-content: center;
+  padding-top: 5vh !important;
+  overflow-y: scroll !important;
+  -webkit-overflow-scrolling: touch;
+  z-index: 9999 !important;
+}
+
+.modalContent:global(.android-modal-content) {
+  /* Android-specific modal content styles */
+  margin: 0 auto !important;
+  width: 92% !important;
+  max-width: 500px !important;
+  max-height: 85vh !important;
+  overflow-y: auto !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Apply a more reliable touch-friendly button style for Android */
+:global(.android-device) .confirmButton,
+:global(.android-device) .cancelButton {
+  padding: 12px !important;
+  border-radius: 8px !important;
+  min-height: 48px !important; /* Minimum touch target size */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.confirmButton:global(.android-confirm-button) {
+  margin-bottom: 8px !important;
 } 

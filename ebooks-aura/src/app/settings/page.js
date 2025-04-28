@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { FaArrowLeft, FaTrash, FaBookmark, FaStar, FaExclamationTriangle, FaCrown, FaCoins } from 'react-icons/fa';
+import { FaArrowLeft, FaTrash, FaBookmark, FaStar, FaExclamationTriangle, FaCrown, FaCoins, FaInfoCircle } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import styles from './settings.module.css';
 import { API_BASE_URL } from '../utils/config';
@@ -109,6 +109,17 @@ export default function Settings() {
         } else {
           // User doesn't have an active subscription
           console.log('No active subscription found');
+          
+          // Check if this was an expired subscription
+          if (subscriptionData && subscriptionData.wasExpired) {
+            // Show message that subscription has expired
+            setError('Your subscription has expired. Please renew to continue enjoying premium benefits.');
+            // Add the expired subscription to the history 
+            if (subscriptionData.subscription) {
+              setSubscriptionHistory(prev => [subscriptionData.subscription, ...prev]);
+            }
+          }
+          
           setCurrentSubscription(null);
         }
       } catch (err) {
@@ -364,37 +375,17 @@ export default function Settings() {
       setSubscriptionLoading(false);
     }
   };
-  
+
   const handleCancelSubscription = () => {
+    setCancelReason("non_cancellable");
     setShowCancelSubscriptionModal(true);
   };
-  
+
   const confirmCancelSubscription = async () => {
-    if (!currentSubscription) return;
-    
     setShowCancelSubscriptionModal(false);
-    setSubscriptionLoading(true);
-    setError('');
-    setSuccess('');
-    
-    try {
-      const result = await cancelSubscription(currentSubscription._id, cancelReason);
-      
-      if (result && result.subscription) {
-        setCurrentSubscription(result.subscription);
-        setSuccess('Subscription has been canceled. You will have access until the end of your billing period.');
-        
-        // Refresh subscription history
-        fetchSubscriptionData();
-      }
-    } catch (err) {
-      console.error('Error canceling subscription:', err);
-      setError(err.message || 'Failed to cancel subscription');
-    } finally {
-      setSubscriptionLoading(false);
-    }
+    setError('Subscription cancellation is not allowed. Subscriptions are non-refundable once purchased.');
   };
-  
+
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
@@ -592,22 +583,23 @@ export default function Settings() {
                     {currentSubscription.autoRenew ? 'Disable Auto-Renew' : 'Enable Auto-Renew'}
                   </button>
                   
-                  {currentSubscription.status === 'active' && (
-                    <button 
-                      className={`${styles.actionButton} ${styles.dangerButton}`}
-                      onClick={handleCancelSubscription}
-                      disabled={subscriptionLoading}
-                    >
-                      Cancel Subscription
-                    </button>
-                  )}
+                  <div className={styles.nonCancelableNotice}>
+                    <FaInfoCircle className={styles.infoIcon} />
+                    <p>Subscriptions are non-refundable and cannot be canceled once purchased.</p>
+                  </div>
                 </div>
               </div>
             ) : (
               <div className={styles.noSubscription}>
                 <p>You don't have an active subscription.</p>
+                {error && error.includes('expired') ? (
+                  <div className={styles.expiredSubscriptionMessage}>
+                    <FaInfoCircle className={styles.warningIcon} />
+                    <p>Your subscription has expired. Renew now to continue enjoying premium benefits!</p>
+                  </div>
+                ) : null}
                 <Link href="/plans" className={styles.planButton}>
-                  View Subscription Plans
+                  {error && error.includes('expired') ? 'Renew Subscription' : 'View Subscription Plans'}
                 </Link>
               </div>
             )}
@@ -747,43 +739,21 @@ export default function Settings() {
         </div>
       )}
 
-      {/* Cancel Subscription Modal */}
+      {/* Cancel Subscription Modal - This can be removed since we don't want to show it anymore,
+          but if there are other parts of the code that reference it, we'll keep a simplified version */}
       {showCancelSubscriptionModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
-            <h2>Cancel Subscription</h2>
-            <p>Are you sure you want to cancel your subscription?</p>
+            <h2>Subscription Cancellation</h2>
+            <p>Subscriptions are non-refundable and cannot be canceled once purchased.</p>
             <p>You will continue to have access until {formatDate(currentSubscription?.endDate)}.</p>
-            
-            <div className={styles.formGroup}>
-              <label htmlFor="cancelReason">Reason for cancellation (optional):</label>
-              <select 
-                id="cancelReason"
-                value={cancelReason}
-                onChange={(e) => setCancelReason(e.target.value)}
-                className={styles.selectInput}
-              >
-                <option value="">Select a reason</option>
-                <option value="too expensive">Too expensive</option>
-                <option value="not using enough">Not using enough</option>
-                <option value="found alternative">Found an alternative</option>
-                <option value="missing features">Missing features</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
             
             <div className={styles.modalActions}>
               <button 
-                className={styles.cancelButton}
+                className={styles.confirmButton}
                 onClick={() => setShowCancelSubscriptionModal(false)}
               >
-                Keep Subscription
-              </button>
-              <button 
-                className={styles.confirmButton}
-                onClick={confirmCancelSubscription}
-              >
-                Confirm Cancellation
+                I Understand
               </button>
             </div>
           </div>

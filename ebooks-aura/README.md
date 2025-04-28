@@ -27,6 +27,26 @@ This is the frontend application for EbookAura, built with Next.js to provide a 
 - Manage existing books
 - View statistics on book views and downloads
 
+### Social Media Preview
+When sharing book links on social media platforms like WhatsApp, Instagram, Twitter, or Facebook, the links will display rich previews including:
+- Book cover image
+- Book title and author
+- Brief description
+- Book rating
+- File size information
+
+This makes sharing books more engaging and informative for potential readers.
+
+To test the social media previews, you can use the included test script:
+```
+test-og-metadata.bat <BOOK_ID>
+```
+
+Or directly check your links with:
+- [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/)
+- [Twitter Card Validator](https://cards-dev.twitter.com/validator)
+- [LinkedIn Post Inspector](https://www.linkedin.com/post-inspector/)
+
 ## Pages and Components
 
 ### Main Pages

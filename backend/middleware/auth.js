@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const mongoose = require('mongoose');
 
 // Middleware to protect routes with JWT authentication
 const protect = async (req, res, next) => {
@@ -159,4 +160,126 @@ const validateAuth = async (req, res, next) => {
   }
 };
 
-module.exports = { protect, admin, validateAuth }; 
+/**
+ * Helper function to safely get a registered Mongoose model or require it
+ * @param {string} modelName - The name of the model to look for
+ * @param {string} modelPath - The path to require the model from if not found
+ * @returns {Model} The mongoose model
+ */
+const getSafeModel = (modelName, modelPath) => {
+  try {
+    // Check if the model is already registered
+    return mongoose.models[modelName] || require(modelPath);
+  } catch (err) {
+    console.error(`Error loading model ${modelName} from ${modelPath}:`, err);
+    return null;
+  }
+};
+
+/**
+ * Middleware to check if a user has access to premium books through a Pro plan
+ * This should be used after the protect middleware
+ * It will enhance the req.user object with a hasProAccess property
+ */
+const checkProPlanBookAccess = async (req, res, next) => {
+  // Skip if user is not authenticated
+  if (!req.user || !req.user._id) {
+    return next();
+  }
+
+  try {
+    const userId = req.user._id;
+    
+    // Try to get the Subscription model safely
+    let SubscriptionToUse;
+    
+    // First, check if models are already registered
+    if (mongoose.models.Subscription) {
+      SubscriptionToUse = mongoose.models.Subscription;
+    } else {
+      // If not found, try to require them (but handle potential errors)
+      try {
+        SubscriptionToUse = require('../models/Subscription');
+      } catch (mainErr) {
+        try {
+          SubscriptionToUse = require('../models/subscriptionModel');
+        } catch (altErr) {
+          console.error('Could not load any Subscription model:', altErr);
+        }
+      }
+    }
+    
+    if (!SubscriptionToUse) {
+      console.error('Could not find valid Subscription model');
+      req.user.hasProAccess = false;
+      return next();
+    }
+    
+    // Get SubscriptionPlan model if needed for population
+    let SubscriptionPlanModel;
+    if (mongoose.models.SubscriptionPlan) {
+      SubscriptionPlanModel = mongoose.models.SubscriptionPlan;
+    } else {
+      try {
+        SubscriptionPlanModel = require('../models/subscriptionPlanModel');
+      } catch (err) {
+        // Non-critical, as we'll check the plan info carefully later
+        console.warn('Could not load SubscriptionPlan model, will proceed with caution');
+      }
+    }
+    
+    // Check for current active subscriptions first
+    const activeSubscription = await SubscriptionToUse.findOne({
+      user: userId,
+      status: 'active'
+    }).populate('plan');
+
+    // If user has an active subscription
+    if (activeSubscription && activeSubscription.plan) {
+      // Check if it's a pro plan that should have access to all premium books
+      // We're looking for plans with 'Pro' in the name or with unlimited premium books
+      const isPlanPro = activeSubscription.plan.name && 
+                        activeSubscription.plan.name.toLowerCase().includes('pro') ||
+                        (activeSubscription.plan.benefits && 
+                         activeSubscription.plan.benefits.maxPremiumBooks === Infinity);
+      
+      if (isPlanPro) {
+        req.user.hasProAccess = true;
+        console.log(`User ${userId} has Pro plan access to all premium books`);
+        return next();
+      }
+    }
+
+    // If no active pro subscription, check for past pro subscriptions
+    const pastProSubscription = await SubscriptionToUse.findOne({
+      user: userId,
+      status: { $in: ['expired', 'canceled'] }
+    }).populate('plan');
+
+    if (pastProSubscription && pastProSubscription.plan) {
+      // Check if it was a pro plan
+      const wasPlanPro = pastProSubscription.plan.name && 
+                         pastProSubscription.plan.name.toLowerCase().includes('pro') ||
+                         (pastProSubscription.plan.benefits && 
+                          pastProSubscription.plan.benefits.maxPremiumBooks === Infinity);
+      
+      if (wasPlanPro) {
+        req.user.hasProAccess = true;
+        console.log(`User ${userId} has Pro plan access from past subscription`);
+        return next();
+      }
+    }
+
+    // If neither current nor past pro subscription exists
+    req.user.hasProAccess = false;
+    return next();
+    
+  } catch (error) {
+    console.error('Error checking pro plan access:', error);
+    // Don't block the request if there's an error checking subscription
+    req.user.hasProAccess = false;
+    return next();
+  }
+};
+
+module.exports = { protect, admin, validateAuth, checkProPlanBookAccess }; 

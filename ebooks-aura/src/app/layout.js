@@ -6,6 +6,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Script from "next/script";
 import Head from 'next/head';
+import SessionTimeTracker from "./components/SessionTimeTracker";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -78,6 +79,32 @@ export default function RootLayout({ children }) {
                   for (var j = 0; j < contentWithBottomActions.length; j++) {
                     contentWithBottomActions[j].classList.add('page-with-bottom-actions');
                   }
+                  
+                  // Add Android class to all modals for specific styling
+                  function addAndroidClassToModals() {
+                    var modalOverlays = document.querySelectorAll('.modalOverlay');
+                    for (var k = 0; k < modalOverlays.length; k++) {
+                      modalOverlays[k].classList.add('android-modal');
+                    }
+                    
+                    var modalContent = document.querySelectorAll('.modalContent');
+                    for (var l = 0; l < modalContent.length; l++) {
+                      modalContent[l].classList.add('android-modal-content');
+                    }
+                  }
+                  
+                  // Run initially
+                  addAndroidClassToModals();
+                  
+                  // Also run when DOM changes to catch dynamically added modals
+                  var observer = new MutationObserver(function(mutations) {
+                    addAndroidClassToModals();
+                  });
+                  
+                  observer.observe(document.body, {
+                    childList: true,
+                    subtree: true
+                  });
                 });
               }
             })();
@@ -106,6 +133,7 @@ export default function RootLayout({ children }) {
           <main style={{ paddingTop: '60px', minHeight: 'calc(100vh - 60px)' }}>
             {children}
           </main>
+          <SessionTimeTracker />
           <ToastContainer 
             position="top-right"
             autoClose={3000}

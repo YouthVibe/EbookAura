@@ -46,6 +46,19 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  // Track session time for activity rewards
+  lastSessionStart: {
+    type: Date,
+    default: null
+  },
+  lastSessionReward: {
+    type: Date,
+    default: null
+  },
+  sessionTimeToday: {
+    type: Number, // in seconds
+    default: 0
+  },
   // Track purchased books
   purchasedBooks: [{
     type: mongoose.Schema.Types.ObjectId,

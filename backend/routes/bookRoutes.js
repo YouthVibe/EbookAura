@@ -12,7 +12,7 @@ const {
   getBookRating,
   createBookReview
 } = require('../controllers/reviewController');
-const { protect } = require('../middleware/auth');
+const { protect, admin, validateAuth, checkProPlanBookAccess } = require('../middleware/auth');
 const { 
   apiKeyAuth, 
   apiKeyReadPermission,
@@ -24,29 +24,47 @@ const {
 const Book = require('../models/Book');
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+const mongoose = require('mongoose');
 
-// Authentication middleware that supports both JWT and API key auth
-const flexAuth = async (req, res, next) => {
-  // Check for API key
-  const apiKey = req.headers['x-api-key'];
+// Helper function to safely get a Subscription model
+const getSubscriptionModel = () => {
+  // First check if the model is already registered with mongoose
+  if (mongoose.models.Subscription) {
+    return mongoose.models.Subscription;
+  }
   
-  if (apiKey) {
-    // Use API key authentication
-    return apiKeyAuth(req, res, next);
-  } else {
-    // Use JWT authentication
-    return protect(req, res, next);
+  // If not found, try to require one of the models
+  try {
+    return require('../models/Subscription');
+  } catch (mainErr) {
+    try {
+      return require('../models/subscriptionModel');
+    } catch (altErr) {
+      console.error('Could not load any Subscription model:', altErr);
+      return null;
+    }
   }
 };
 
-// Public routes - no authentication needed
+// Authentication middleware that supports both JWT and API key auth
+const flexAuth = async (req, res, next) => {
+  // Allow request to proceed without authentication for public routes
+  // We'll check for auth only when needed for premium content
+  next();
+};
+
+// Public routes - no authentication required
+router.get('/', flexAuth, getBooks);
 router.get('/categories', getCategories);
 router.get('/tags', getTags);
-router.get('/:id', getBook);
-router.post('/:id/download', incrementDownloads);
 
-// Books list route - ALWAYS public access without limits
-router.get('/', getBooks);
+// Get single book - flex auth (will check auth if needed for premium)
+// Note that checkProPlanBookAccess middleware is added to scan for pro plan access
+router.get('/:id', flexAuth, checkProPlanBookAccess, getBook);
+
+// Increment download count - no authentication needed
+router.post('/:id/download', incrementDownloads);
 
 // Review routes
 router.get('/:bookId/reviews', getBookReviews);
@@ -110,6 +128,64 @@ async function servePdf(req, res) {
           const decoded = jwt.verify(token, process.env.JWT_SECRET);
           req.user = decoded;
           console.log(`User ${decoded._id} accessing premium content`);
+          
+          // Check if user has purchased the book or has Pro plan access
+          const user = await User.findById(decoded._id);
+          
+          if (user) {
+            // Check for book in user's purchased books
+            const hasPurchased = user.purchasedBooks && user.purchasedBooks.some(id => 
+              id.toString() === book._id.toString()
+            );
+            
+            // If user hasn't purchased this specific book, check for Pro plan access
+            if (!hasPurchased) {
+              // Get the Subscription model
+              const SubscriptionToUse = getSubscriptionModel();
+              
+              if (!SubscriptionToUse) {
+                console.error('Could not find valid Subscription model');
+                return res.status(403).json({
+                  message: 'You need to purchase this book to access it',
+                  isPremium: true
+                });
+              }
+              
+              // Check for active Pro subscription
+              const subscription = await SubscriptionToUse.findOne({
+                user: decoded._id,
+                status: 'active'
+              }).populate('plan');
+              
+              // Check for expired/canceled Pro subscription
+              const pastProSubscription = !subscription ? await SubscriptionToUse.findOne({
+                user: decoded._id,
+                status: { $in: ['expired', 'canceled'] }
+              }).populate('plan') : null;
+              
+              // Check if current or past subscription is a Pro plan
+              const hasProAccess = (subscription && subscription.plan && 
+                                    subscription.plan.name && 
+                                    subscription.plan.name.toLowerCase().includes('pro') || 
+                                    (subscription.plan.benefits && 
+                                     subscription.plan.benefits.maxPremiumBooks === Infinity)) ||
+                                  (pastProSubscription && pastProSubscription.plan && 
+                                   pastProSubscription.plan.name && 
+                                   pastProSubscription.plan.name.toLowerCase().includes('pro') || 
+                                   (pastProSubscription.plan.benefits && 
+                                    pastProSubscription.plan.benefits.maxPremiumBooks === Infinity));
+              
+              if (hasProAccess) {
+                console.log(`User ${decoded._id} granted access to premium book through Pro plan`);
+              } else if (!hasPurchased) {
+                console.log(`User ${decoded._id} has not purchased this premium book and has no Pro access`);
+                return res.status(403).json({
+                  message: 'You need to purchase this book or have a Pro subscription to access it',
+                  isPremium: true
+                });
+              }
+            }
+          }
         } catch (error) {
           console.log('Premium content access denied: Invalid token');
           return res.status(401).json({ 
@@ -229,6 +305,64 @@ async function servePdfContent(req, res) {
           const decoded = jwt.verify(token, process.env.JWT_SECRET);
           req.user = decoded;
           console.log(`User ${decoded._id} accessing premium content`);
+          
+          // Check if user has purchased the book or has Pro plan access
+          const user = await User.findById(decoded._id);
+          
+          if (user) {
+            // Check for book in user's purchased books
+            const hasPurchased = user.purchasedBooks && user.purchasedBooks.some(id => 
+              id.toString() === book._id.toString()
+            );
+            
+            // If user hasn't purchased this specific book, check for Pro plan access
+            if (!hasPurchased) {
+              // Get the Subscription model
+              const SubscriptionToUse = getSubscriptionModel();
+              
+              if (!SubscriptionToUse) {
+                console.error('Could not find valid Subscription model');
+                return res.status(403).json({
+                  message: 'You need to purchase this book to access it',
+                  isPremium: true
+                });
+              }
+              
+              // Check for active Pro subscription
+              const subscription = await SubscriptionToUse.findOne({
+                user: decoded._id,
+                status: 'active'
+              }).populate('plan');
+              
+              // Check for expired/canceled Pro subscription
+              const pastProSubscription = !subscription ? await SubscriptionToUse.findOne({
+                user: decoded._id,
+                status: { $in: ['expired', 'canceled'] }
+              }).populate('plan') : null;
+              
+              // Check if current or past subscription is a Pro plan
+              const hasProAccess = (subscription && subscription.plan && 
+                                    subscription.plan.name && 
+                                    subscription.plan.name.toLowerCase().includes('pro') || 
+                                    (subscription.plan.benefits && 
+                                     subscription.plan.benefits.maxPremiumBooks === Infinity)) ||
+                                  (pastProSubscription && pastProSubscription.plan && 
+                                   pastProSubscription.plan.name && 
+                                   pastProSubscription.plan.name.toLowerCase().includes('pro') || 
+                                   (pastProSubscription.plan.benefits && 
+                                    pastProSubscription.plan.benefits.maxPremiumBooks === Infinity));
+              
+              if (hasProAccess) {
+                console.log(`User ${decoded._id} granted access to premium book through Pro plan`);
+              } else if (!hasPurchased) {
+                console.log(`User ${decoded._id} has not purchased this premium book and has no Pro access`);
+                return res.status(403).json({
+                  message: 'You need to purchase this book or have a Pro subscription to access it',
+                  isPremium: true
+                });
+              }
+            }
+          }
         } catch (error) {
           console.log('Premium content access denied: Invalid token');
           return res.status(401).json({ 

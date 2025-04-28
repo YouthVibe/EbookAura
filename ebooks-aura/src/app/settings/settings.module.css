@@ -757,4 +757,49 @@
     width: 95%;
     padding: 1.5rem;
   }
+}
+
+/* Add this new style for the non-cancelable notice */
+.nonCancelableNotice {
+  display: flex;
+  align-items: center;
+  background-color: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin-top: 1rem;
+  color: #b91c1c;
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+.nonCancelableNotice p {
+  margin: 0;
+  margin-left: 0.5rem;
+}
+
+.infoIcon {
+  color: #dc2626;
+  flex-shrink: 0;
+}
+
+/* Add styles for the expired subscription message */
+.expiredSubscriptionMessage {
+  background-color: #fff3cd;
+  border: 1px solid #ffeeba;
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin: 1rem 0;
+  color: #856404;
+  display: flex;
+  align-items: center;
+}
+
+.expiredSubscriptionMessage p {
+  margin: 0 0 0 0.5rem;
+}
+
+.expiredSubscriptionMessage .warningIcon {
+  color: #856404;
+  flex-shrink: 0;
 } 

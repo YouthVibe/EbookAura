@@ -246,7 +246,7 @@ const getBook = asyncHandler(async (req, res) => {
   }
   
   // Check user authentication for purchase status
-  // If authenticated, check if the user has purchased this book
+  // If authenticated, check if the user has purchased this book or has pro access
   if (req.user && req.user._id) {
     try {
       const userId = req.user._id;
@@ -258,9 +258,17 @@ const getBook = asyncHandler(async (req, res) => {
           id.toString() === book._id.toString()
         );
         
-        // Add purchase info to book data
-        bookData.userHasAccess = hasPurchased;
-        console.log(`User ${userId} has ${hasPurchased ? 'purchased' : 'not purchased'} book ${book._id}`);
+        // Check if user has Pro plan access (set by the checkProPlanBookAccess middleware)
+        const hasProAccess = req.user.hasProAccess === true;
+        
+        // User has access if they purchased the book OR they have Pro plan access
+        bookData.userHasAccess = hasPurchased || hasProAccess;
+        
+        if (hasProAccess && !hasPurchased) {
+          console.log(`User ${userId} granted access to premium book ${book._id} through Pro plan`);
+        } else {
+          console.log(`User ${userId} has ${hasPurchased ? 'purchased' : 'not purchased'} book ${book._id}`);
+        }
       }
     } catch (err) {
       console.error('Error checking user purchase status:', err);

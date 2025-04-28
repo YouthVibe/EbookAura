@@ -18,19 +18,28 @@ const router = express.Router();
 // Apply authentication middleware to all routes
 router.use(protect);
 
-// Subscription routes
+// Get all available subscription plans
 router.get('/plans', getSubscriptionPlans);
+
+// Get user's current subscription
 router.get('/my-subscription', getUserSubscription);
 router.get('/current', getCurrentSubscription);
+
+// Purchase a subscription plan
+router.post('/purchase', purchaseSubscription);
+router.post('/', createSubscription);
+
+// Toggle auto-renew
+router.patch('/auto-renew', toggleAutoRenew);
+
+// Get subscription history
 router.get('/history', getSubscriptionHistory);
 
-router.post('/', createSubscription);
-router.post('/purchase', purchaseSubscription);
-
-router.put('/cancel', cancelSubscription);
-router.put('/toggle-auto-renew', toggleAutoRenew);
-
+// Update subscription (toggle auto-renew)
 router.patch('/:id', updateSubscription);
-router.post('/:id/cancel', cancelSubscriptionById);
+
+// Cancellation routes - these will always return 403 Forbidden
+router.put('/cancel', cancelSubscription);
+router.delete('/:id', cancelSubscriptionById);
 
 module.exports = router; 
