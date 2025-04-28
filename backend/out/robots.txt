@@ -1,6 +1,54 @@
-# Allow all crawlers
+# robots.txt for EbookAura
+# https://ebookaura.onrender.com
+
 User-agent: *
 Allow: /
+Allow: /search
+Allow: /books
+Allow: /coins
+Allow: /bookmarks
+Allow: /categories
+Disallow: /api/
+Disallow: /admin/
+Disallow: /login
+Disallow: /register
+Disallow: /profile
+Disallow: /_next/
+Disallow: /*?*
+Disallow: /*/download
+
+# Block specific resources folders
+Disallow: /*.json$
+Disallow: /*.js$
+Disallow: /*.css$
+
+# Allow sitemap
+Allow: /sitemap.xml
+
+# Crawl delay to prevent server overload
+Crawl-delay: 1
 
 # Sitemap location
-Sitemap: https://your-site-url.com/sitemap.xml 
+Sitemap: https://ebookaura.onrender.com/sitemap.xml
+
+# Google specific
+User-agent: Googlebot
+Allow: /
+Allow: /search
+Allow: /books
+Disallow: /api/
+Disallow: /admin/
+Disallow: /login
+Disallow: /register
+Disallow: /profile
+
+# Bing specific
+User-agent: Bingbot  
+Allow: /
+Allow: /search
+Allow: /books
+Disallow: /api/
+Disallow: /admin/
+Disallow: /login
+Disallow: /register
+Disallow: /profile 

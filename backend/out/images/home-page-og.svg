@@ -1,0 +1,53 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#1a1a1a"/>
+  
+  <!-- Gradient overlay -->
+  <rect width="1200" height="630" fill="url(#paint0_radial)" opacity="0.7"/>
+  
+  <!-- Books stacked on the left side -->
+  <g transform="translate(100, 180)">
+    <!-- Stack of books -->
+    <rect x="0" y="0" width="250" height="40" rx="3" fill="#4A6FA5"/>
+    <rect x="10" y="40" width="250" height="35" rx="3" fill="#47A8BD"/>
+    <rect x="-5" y="75" width="250" height="45" rx="3" fill="#9EBC9E"/>
+    <rect x="15" y="120" width="250" height="30" rx="3" fill="#FFD166"/>
+    <rect x="-10" y="150" width="250" height="50" rx="3" fill="#EF767A"/>
+    
+    <!-- Book details on spines -->
+    <text x="125" y="25" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white" text-anchor="middle">PROGRAMMING</text>
+    <text x="135" y="62" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white" text-anchor="middle">FICTION</text>
+    <text x="120" y="105" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white" text-anchor="middle">BIOGRAPHIES</text>
+    <text x="140" y="140" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white" text-anchor="middle">SCIENCE</text>
+    <text x="115" y="180" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white" text-anchor="middle">PHILOSOPHY</text>
+  </g>
+  
+  <!-- Logo and branding -->
+  <g>
+    <!-- "Ebook" part of the logo -->
+    <text x="600" y="240" font-family="Arial, sans-serif" font-size="90" font-weight="bold" fill="white" text-anchor="middle">Ebook</text>
+    
+    <!-- "Aura" part of the logo -->
+    <text x="600" y="320" font-family="Arial, sans-serif" font-size="90" font-weight="bold" fill="#FFD700" text-anchor="middle">Aura</text>
+  </g>
+  
+  <!-- Tagline -->
+  <text x="600" y="380" font-family="Arial, sans-serif" font-size="30" fill="white" text-anchor="middle">Your Digital Library Companion</text>
+  
+  <!-- Features -->
+  <g transform="translate(600, 440)">
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="24" fill="#CCCCCC" text-anchor="middle">• Discover • Read • Download • Organize •</text>
+  </g>
+  
+  <!-- Call to action -->
+  <rect x="450" y="480" width="300" height="60" rx="30" fill="#FFD700"/>
+  <text x="600" y="520" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#1a1a1a" text-anchor="middle">EXPLORE OUR LIBRARY</text>
+  
+  <!-- Gradient definition -->
+  <defs>
+    <radialGradient id="paint0_radial" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(600 315) rotate(90) scale(315 600)">
+      <stop stop-color="#FFD700" stop-opacity="0.2"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+</svg> 
