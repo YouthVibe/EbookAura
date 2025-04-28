@@ -1,7 +1,7 @@
 /**
  * This file contains a list of all book IDs for static generation
- * Generated on: 2025-04-22T17:03:13.473Z
- * Total books: 5
+ * Generated on: 2025-04-28T17:09:11.937Z
+ * Total books: 3
  * 
  * For static exports, we must pre-render ALL book pages that users might access
  */
@@ -13,8 +13,7 @@ const STATIC_BOOKS = [
   '6807c9d24fb1873f72080fb1',  // Critical book ID
   
   // Additional book IDs from the API
-  '680735665ceba10744914991',
-  '680678c531bede49ddbf9c37',
+
 ];
 
 export default STATIC_BOOKS;

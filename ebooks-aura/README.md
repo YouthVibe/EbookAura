@@ -42,10 +42,137 @@ To test the social media previews, you can use the included test script:
 test-og-metadata.bat <BOOK_ID>
 ```
 
+Similarly, the search page has been enhanced with metadata for better sharing:
+```
+test-search-metadata.bat
+```
+
 Or directly check your links with:
 - [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/)
 - [Twitter Card Validator](https://cards-dev.twitter.com/validator)
 - [LinkedIn Post Inspector](https://www.linkedin.com/post-inspector/)
+
+## SEO and Metadata Features
+
+### Sitemap Generation
+The application includes a comprehensive sitemap generator that can be used to create and update the `sitemap.xml` file. This helps search engines discover and index all the pages of the application.
+
+To generate the sitemap:
+```
+npm run generate:sitemap
+```
+or use the batch file:
+```
+generate-sitemap.bat
+```
+
+If you encounter dependency issues, we also provide a simplified sitemap generator that has no external dependencies:
+```
+npm run generate:simple-sitemap
+```
+or use the batch file:
+```
+generate-simple-sitemap.bat
+```
+This simpler version creates a basic sitemap with all your main pages and books.
+
+### PDF Metadata Generation
+EbookAura provides enhanced PDF metadata generation for improved search engine indexing and social sharing of your books. This feature:
+
+1. Creates dedicated metadata pages for each book
+2. Adds structured Schema.org markup for rich search results
+3. Generates optimized social sharing metadata
+4. Enhances the sitemap with book information and cover images
+
+To generate PDF metadata:
+```
+npm run generate:pdf-metadata
+```
+or use the batch file:
+```
+generate-pdf-metadata.bat
+```
+
+The generated files will be stored in `public/pdf-metadata/` and can be accessed at:
+- JSON format: `/pdf-metadata/[book-id].json`
+- HTML format: `/pdf-metadata/[book-id].html`
+
+These metadata pages are automatically included in the sitemap and help search engines better understand and index your PDF content.
+
+### Social Media Preview Testing
+You can test how your book links will appear when shared on social media platforms:
+
+For individual book pages:
+```
+test-og-metadata.bat <BOOK_ID>
+```
+
+For the search page:
+```
+test-search-metadata.bat
+```
+
+### Robots.txt
+The application includes a `robots.txt` file in the public directory that provides guidance to search engines about which parts of the site should be crawled. This file can be customized to fit your specific requirements.
+
+## Enhanced SEO for PDFs
+
+EbookAura includes advanced SEO optimization for PDF content to improve discoverability in search engines. These features help your PDF books rank higher in search results:
+
+### PDF Metadata Generation
+
+The system generates comprehensive metadata for each PDF book:
+
+1. **HTML Landing Pages**: SEO-optimized landing pages for each PDF with:
+   - Structured data markup (Schema.org)
+   - Open Graph and Twitter card tags
+   - Detailed book information
+   - Breadcrumb navigation
+   - Google Analytics integration
+   - Mobile-responsive design
+
+2. **JSON Metadata**: Machine-readable metadata used by search engines
+
+3. **TXT Metadata Files**: Special meta.txt files that help search engines index PDFs more effectively
+
+### Enhanced Sitemap Generation
+
+The sitemap includes detailed information about each book:
+
+1. **Book-specific metadata** in XML sitemap format
+2. **Image information** for book covers
+3. **Content relationships** between books and their metadata pages
+4. **News publication data** for better indexing
+
+### How to Generate PDF SEO Content
+
+To generate all SEO content for your PDFs, run:
+
+```bash
+npm run seo:all
+```
+
+Or use the Windows batch file:
+
+```
+generate-pdf-metadata.bat
+```
+
+This will generate:
+- HTML landing pages in `/public/pdf-metadata/*.html`
+- JSON metadata files in `/public/pdf-metadata/*.json`
+- TXT metadata files in `/public/pdf-metadata/*.txt`
+- Enhanced sitemap at `/public/sitemap.xml`
+
+### SEO Best Practices
+
+For best SEO results:
+
+1. Run the PDF metadata and sitemap generators regularly to keep content fresh
+2. Ensure all PDFs have complete metadata (author, title, description, etc.)
+3. Include categories and tags for better topical relevance
+4. Use the meta.txt files alongside your PDFs for better indexing
+5. Submit your sitemap to Google Search Console
 
 ## Pages and Components
 

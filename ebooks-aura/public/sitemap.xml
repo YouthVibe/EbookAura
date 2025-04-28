@@ -1,33 +1,128 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+
   <url>
-    <loc>https://your-site-url.com/</loc>
-    <lastmod>2023-08-01</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://ebookaura.onrender.com/</loc>
+    <lastmod>2025-04-28</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://your-site-url.com/search</loc>
-    <lastmod>2023-08-01</lastmod>
-    <changefreq>weekly</changefreq>
+    <loc>https://ebookaura.onrender.com/search</loc>
+    <lastmod>2025-04-28</lastmod>
+    <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://your-site-url.com/login</loc>
-    <lastmod>2023-08-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://your-site-url.com/register</loc>
-    <lastmod>2023-08-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://your-site-url.com/bookmarks</loc>
-    <lastmod>2023-08-01</lastmod>
+    <loc>https://ebookaura.onrender.com/bookmarks</loc>
+    <lastmod>2025-04-28</lastmod>
     <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/about</loc>
+    <lastmod>2025-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/coins</loc>
+    <lastmod>2025-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/plans</loc>
+    <lastmod>2025-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/search?category=fiction</loc>
+    <lastmod>2025-04-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/search?category=non-fiction</loc>
+    <lastmod>2025-04-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/search?category=science</loc>
+    <lastmod>2025-04-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/search?category=technology</loc>
+    <lastmod>2025-04-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/search?category=biography</loc>
+    <lastmod>2025-04-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/search?category=history</loc>
+    <lastmod>2025-04-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/search?category=programming</loc>
+    <lastmod>2025-04-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/search?category=self-development</loc>
+    <lastmod>2025-04-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/search?category=philosophy</loc>
+    <lastmod>2025-04-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/6807be6cf05cdd8f4bdf933c</loc>
+    <lastmod>2025-04-28</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
-</urlset> 
+  <url>
+    <loc>https://ebookaura.onrender.com/books/6803d0c8cd7950184b1e8cf3</loc>
+    <lastmod>2025-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/6807c9d24fb1873f72080fb1</loc>
+    <lastmod>2025-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/680735665ceba10744914991</loc>
+    <lastmod>2025-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/680678c531bede49ddbf9c37</loc>
+    <lastmod>2025-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+</urlset>

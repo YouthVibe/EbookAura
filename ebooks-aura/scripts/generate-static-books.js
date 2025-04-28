@@ -11,7 +11,7 @@ const path = require('path');
 const https = require('https');
 
 // Configuration
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://ebooksaura.onrender.com/api';
 const OUTPUT_FILE = path.join(__dirname, '../src/app/utils/STATIC_BOOKS.js');
 
 // Known important book IDs that must be included

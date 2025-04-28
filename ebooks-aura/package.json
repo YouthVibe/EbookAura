@@ -7,13 +7,19 @@
     "build": "next build",
     "build:dev": "cross-env NEXT_PUBLIC_API_URL=http://localhost:5000/api next build",
     "build:prod": "cross-env NEXT_PUBLIC_API_URL=https://ebookaura.onrender.com/api next build",
-    "build:static": "cross-env STATIC_EXPORT=true next build",
+    "build:static": "next build && next export -o out",
     "build:static:dev": "cross-env STATIC_EXPORT=true NEXT_PUBLIC_API_URL=http://localhost:5000/api next build",
-    "build:static:prod": "cross-env STATIC_EXPORT=true NEXT_PUBLIC_API_URL=https://ebookaura.onrender.com/api next build",
+    "build:static:prod": "cross-env NODE_ENV=production next build && next export -o out",
     "start": "next start",
     "serve": "npx serve out",
     "lint": "next lint",
-    "clean": "rimraf .next out"
+    "clean": "rimraf .next out",
+    "build:production": "node build-production.js",
+    "generate:sitemap": "node scripts/generate-sitemap.js",
+    "generate:simple-sitemap": "node scripts/generate-simple-sitemap.js",
+    "generate:pdf-metadata": "node scripts/generate-pdf-metadata.js",
+    "generate:pdf-meta-txt": "node scripts/generate-pdf-meta-txt.js",
+    "seo:all": "npm run generate:sitemap && npm run generate:pdf-metadata && npm run generate:pdf-meta-txt"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
