@@ -19,7 +19,9 @@
     "generate:simple-sitemap": "node scripts/generate-simple-sitemap.js",
     "generate:pdf-metadata": "node scripts/generate-pdf-metadata.js",
     "generate:pdf-meta-txt": "node scripts/generate-pdf-meta-txt.js",
-    "seo:all": "npm run generate:sitemap && npm run generate:pdf-metadata && npm run generate:pdf-meta-txt"
+    "submit:sitemap": "node scripts/submit-sitemap.js",
+    "test:metadata": "node scripts/test-search-metadata.js",
+    "seo:all": "npm run generate:sitemap && npm run generate:pdf-metadata && npm run generate:pdf-meta-txt && npm run submit:sitemap"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

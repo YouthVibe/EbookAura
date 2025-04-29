@@ -8,6 +8,7 @@ import { Suspense } from 'react';
 import { default as DynamicImport } from 'next/dynamic';
 import BookPageClient from './BookClientWrapper';
 import STATIC_BOOKS from '../../utils/STATIC_BOOKS';
+import Script from 'next/script';
 
 // Configure rendering for this page - using 'auto' instead of 'force-dynamic' for static exports
 // export const dynamic = 'force-dynamic';
@@ -37,7 +38,7 @@ export async function generateMetadata(props) {
 
     // Get the API URL with localhost fallback
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ebooks-aura.com';
+    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ebookaura.onrender.com';
     
     // Fetch book details for metadata
     const response = await fetch(`${apiUrl}/books/${id}`, {
@@ -76,6 +77,7 @@ export async function generateMetadata(props) {
     return {
       title: `${book.title || 'Book'} by ${book.author || 'Unknown Author'} - EbookAura`,
       description,
+      keywords: `${book.title}, ${book.author}, ${book.categories?.join(', ') || ''}, PDF, ebook, free book, read online, download pdf, ebookaura`,
       openGraph: {
         title: `${book.title || 'Book'} by ${book.author || 'Unknown Author'}`,
         description,
@@ -118,12 +120,114 @@ export async function generateMetadata(props) {
   }
 }
 
+// Helper to generate structured data for the book
+async function getBookStructuredData(params) {
+  try {
+    const id = params?.id;
+    if (!id || id === 'not-found') {
+      return null;
+    }
+
+    // Get the API URL with localhost fallback
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ebookaura.onrender.com';
+    
+    // Fetch book details
+    const response = await fetch(`${apiUrl}/books/${id}`, {
+      next: { revalidate: 3600 }, // Revalidate cache every hour
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch book: ${response.status}`);
+    }
+    
+    const book = await response.json();
+
+    // Get the book cover URL (ensure it's an absolute URL)
+    const coverUrl = book.coverImage && book.coverImage.startsWith('http')
+      ? book.coverImage
+      : `${siteUrl}${book.coverImage && book.coverImage.startsWith('/') ? '' : '/'}${book.coverImage || '/images/default-cover.jpg'}`;
+
+    // Format publication date if available
+    const publicationDate = book.publicationDate ? new Date(book.publicationDate).toISOString().split('T')[0] : undefined;
+
+    // Build structured data for search engines
+    const structuredData = {
+      "@context": "https://schema.org",
+      "@type": "Book",
+      "name": book.title,
+      "author": {
+        "@type": "Person",
+        "name": book.author || "Unknown Author"
+      },
+      "url": `${siteUrl}/books/${id}`,
+      "workExample": {
+        "@type": "Book",
+        "bookFormat": "http://schema.org/EBook",
+        "potentialAction": {
+          "@type": "ReadAction",
+          "target": `${siteUrl}/books/${id}`
+        }
+      },
+      "image": coverUrl,
+      "description": book.description || `Read ${book.title} by ${book.author} online at EbookAura.`
+    };
+
+    // Add optional fields if available
+    if (book.isbn) structuredData.isbn = book.isbn;
+    if (publicationDate) structuredData.datePublished = publicationDate;
+    if (book.publisher) structuredData.publisher = { "@type": "Organization", "name": book.publisher };
+    if (book.pageCount) structuredData.numberOfPages = book.pageCount;
+    if (book.language) structuredData.inLanguage = book.language;
+    if (book.categories && book.categories.length) structuredData.genre = book.categories[0];
+    if (book.averageRating) {
+      structuredData.aggregateRating = {
+        "@type": "AggregateRating",
+        "ratingValue": book.averageRating,
+        "bestRating": "5",
+        "worstRating": "1",
+        "ratingCount": book.ratingCount || 1
+      };
+    }
+
+    // Add offers data for free book
+    structuredData.offers = {
+      "@type": "Offer",
+      "availability": "http://schema.org/InStock",
+      "price": book.price || "0",
+      "priceCurrency": "USD",
+      "url": `${siteUrl}/books/${id}`
+    };
+
+    return structuredData;
+  } catch (error) {
+    console.error('Error generating book structured data:', error);
+    return null;
+  }
+}
+
 // Server Component using proper params handling for Next.js 13+
-export default function BookPage({ params }) {
+export default async function BookPage({ params }) {
+  // Get structured data for the book
+  const structuredData = await getBookStructuredData(params);
+  
   return (
-    <Suspense fallback={<div className="loading">Loading book...</div>}>
-      <BookPageClient params={params} />
-    </Suspense>
+    <>
+      {/* Add structured data for search engines */}
+      {structuredData && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+      )}
+      
+      <Suspense fallback={<div className="loading">Loading book...</div>}>
+        <BookPageClient params={params} />
+      </Suspense>
+    </>
   );
 }
 

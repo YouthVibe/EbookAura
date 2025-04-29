@@ -1,5 +1,6 @@
 # robots.txt for EbookAura
 # https://ebookaura.onrender.com
+# Effective date: April 2023
 
 User-agent: *
 Allow: /
@@ -8,6 +9,9 @@ Allow: /books
 Allow: /coins
 Allow: /bookmarks
 Allow: /categories
+Allow: /pdf-metadata/
+Allow: /sitemap.xml
+Allow: /images/
 Disallow: /api/
 Disallow: /admin/
 Disallow: /login
@@ -21,6 +25,9 @@ Disallow: /*/download
 Disallow: /*.json$
 Disallow: /*.js$
 Disallow: /*.css$
+Disallow: /*.md$
+Disallow: /*.bak$
+Disallow: /*.tmp$
 
 # Allow sitemap
 Allow: /sitemap.xml
@@ -36,17 +43,46 @@ User-agent: Googlebot
 Allow: /
 Allow: /search
 Allow: /books
+Allow: /pdf-metadata/
 Disallow: /api/
 Disallow: /admin/
 Disallow: /login
 Disallow: /register
 Disallow: /profile
+Crawl-delay: 0.5
 
 # Bing specific
 User-agent: Bingbot  
 Allow: /
 Allow: /search
 Allow: /books
+Allow: /pdf-metadata/
+Disallow: /api/
+Disallow: /admin/
+Disallow: /login
+Disallow: /register
+Disallow: /profile
+Crawl-delay: 1
+
+# Yandex specific
+User-agent: Yandexbot
+Allow: /
+Allow: /search
+Allow: /books
+Allow: /pdf-metadata/
+Disallow: /api/
+Disallow: /admin/
+Disallow: /login
+Disallow: /register
+Disallow: /profile
+Crawl-delay: 1.5
+
+# Archive.org bot - allow archiving
+User-agent: ia_archiver
+Allow: /
+Allow: /search
+Allow: /books
+Allow: /pdf-metadata/
 Disallow: /api/
 Disallow: /admin/
 Disallow: /login

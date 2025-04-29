@@ -4,13 +4,13 @@
  */
 
 export const mainPageMetadata = {
-  title: 'EbookAura - Your Digital Library Companion',
-  description: 'Discover, read, and download thousands of ebooks in our extensive digital library. Browse by category or search for your next great read.',
-  keywords: 'ebooks, digital library, free books, pdf books, online reading, book download, ebook platform, ebookaura',
+  title: 'EbookAura - Free PDF Books Library | Read and Download',
+  description: 'Discover, read and download thousands of free PDF books at EbookAura. Our digital library offers a vast collection of ebooks in PDF format that you can access instantly.',
+  keywords: 'free pdf books, ebooks download, digital library, free ebooks, pdf download, online reading, ebookaura, ebook platform, ebook reader, pdf reader, free books online, download books, read online, digital books, free pdf download, book collection, online books, ebookaura.onrender.com',
   openGraph: {
-    title: 'EbookAura Digital Library',
-    description: 'Your gateway to thousands of digital books. Browse our collection, read online, or download for offline reading.',
-    url: '/',
+    title: 'EbookAura - Your Ultimate PDF Books Library',
+    description: 'Access thousands of free PDF books at EbookAura. Browse our extensive collection, read online, or download for offline reading. No registration needed for many titles.',
+    url: 'https://ebookaura.onrender.com/',
     siteName: 'EbookAura',
     images: [
       {
@@ -25,9 +25,11 @@ export const mainPageMetadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'EbookAura Digital Library',
-    description: 'Your gateway to thousands of digital books. Browse our collection, read online, or download for offline reading.',
+    title: 'EbookAura - Free PDF Books Library',
+    description: 'Access thousands of free PDF books. Browse our collection, read online, or download for offline reading at EbookAura.',
     images: ['/images/home-page-og.svg'],
+    site: '@EbookAura',
+    creator: '@EbookAura',
   },
   robots: {
     index: true,
@@ -38,15 +40,24 @@ export const mainPageMetadata = {
       follow: true,
       'max-image-preview': 'large',
       'max-snippet': -1,
+      'max-video-preview': -1,
     },
   },
   verification: {
-    google: 'google-site-verification-code', // Replace with your actual verification code if available
+    google: 'REPLACE_WITH_YOUR_VERIFICATION_CODE', // Replace with your actual Google verification code
+    yandex: 'REPLACE_WITH_YANDEX_CODE', // Optional: for Yandex search
+    bing: 'REPLACE_WITH_BING_CODE', // Optional: for Bing search
   },
   alternates: {
-    canonical: '/',
+    canonical: 'https://ebookaura.onrender.com/',
     languages: {
-      'en-US': '/',
+      'en-US': 'https://ebookaura.onrender.com/',
     },
   },
+  authors: [
+    { name: 'EbookAura Team' }
+  ],
+  category: 'Books & Literature',
+  creator: 'EbookAura',
+  publisher: 'EbookAura',
 }; 

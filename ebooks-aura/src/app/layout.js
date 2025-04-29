@@ -19,13 +19,49 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "EbookAura",
-  description: "Your digital library companion",
-  // You can add verification meta tags here if needed
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://ebooks-aura.com'),
+  title: "EbookAura - Free PDF Books Library",
+  description: "Discover, read and download free PDF books. EbookAura offers a vast collection of ebooks in PDF format for free reading online or download.",
+  keywords: "ebooks, free pdf books, pdf download, digital library, online reading, free ebooks, ebookaura, ebook platform, pdf reader, book collection, download books, read online, free pdf download, ebook reader, digital books",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://ebookaura.onrender.com'),
+  alternates: {
+    canonical: '/'
+  },
   other: {
     'google-adsense-account': 'ca-pub-2456537810743091',
-  }
+  },
+  openGraph: {
+    title: "EbookAura - Free PDF Books Library",
+    description: "Discover, read and download free PDF books. Access thousands of ebooks in PDF format for free reading online or download.",
+    url: 'https://ebookaura.onrender.com',
+    siteName: 'EbookAura',
+    locale: 'en_US',
+    type: 'website',
+    images: [
+      {
+        url: '/images/home-page-og.svg',
+        width: 1200,
+        height: 630,
+        alt: 'EbookAura - Digital Library Homepage',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "EbookAura - Free PDF Books Library",
+    description: "Your gateway to thousands of free PDF books. Browse our collection, read online, or download for offline reading.",
+    images: ['/images/home-page-og.svg'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    nocache: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
 };
 
 export const viewport = {
@@ -47,6 +83,9 @@ export default function RootLayout({ children }) {
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2456537810743091"
           crossOrigin="anonymous"
         />
+        
+        {/* Google Search Console Verification - You would need to replace this with your actual verification code */}
+        <meta name="google-site-verification" content="REPLACE_WITH_YOUR_VERIFICATION_CODE" />
       </head>
       <body 
         className={`${geistSans.variable} ${geistMono.variable}`} 
