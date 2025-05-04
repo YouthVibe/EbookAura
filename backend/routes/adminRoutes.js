@@ -6,6 +6,7 @@ const {
   deleteUser,
   getAllBooks,
   deleteBook,
+  updateBook,
   cleanupCloudinaryResources
 } = require('../controllers/adminController');
 const { protect, admin } = require('../middleware/auth');
@@ -15,12 +16,13 @@ router.use(protect, admin);
 
 // User management routes
 router.get('/users', getAllUsers);
-router.put('/users/:id/ban', toggleUserBan);
+router.put('/users/:id/toggle-ban', toggleUserBan);
 router.delete('/users/:id', deleteUser);
 
 // Book management routes
 router.get('/books', getAllBooks);
 router.delete('/books/:id', deleteBook);
+router.put('/books/:id', updateBook);
 
 // Maintenance routes
 router.post('/cleanup-cloudinary', cleanupCloudinaryResources);

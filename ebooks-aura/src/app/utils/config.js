@@ -27,8 +27,8 @@ export const API_ENDPOINTS = {
     CATEGORIES: `${API_BASE_URL}/books/categories`,
     TAGS: `${API_BASE_URL}/books/tags`,
     DETAILS: (id) => `${API_BASE_URL}/books/${id}`,
-    PDF: (id) => `${API_BASE_URL}/books/${id}/pdf`,
-    PDF_CONTENT: (id) => `${API_BASE_URL}/books/${id}/pdf-content`,
+    PDF: (id) => `${API_BASE_URL}/books/pdf/${id}`,
+    PDF_CONTENT: (id) => `${API_BASE_URL}/books/pdf/${id}`,
     DOWNLOAD: (id) => `${API_BASE_URL}/books/${id}/download`,
     REVIEWS: (id) => `${API_BASE_URL}/books/${id}/reviews`,
     RATING: (id) => `${API_BASE_URL}/books/${id}/rating`,
@@ -51,6 +51,23 @@ export const API_ENDPOINTS = {
     UPDATE_IMAGE: `${API_BASE_URL}/users/profile/image`,
     BOOKMARKS: `${API_BASE_URL}/users/bookmarks`,
   },
+  
+  // Subscription endpoints
+  SUBSCRIPTIONS: {
+    CURRENT: `${API_BASE_URL}/subscriptions/current`,
+    CHECK: `${API_BASE_URL}/subscriptions/check`,
+    CHECK_API: `${API_BASE_URL}/subscriptions/check-api`,
+    ACTIVATE: `${API_BASE_URL}/subscriptions/activate`,
+    DEACTIVATE: `${API_BASE_URL}/subscriptions/deactivate`
+  },
+  
+  // API Keys endpoints
+  API_KEYS: {
+    GENERATE: `${API_BASE_URL}/api-keys/generate`,
+    CURRENT: `${API_BASE_URL}/api-keys/current`,
+    REVOKE: `${API_BASE_URL}/api-keys/revoke`,
+    VERIFY: `${API_BASE_URL}/api-keys/verify`
+  },
 };
 
 // App settings
@@ -72,8 +89,7 @@ export const APP_CONFIG = {
     '/books/categories',
     '/books/tags',
     '/books/',
-    '/books/:id/pdf',
-    '/books/:id/pdf-content',
+    '/books/pdf/:id',
     '/books/:id/download',
     '/books/:id/reviews',
     '/books/:id/rating',

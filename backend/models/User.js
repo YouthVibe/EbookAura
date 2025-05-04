@@ -64,6 +64,20 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Book'
   }],
+  // Track subscription status
+  planActive: {
+    type: Boolean,
+    default: false
+  },
+  planType: {
+    type: String,
+    enum: ['basic', 'pro', null],
+    default: null
+  },
+  planExpiresAt: {
+    type: Date,
+    default: null
+  },
   emailVerificationToken: String,
   emailVerificationExpires: Date,
   resetPasswordToken: String,
@@ -86,7 +100,13 @@ const userSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
-  }
+  },
+  // API key field
+  apiKey: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
 }, {
   timestamps: true
 });
@@ -146,6 +166,14 @@ userSchema.methods.generateResetPasswordToken = function() {
   this.resetPasswordExpires = Date.now() + 60 * 60 * 1000; // 1 hour
   
   return resetToken;
+};
+
+// Generate API key
+userSchema.methods.generateApiKey = function() {
+  // Generate a secure API key with a prefix for identification
+  const apiKey = `ak_${crypto.randomBytes(24).toString('hex')}`;
+  this.apiKey = apiKey;
+  return apiKey;
 };
 
 const User = mongoose.model('User', userSchema);

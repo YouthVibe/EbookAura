@@ -2,6 +2,7 @@
  * API functions for subscription operations
  */
 import { getAPI, postAPI, putAPI, patchAPI, shouldMakeApiCall, cacheApiCallResult } from './apiUtils';
+import { API_ENDPOINTS } from '../utils/config';
 
 // Cache durations (in milliseconds)
 const CACHE_DURATIONS = {
@@ -51,41 +52,74 @@ export const getSubscriptionPlans = async (forceFresh = false) => {
 };
 
 // Get current user's subscription
-export const getCurrentSubscription = async (forceFresh = false) => {
+export const getCurrentSubscription = async () => {
   try {
     const token = localStorage.getItem('token');
     
     if (!token) {
-      throw new Error('Authentication required');
+      console.log('No authentication token found for subscription check');
+      return { success: false, hasSubscription: false, message: 'Not authenticated' };
     }
     
-    // Check if we should make the API call or use cached data
-    const cacheKey = 'current_subscription';
-    const { shouldMakeCall, cachedData } = shouldMakeApiCall(
-      cacheKey, 
-      CACHE_DURATIONS.CURRENT,
-      forceFresh
-    );
-    
-    // Return cached data if available and still valid
-    if (!shouldMakeCall && cachedData) {
-      return cachedData;
-    }
-    
-    // Make the API call
-    const response = await getAPI('/subscriptions/current', {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscriptions/current`, {
+      method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`
       }
     });
     
-    // Cache the result
-    cacheApiCallResult(cacheKey, response);
+    const data = await response.json();
     
-    return response;
+    if (response.ok) {
+      // Cache the subscription status with timestamp
+      try {
+        localStorage.setItem('subscriptionStatus', JSON.stringify({
+          hasSubscription: data.hasSubscription,
+          planType: data.planType,
+          expiresAt: data.expiresAt,
+          timestamp: new Date().toISOString()
+        }));
+      } catch (cacheError) {
+        console.warn('Failed to cache subscription status:', cacheError);
+      }
+      
+      return data;
+    } else {
+      throw new Error(data.message || 'Failed to check subscription status');
+    }
   } catch (error) {
-    console.error('Error fetching current subscription:', error);
-    throw error;
+    console.error('Error checking subscription status:', error);
+    
+    // Try to get cached subscription status as fallback
+    try {
+      const cachedStatus = localStorage.getItem('subscriptionStatus');
+      if (cachedStatus) {
+        const parsedStatus = JSON.parse(cachedStatus);
+        const cacheTime = new Date(parsedStatus.timestamp);
+        const now = new Date();
+        
+        // Use cache if it's less than 5 minutes old
+        if ((now - cacheTime) < 5 * 60 * 1000) {
+          console.log('Using cached subscription status');
+          return {
+            success: true,
+            hasSubscription: parsedStatus.hasSubscription,
+            planType: parsedStatus.planType,
+            expiresAt: parsedStatus.expiresAt,
+            fromCache: true
+          };
+        }
+      }
+    } catch (cacheError) {
+      console.error('Error reading cached subscription status:', cacheError);
+    }
+    
+    // Return default response if cache fails
+    return { 
+      success: false, 
+      hasSubscription: false, 
+      error: error.message || 'Failed to check subscription status'
+    };
   }
 };
 
@@ -216,4 +250,40 @@ export const cancelSubscription = async (subscriptionId, cancelReason) => {
     success: false,
     message: 'Subscription cancellation is not allowed. Subscriptions are non-refundable once purchased.'
   });
+};
+
+// Check subscription status using API key
+export const checkSubscriptionWithApiKey = async (apiKey) => {
+  try {
+    if (!apiKey) {
+      throw new Error('API key is required');
+    }
+    
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscriptions/check-api`, {
+      method: 'GET',
+      headers: {
+        'X-API-Key': apiKey
+      }
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok) {
+      return data;
+    } else {
+      throw new Error(data.message || 'Failed to check subscription status');
+    }
+  } catch (error) {
+    console.error('Error checking subscription with API key:', error);
+    return { 
+      success: false, 
+      hasSubscription: false, 
+      error: error.message || 'Failed to check subscription status'
+    };
+  }
+};
+
+export default {
+  getCurrentSubscription,
+  checkSubscriptionWithApiKey
 }; 

@@ -5,6 +5,7 @@ const SubscriptionPlan = require('../models/subscriptionPlanModel');
 const { ErrorResponse } = require('../utils/errorResponse');
 const { v4: uuidv4 } = require('uuid');
 const { addDuration } = require('../utils/dateUtils');
+const mongoose = require('mongoose');
 
 /**
  * @desc    Get all subscription plans
@@ -370,51 +371,41 @@ const createSubscription = asyncHandler(async (req, res) => {
  * @access  Private
  */
 const getCurrentSubscription = asyncHandler(async (req, res) => {
-  // Use either req.user.id or req.user._id depending on what's available
-  const userId = req.user.id || req.user._id;
-  
-  const subscription = await Subscription.findOne({
-    user: userId,
-    status: 'active'
-  }).populate('plan');
-
-  if (!subscription) {
-    // Instead of returning a 404 error, return a 200 with a message indicating no subscription
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+    
+    // Check if plan is active but expired
+    if (user.planActive && user.planExpiresAt) {
+      const now = new Date();
+      if (new Date(user.planExpiresAt) < now) {
+        // Plan has expired, update the user record
+        user.planActive = false;
+        await user.save();
+      }
+    }
+    
     return res.status(200).json({
       success: true,
-      hasSubscription: false,
-      message: 'No active subscription found'
+      hasSubscription: user.planActive === true,
+      planType: user.planType,
+      expiresAt: user.planExpiresAt
+    });
+  } catch (error) {
+    console.error('Error getting current subscription:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error getting subscription details',
+      error: error.message
     });
   }
-
-  // Check if the subscription has expired based on endDate
-  const now = new Date();
-  if (new Date(subscription.endDate) < now) {
-    // Update the subscription status to expired in the database
-    subscription.status = 'expired';
-    await subscription.save();
-    
-    // Also update user's premium status
-    await User.findByIdAndUpdate(userId, { 
-      isPremium: false,
-      isSubscribed: false
-    });
-    
-    // Return a message indicating the subscription has expired
-    return res.status(200).json({
-      success: true,
-      hasSubscription: false,
-      message: 'Your subscription has expired',
-      wasExpired: true,
-      subscription: subscription
-    });
-  }
-
-  res.status(200).json({
-    success: true,
-    hasSubscription: true,
-    subscription
-  });
 });
 
 /**
@@ -504,6 +495,364 @@ const cancelSubscriptionById = asyncHandler(async (req, res) => {
   */
 });
 
+/**
+ * @desc    Check if user has an active subscription
+ * @route   GET /api/subscriptions/check
+ * @access  Private
+ */
+const checkSubscription = asyncHandler(async (req, res) => {
+  try {
+    const userId = req.user._id;
+    
+    // Get the user
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+    
+    // Check if user has an active plan
+    const hasActiveSubscription = user.planActive === true;
+    
+    // If there's an expiration date, check if it's in the future
+    if (user.planExpiresAt && user.planActive) {
+      const now = new Date();
+      if (new Date(user.planExpiresAt) < now) {
+        // Plan has expired, update the user record
+        user.planActive = false;
+        await user.save();
+        
+        return res.status(200).json({
+          success: true,
+          hasSubscription: false,
+          planType: user.planType,
+          message: 'Your subscription has expired'
+        });
+      }
+    }
+    
+    return res.status(200).json({
+      success: true,
+      hasSubscription: hasActiveSubscription,
+      planType: user.planType,
+      expiresAt: user.planExpiresAt,
+      message: hasActiveSubscription ? 'Active subscription found' : 'No active subscription'
+    });
+  } catch (error) {
+    console.error('Error checking subscription status:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error checking subscription status',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @desc    Activate user subscription
+ * @route   POST /api/subscriptions/activate
+ * @access  Private/Admin
+ */
+const activateSubscription = asyncHandler(async (req, res) => {
+  try {
+    const { userId, planType, expiresAt } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'User ID is required' 
+      });
+    }
+    
+    if (!planType) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Plan type is required' 
+      });
+    }
+    
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+    
+    // Set subscription status to active
+    user.planActive = true;
+    user.planType = planType;
+    
+    // Set expiration date if provided
+    if (expiresAt) {
+      user.planExpiresAt = new Date(expiresAt);
+    } else {
+      // Default to 30 days from now
+      const defaultExpiration = new Date();
+      defaultExpiration.setDate(defaultExpiration.getDate() + 30);
+      user.planExpiresAt = defaultExpiration;
+    }
+    
+    await user.save();
+    
+    return res.status(200).json({
+      success: true,
+      message: `Successfully activated ${planType} subscription for user`,
+      expiresAt: user.planExpiresAt
+    });
+  } catch (error) {
+    console.error('Error activating subscription:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error activating subscription',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @desc    Deactivate user subscription
+ * @route   POST /api/subscriptions/deactivate
+ * @access  Private/Admin
+ */
+const deactivateSubscription = asyncHandler(async (req, res) => {
+  try {
+    const { userId } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'User ID is required' 
+      });
+    }
+    
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+    
+    // Set subscription status to inactive
+    user.planActive = false;
+    
+    await user.save();
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Successfully deactivated subscription for user'
+    });
+  } catch (error) {
+    console.error('Error deactivating subscription:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error deactivating subscription',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @desc    Check user API key and return subscription status
+ * @route   GET /api/subscriptions/check-api
+ * @access  Public (with API key)
+ */
+const checkSubscriptionByApiKey = asyncHandler(async (req, res) => {
+  try {
+    const apiKey = req.headers['x-api-key'];
+    
+    if (!apiKey) {
+      return res.status(401).json({
+        success: false,
+        message: 'API key is required'
+      });
+    }
+    
+    // Find user by API key
+    const user = await User.findOne({ apiKey });
+    
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid API key'
+      });
+    }
+    
+    // Check if user has an active plan
+    const hasActiveSubscription = user.planActive === true;
+    
+    // If there's an expiration date, check if it's in the future
+    if (user.planExpiresAt && user.planActive) {
+      const now = new Date();
+      if (new Date(user.planExpiresAt) < now) {
+        // Plan has expired, update the user record
+        user.planActive = false;
+        await user.save();
+        
+        return res.status(200).json({
+          success: true,
+          hasSubscription: false,
+          message: 'Your subscription has expired'
+        });
+      }
+    }
+    
+    return res.status(200).json({
+      success: true,
+      hasSubscription: hasActiveSubscription,
+      planType: user.planType,
+      expiresAt: user.planExpiresAt
+    });
+  } catch (error) {
+    console.error('Error checking subscription by API key:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error checking subscription',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @desc    Handle webhook from payment processor to update subscription status
+ * @route   POST /api/subscriptions/webhook
+ * @access  Public (with secret key)
+ */
+const subscriptionWebhook = asyncHandler(async (req, res) => {
+  try {
+    const { type, data, secret } = req.body;
+    
+    // Verify webhook secret
+    if (secret !== process.env.WEBHOOK_SECRET) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid webhook secret'
+      });
+    }
+    
+    // Process different event types
+    switch (type) {
+      case 'subscription.created':
+        // Handle new subscription
+        await handleSubscriptionCreated(data);
+        break;
+      case 'subscription.updated':
+        // Handle subscription update
+        await handleSubscriptionUpdated(data);
+        break;
+      case 'subscription.cancelled':
+        // Handle subscription cancellation
+        await handleSubscriptionCancelled(data);
+        break;
+      case 'subscription.expired':
+        // Handle subscription expiration
+        await handleSubscriptionExpired(data);
+        break;
+      default:
+        console.log(`Unhandled webhook event: ${type}`);
+    }
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Webhook processed successfully'
+    });
+  } catch (error) {
+    console.error('Error processing subscription webhook:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error processing webhook',
+      error: error.message
+    });
+  }
+});
+
+// Helper functions for webhook handling
+async function handleSubscriptionCreated(data) {
+  try {
+    const { userId, planType, expiresAt } = data;
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error(`User not found: ${userId}`);
+    }
+    
+    user.planActive = true;
+    user.planType = planType;
+    user.planExpiresAt = new Date(expiresAt);
+    
+    await user.save();
+    console.log(`Subscription created for user ${userId}`);
+  } catch (error) {
+    console.error('Error handling subscription creation:', error);
+    throw error;
+  }
+}
+
+async function handleSubscriptionUpdated(data) {
+  try {
+    const { userId, planType, expiresAt } = data;
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error(`User not found: ${userId}`);
+    }
+    
+    user.planActive = true;
+    user.planType = planType;
+    user.planExpiresAt = new Date(expiresAt);
+    
+    await user.save();
+    console.log(`Subscription updated for user ${userId}`);
+  } catch (error) {
+    console.error('Error handling subscription update:', error);
+    throw error;
+  }
+}
+
+async function handleSubscriptionCancelled(data) {
+  try {
+    const { userId } = data;
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error(`User not found: ${userId}`);
+    }
+    
+    user.planActive = false;
+    
+    await user.save();
+    console.log(`Subscription cancelled for user ${userId}`);
+  } catch (error) {
+    console.error('Error handling subscription cancellation:', error);
+    throw error;
+  }
+}
+
+async function handleSubscriptionExpired(data) {
+  try {
+    const { userId } = data;
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error(`User not found: ${userId}`);
+    }
+    
+    user.planActive = false;
+    
+    await user.save();
+    console.log(`Subscription expired for user ${userId}`);
+  } catch (error) {
+    console.error('Error handling subscription expiration:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   getSubscriptionPlans,
   getUserSubscription,
@@ -514,5 +863,10 @@ module.exports = {
   createSubscription,
   getCurrentSubscription,
   updateSubscription,
-  cancelSubscriptionById
+  cancelSubscriptionById,
+  checkSubscription,
+  activateSubscription,
+  deactivateSubscription,
+  checkSubscriptionByApiKey,
+  subscriptionWebhook
 }; 

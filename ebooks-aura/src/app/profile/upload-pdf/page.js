@@ -627,7 +627,7 @@ export default function UploadPdf() {
       if (isPdfUrl) {
         // For URL-based PDFs
         formData.append('isCustomUrl', 'true');
-        formData.append('customURLPDF', pdfUrl.trim());
+        formData.append('pdfUrl', pdfUrl.trim());
         formData.append('fileSizeMB', customUrlFileSize); // Add file size for custom URL
         
         setUploadStatus('Processing PDF URL...');

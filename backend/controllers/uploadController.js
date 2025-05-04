@@ -96,11 +96,42 @@ const uploadPdf = async (req, res) => {
       isAdmin: req.user.isAdmin 
     });
 
-    // Check if all required fields are present
-    const { title, author, description, category, pageSize, isCustomUrl, customURLPDF, customUrlFileSize, isPremium, price } = req.body;
+    // Extract form data
+    const { 
+      title, 
+      author, 
+      description, 
+      pageSize = 0,
+      category = 'General',
+      tags = '',
+      isPremium = 'false',
+      price = 0,
+      isCustomUrl = 'false',
+      fileSizeMB = 0
+    } = req.body;
     
+    const bookIsPremium = isPremium === 'true';
+    const bookPrice = parseInt(price, 10) || 0;
+    const customUrlFileSize = parseFloat(fileSizeMB) || 0;
+    
+    // Validate required fields
     if (!title || !author || !description || !category || !pageSize) {
       return res.status(400).json({ message: 'All fields are required' });
+    }
+    
+    // Validate title length
+    if (title.length > 100) {
+      return res.status(400).json({ message: 'Title must be under 100 characters' });
+    }
+
+    // Validate description length
+    if (description.length > 200) {
+      return res.status(400).json({ message: 'Description must be under 200 characters' });
+    }
+    
+    // Validate premium book price
+    if (bookIsPremium && bookPrice < 0) {
+      return res.status(400).json({ message: 'Price must be a valid number greater than or equal to 0' });
     }
     
     // Validate field lengths
@@ -112,29 +143,14 @@ const uploadPdf = async (req, res) => {
       return res.status(400).json({ message: 'Description must be under 200 characters' });
     }
 
-    // Parse isPremium value
-    const bookIsPremium = isPremium === 'true' || isPremium === true;
-    
-    // Parse and validate price if book is premium
-    let bookPrice = 0;
-    if (bookIsPremium) {
-      if (!price && price !== 0) {
-        return res.status(400).json({ message: 'Price is required for premium books' });
-      }
-      
-      bookPrice = parseInt(price, 10);
-      if (isNaN(bookPrice) || bookPrice < 0) {
-        return res.status(400).json({ message: 'Price must be a valid number greater than or equal to 0' });
-      }
-    }
-    
     // Handle the custom URL case
-    if (isCustomUrl === 'true' && customURLPDF) {
-      console.log('Using custom PDF URL:', customURLPDF);
+    if (isCustomUrl === 'true' && req.body.pdfUrl) {
+      const pdfUrl = req.body.pdfUrl;
+      console.log('Using custom PDF URL:', pdfUrl);
       
       // Check if the URL is valid - accept any URL format
       try {
-        new URL(customURLPDF);
+        new URL(pdfUrl);
         // We'll accept any valid URL format, not just PDFs
         console.log('URL format is valid');
       } catch (error) {
@@ -142,16 +158,11 @@ const uploadPdf = async (req, res) => {
       }
       
       // Check if file size was provided for custom URL
-      let fileSizeMB = 0;
-      if (customUrlFileSize) {
-        fileSizeMB = parseFloat(customUrlFileSize);
-        if (isNaN(fileSizeMB) || fileSizeMB <= 0) {
-          return res.status(400).json({ message: 'Please provide a valid file size greater than 0' });
-        }
-        console.log(`Custom URL PDF file size: ${fileSizeMB} MB`);
-      } else {
-        console.log('No file size provided for custom URL PDF');
+      if (customUrlFileSize <= 0) {
+        return res.status(400).json({ message: 'Please provide a valid file size greater than 0' });
       }
+      
+      console.log(`Custom URL PDF file size: ${customUrlFileSize} MB`);
       
       // Still need to check if cover image is provided
       if (!req.files || !req.files.coverImage) {
@@ -203,14 +214,14 @@ const uploadPdf = async (req, res) => {
         description,
         coverImage: coverResult.secure_url,
         coverImageId: coverResult.public_id,
-        pdfUrl: customURLPDF,
+        pdfUrl: pdfUrl,
         pdfId: pdfId,
         isCustomUrl: true,
-        customURLPDF: customURLPDF,
+        customURLPDF: '', // No longer storing duplicate URL
         isPremium: bookIsPremium,
         price: bookPrice, // Add price field for premium books
         pageSize: parseInt(pageSize, 10),
-        fileSizeMB: fileSizeMB,
+        fileSizeMB: customUrlFileSize,
         category,
         tags: req.body.tags ? req.body.tags.split(',').map(tag => tag.trim()) : [],
         uploadedBy: req.user._id
@@ -229,7 +240,7 @@ const uploadPdf = async (req, res) => {
         const book = await newBook.save();
         
         console.log(`Book created successfully with ID: ${book._id}`);
-        console.log(`Custom PDF URL stored: ${book.customURLPDF}`);
+        console.log(`Custom PDF URL stored: ${book.pdfUrl}`);
         console.log(`Book uploaded by user: ${book.uploadedBy}`);
         
         res.status(201).json({

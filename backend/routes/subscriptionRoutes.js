@@ -1,5 +1,5 @@
 const express = require('express');
-const { protect } = require('../middleware/auth');
+const { protect, admin } = require('../middleware/auth');
 const {
   getUserSubscription,
   getSubscriptionPlans,
@@ -10,7 +10,12 @@ const {
   createSubscription,
   getCurrentSubscription,
   updateSubscription,
-  cancelSubscriptionById
+  cancelSubscriptionById,
+  checkSubscription,
+  activateSubscription,
+  deactivateSubscription,
+  checkSubscriptionByApiKey,
+  subscriptionWebhook
 } = require('../controllers/subscriptionController');
 
 const router = express.Router();
@@ -41,5 +46,19 @@ router.patch('/:id', updateSubscription);
 // Cancellation routes - these will always return 403 Forbidden
 router.put('/cancel', cancelSubscription);
 router.delete('/:id', cancelSubscriptionById);
+
+// Public routes (with API key)
+router.get('/check-api', checkSubscriptionByApiKey);
+
+// Protected routes (requires authentication)
+router.get('/check', protect, checkSubscription);
+router.get('/current', protect, getCurrentSubscription);
+
+// Admin routes
+router.post('/activate', protect, admin, activateSubscription);
+router.post('/deactivate', protect, admin, deactivateSubscription);
+
+// Webhook route
+router.post('/webhook', subscriptionWebhook);
 
 module.exports = router; 

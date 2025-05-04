@@ -1,6 +1,6 @@
 /**
  * This file contains a list of all book IDs for static generation
- * Generated on: 2025-04-28T17:09:11.937Z
+ * Generated on: 2025-05-04T14:29:46.475Z
  * Total books: 3
  * 
  * For static exports, we must pre-render ALL book pages that users might access

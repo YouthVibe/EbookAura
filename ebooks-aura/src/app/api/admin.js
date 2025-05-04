@@ -134,4 +134,36 @@ export const cleanupCloudinaryResources = async () => {
     console.error('Error cleaning up Cloudinary resources:', error);
     throw error;
   }
+};
+
+// Update a book
+export const updateBook = async (bookId, formData) => {
+  try {
+    const token = localStorage.getItem('token');
+    const apiKey = localStorage.getItem('apiKey');
+    
+    if (!token || !apiKey) {
+      throw new Error('Authentication required');
+    }
+    
+    // Use fetch directly since we need to handle FormData
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/admin/books/${bookId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'X-API-Key': apiKey
+      },
+      body: formData
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update book');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating book:', error);
+    throw error;
+  }
 }; 

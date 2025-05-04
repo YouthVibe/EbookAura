@@ -2,80 +2,133 @@ const ApiKey = require('../models/ApiKey');
 const User = require('../models/User');
 
 /**
- * Middleware to authenticate requests with API key
- * Sets req.user and req.apiKey if authentication is successful
+ * Middleware to authenticate using API key
+ * Adds user info to req.user if valid API key is provided
  */
 const apiKeyAuth = async (req, res, next) => {
-  // Get API key from headers
   const apiKey = req.headers['x-api-key'];
   
+  // If no API key provided, move to the next middleware
   if (!apiKey) {
-    return res.status(401).json({
-      message: 'API key is required',
-      code: 'NO_API_KEY'
-    });
+    return next();
   }
   
   try {
-    // Find the API key in the database
-    const key = await ApiKey.findOne({ key: apiKey });
-    
-    if (!key) {
-      return res.status(401).json({
-        message: 'Invalid API key',
-        code: 'INVALID_API_KEY'
-      });
-    }
-    
-    // Check if API key is active
-    if (!key.isActive) {
-      return res.status(401).json({
-        message: 'This API key has been deactivated',
-        code: 'INACTIVE_API_KEY'
-      });
-    }
-    
-    // Reset usage counters if a day has passed
-    try {
-      key.resetUsageIfNeeded();
-      // Update last used timestamp
-      key.lastUsed = Date.now();
-      await key.save();
-    } catch (error) {
-      console.error('Error updating API key usage data:', error);
-      // Continue with authentication even if usage tracking fails
-    }
-    
-    // Get the user associated with this API key
-    const user = await User.findById(key.user).select('-password');
+    // Find user by API key
+    const user = await User.findOne({ apiKey }).select('-password');
     
     if (!user) {
-      return res.status(401).json({
-        message: 'User associated with this API key not found',
-        code: 'USER_NOT_FOUND'
-      });
+      // Invalid API key, but don't block the request yet
+      // Just move to the next middleware without setting req.user
+      return next();
     }
     
-    // Check if user is banned
+    // If user is banned, deny access
     if (user.isBanned) {
       return res.status(403).json({
-        message: 'This account has been suspended',
-        code: 'ACCOUNT_SUSPENDED'
+        success: false,
+        message: 'This account has been suspended'
       });
     }
     
-    // Set user and apiKey on the request object
+    // Set authenticated user on request object
     req.user = user;
-    req.apiKey = key;
+    req.apiKeyAuthenticated = true;
+    
+    // Check subscription status and add to request
+    if (user.planActive) {
+      // Check if plan is active but expired
+      if (user.planExpiresAt) {
+        const now = new Date();
+        if (new Date(user.planExpiresAt) < now) {
+          // Plan has expired, update the user record
+          user.planActive = false;
+          await user.save();
+          req.hasSubscription = false;
+        } else {
+          req.hasSubscription = true;
+          req.planType = user.planType;
+        }
+      } else {
+        req.hasSubscription = true;
+        req.planType = user.planType;
+      }
+    } else {
+      req.hasSubscription = false;
+    }
     
     next();
   } catch (error) {
     console.error('API key authentication error:', error);
-    return res.status(500).json({
-      message: 'Server error during API key authentication',
-      code: 'SERVER_ERROR'
+    // Don't block the request, just pass to the next middleware
+    next();
+  }
+};
+
+/**
+ * Middleware to ensure that an API key is provided
+ * Requires the apiKeyAuth middleware to be called first
+ */
+const requireApiKey = (req, res, next) => {
+  if (!req.user || !req.apiKeyAuthenticated) {
+    return res.status(401).json({
+      success: false,
+      message: 'Valid API key required'
     });
   }
+  
+  next();
+};
+
+/**
+ * Middleware to check subscription status for API key
+ * Requires the apiKeyAuth middleware to be called first
+ */
+const requireSubscription = (req, res, next) => {
+  if (!req.user || !req.apiKeyAuthenticated) {
+    return res.status(401).json({
+      success: false,
+      message: 'Valid API key required'
+    });
+  }
+  
+  if (!req.hasSubscription) {
+    return res.status(403).json({
+      success: false,
+      message: 'Active subscription required'
+    });
+  }
+  
+  next();
+};
+
+/**
+ * Middleware to check for Pro plan subscription
+ * Requires the apiKeyAuth middleware to be called first
+ */
+const requireProPlan = (req, res, next) => {
+  if (!req.user || !req.apiKeyAuthenticated) {
+    return res.status(401).json({
+      success: false,
+      message: 'Valid API key required'
+    });
+  }
+  
+  if (!req.hasSubscription) {
+    return res.status(403).json({
+      success: false,
+      message: 'Active subscription required'
+    });
+  }
+  
+  if (req.planType !== 'pro') {
+    return res.status(403).json({
+      success: false,
+      message: 'Pro plan subscription required'
+    });
+  }
+  
+  next();
 };
 
 /**
@@ -281,6 +334,9 @@ const trackReviewPostingUsage = async (req, res, next) => {
 
 module.exports = {
   apiKeyAuth,
+  requireApiKey,
+  requireSubscription,
+  requireProPlan,
   apiKeyReadPermission,
   apiKeyWritePermission, 
   apiKeyGetPdfPermission,

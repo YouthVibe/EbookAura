@@ -24,15 +24,44 @@ export default function PdfViewer({ pdfUrl, onClose, title, allowDownload, onDow
 
   // Handle the PDF URL, potentially converting blob to URL
   useEffect(() => {
-    // If pdfUrl is already a string URL, use it directly
+    // If pdfUrl is already a string URL, create a virtual file with proper MIME type
     if (typeof pdfUrl === 'string') {
-      setLocalPdfUrl(pdfUrl);
-      return;
+      // Fetch the PDF content and create a blob with proper MIME type
+      fetch(pdfUrl)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
+          }
+          return response.blob();
+        })
+        .then(blob => {
+          // Create a new blob with explicit PDF MIME type
+          const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+          const url = URL.createObjectURL(pdfBlob);
+          setLocalPdfUrl(url);
+        })
+        .catch(error => {
+          console.error('Error creating virtual PDF file:', error);
+          // Fallback to direct URL if fetching fails
+          setLocalPdfUrl(pdfUrl);
+        });
+      return () => {
+        // Clean up any created URL when component unmounts
+        if (localPdfUrl && localPdfUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(localPdfUrl);
+        }
+      };
     }
     
     // If pdfUrl is a Blob or File object, create a local URL
     if (pdfUrl instanceof Blob || pdfUrl instanceof File) {
-      const url = URL.createObjectURL(pdfUrl);
+      // If the blob doesn't have the PDF MIME type, create a new one
+      let blobToUse = pdfUrl;
+      if (pdfUrl.type !== 'application/pdf') {
+        blobToUse = new Blob([pdfUrl], { type: 'application/pdf' });
+      }
+      
+      const url = URL.createObjectURL(blobToUse);
       setLocalPdfUrl(url);
       
       // Clean up the created URL when component unmounts
@@ -80,7 +109,9 @@ export default function PdfViewer({ pdfUrl, onClose, title, allowDownload, onDow
         fetch(localPdfUrl)
           .then(response => response.blob())
           .then(blob => {
-            const url = URL.createObjectURL(blob);
+            // Create a new blob with proper MIME type
+            const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+            const url = URL.createObjectURL(pdfBlob);
             const link = document.createElement('a');
             link.href = url;
             link.download = `${title || 'document'}.pdf`;
@@ -96,13 +127,33 @@ export default function PdfViewer({ pdfUrl, onClose, title, allowDownload, onDow
       } 
       // If we have a direct URL but not a blob URL
       else if (localPdfUrl) {
-        const link = document.createElement('a');
-        link.href = localPdfUrl;
-        link.download = `${title || 'document'}.pdf`;
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // For direct URLs, fetch first to ensure it gets the correct MIME type
+        fetch(localPdfUrl)
+          .then(response => response.blob())
+          .then(blob => {
+            // Create a new blob with proper MIME type
+            const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+            const url = URL.createObjectURL(pdfBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${title || 'document'}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+          })
+          .catch(err => {
+            console.error('Error downloading PDF from direct URL:', err);
+            
+            // Fallback to direct link if fetch fails
+            const link = document.createElement('a');
+            link.href = localPdfUrl;
+            link.download = `${title || 'document'}.pdf`;
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          });
       }
       else {
         console.error('No valid PDF URL available for download');

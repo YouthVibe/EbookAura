@@ -1,5 +1,7 @@
 const ApiKey = require('../models/ApiKey');
 const crypto = require('crypto');
+const User = require('../models/User');
+const asyncHandler = require('express-async-handler');
 
 /**
  * @desc    Create a new API key
@@ -223,7 +225,7 @@ const updateApiKey = async (req, res) => {
  * @route   PUT /api/api-keys/:id/revoke
  * @access  Private
  */
-const revokeApiKey = async (req, res) => {
+const revokeApiKeyById = async (req, res) => {
   try {
     const apiKey = await ApiKey.findOne({
       _id: req.params.id,
@@ -330,12 +332,181 @@ const deleteApiKey = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Generate a new API key for the user
+ * @route   POST /api/api-keys/generate
+ * @access  Private
+ */
+const generateApiKey = asyncHandler(async (req, res) => {
+  try {
+    const userId = req.user._id;
+    
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    // Generate new API key
+    const apiKey = user.generateApiKey();
+    
+    // Save user with new API key
+    await user.save();
+    
+    return res.status(200).json({
+      success: true,
+      apiKey,
+      message: 'API key generated successfully'
+    });
+  } catch (error) {
+    console.error('Error generating API key:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error generating API key',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @desc    Get current API key for the user
+ * @route   GET /api/api-keys/current
+ * @access  Private
+ */
+const getCurrentApiKey = asyncHandler(async (req, res) => {
+  try {
+    const userId = req.user._id;
+    
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    return res.status(200).json({
+      success: true,
+      hasApiKey: !!user.apiKey,
+      // Only show a masked version of the API key for security
+      apiKey: user.apiKey ? `${user.apiKey.substring(0, 5)}...${user.apiKey.substring(user.apiKey.length - 5)}` : null
+    });
+  } catch (error) {
+    console.error('Error getting API key:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error getting API key',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @desc    Revoke the current API key
+ * @route   DELETE /api/api-keys/revoke
+ * @access  Private
+ */
+const revokeApiKey = asyncHandler(async (req, res) => {
+  try {
+    const userId = req.user._id;
+    
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    // Remove API key
+    user.apiKey = undefined;
+    
+    // Save user with revoked API key
+    await user.save();
+    
+    return res.status(200).json({
+      success: true,
+      message: 'API key revoked successfully'
+    });
+  } catch (error) {
+    console.error('Error revoking API key:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error revoking API key',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @desc    Verify an API key and return user info
+ * @route   POST /api/api-keys/verify
+ * @access  Public
+ */
+const verifyApiKey = asyncHandler(async (req, res) => {
+  try {
+    const { apiKey } = req.body;
+    
+    if (!apiKey) {
+      return res.status(400).json({
+        success: false,
+        message: 'API key is required'
+      });
+    }
+    
+    // Find user by API key
+    const user = await User.findOne({ apiKey }).select('-password');
+    
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid API key'
+      });
+    }
+    
+    // If user is banned, deny access
+    if (user.isBanned) {
+      return res.status(403).json({
+        success: false,
+        message: 'This account has been suspended'
+      });
+    }
+    
+    return res.status(200).json({
+      success: true,
+      userId: user._id,
+      name: user.name,
+      email: user.email,
+      isAdmin: user.isAdmin,
+      planActive: user.planActive,
+      planType: user.planType,
+      message: 'API key verified successfully'
+    });
+  } catch (error) {
+    console.error('Error verifying API key:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error verifying API key',
+      error: error.message
+    });
+  }
+});
+
 module.exports = {
   createApiKey,
   getApiKeys,
   getApiKeyById,
   updateApiKey,
-  revokeApiKey,
+  revokeApiKeyById,
   activateApiKey,
-  deleteApiKey
+  deleteApiKey,
+  generateApiKey,
+  getCurrentApiKey,
+  revokeApiKey,
+  verifyApiKey
 }; 

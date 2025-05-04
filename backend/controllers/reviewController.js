@@ -1,5 +1,6 @@
 const Review = require('../models/Review');
 const Book = require('../models/Book');
+const mongoose = require('mongoose');
 
 // @desc    Get all reviews for a specific book
 // @route   GET /api/books/:bookId/reviews
@@ -145,6 +146,15 @@ const getBookRating = async (req, res) => {
 const createBookReview = async (req, res) => {
   try {
     const bookId = req.params.bookId;
+    
+    // Make sure user is authenticated and we have their ID
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ 
+        message: 'Authentication required to post reviews',
+        code: 'AUTH_REQUIRED'
+      });
+    }
+    
     const userId = req.user._id;
     const { rating, comment = '' } = req.body;
 
@@ -196,7 +206,12 @@ const createBookReview = async (req, res) => {
     console.log(`Updated book average rating to: ${book.averageRating}`);
 
     // Get user info to return
-    const user = await require('../models/User').findById(userId).select('username name profileImage');
+    const User = mongoose.models.User || require('../models/User');
+    const user = await User.findById(userId).select('username name profileImage');
+    
+    if (!user) {
+      console.warn(`User not found with ID: ${userId} but review was created successfully`);
+    }
     
     // Return formatted review
     const formattedReview = {

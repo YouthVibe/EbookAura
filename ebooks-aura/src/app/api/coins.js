@@ -191,26 +191,6 @@ export const claimAdRewardCoins = async () => {
   }
 };
 
-// Purchase a premium book with coins
-export const purchaseBook = async (bookId) => {
-  try {
-    const token = localStorage.getItem('token');
-    
-    if (!token) {
-      throw new Error('Authentication required');
-    }
-    
-    return await postAPI(`/coins/purchase/${bookId}`, {}, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-  } catch (error) {
-    console.error('Error purchasing book:', error);
-    throw error;
-  }
-};
-
 // Check if user has purchased a book
 export const checkBookPurchase = async (bookId) => {
   try {

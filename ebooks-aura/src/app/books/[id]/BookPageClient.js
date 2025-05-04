@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { FaDownload, FaEye, FaBook, FaArrowLeft, FaStar, FaCalendarAlt, FaFileAlt, FaLock, FaCrown, FaUser, FaCoins, FaCheck } from 'react-icons/fa';
+import { FaDownload, FaEye, FaBook, FaArrowLeft, FaStar, FaCalendarAlt, FaFileAlt, FaLock, FaCrown, FaUser, FaCoins, FaCheck, FaCheckCircle, FaUserPlus } from 'react-icons/fa';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
@@ -48,20 +48,14 @@ export default function BookPageClient({ id }) {
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [downloading, setDownloading] = useState(false);
   const [viewing, setViewing] = useState(false);
   const [showPdfViewer, setShowPdfViewer] = useState(false);
   const [pdfUrl, setPdfUrl] = useState(null);
-  const [openingCustomUrl, setOpeningCustomUrl] = useState(false);
-  const [premiumError, setPremiumError] = useState(null);
-  const [purchasing, setPurchasing] = useState(false);
-  const [purchaseSuccess, setPurchaseSuccess] = useState(false);
-  const [purchaseError, setPurchaseError] = useState(null);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [debugMode, setDebugMode] = useState(false);
-  const [hasPurchased, setHasPurchased] = useState(false);
   const [hasSubscription, setHasSubscription] = useState(false);
+  const [debugMode, setDebugMode] = useState(false);
+  const [isSubscriptionChecking, setIsSubscriptionChecking] = useState(false);
   const [subscriptionCheckerActive, setSubscriptionCheckerActive] = useState(false);
+  const [premiumError, setPremiumError] = useState(null);
   const router = useRouter();
   const { user, isLoggedIn, getToken, getApiKey, updateUserCoins } = useAuth();
   
@@ -128,7 +122,13 @@ export default function BookPageClient({ id }) {
   
   // Use both the state and computed property for determining if user has access
   // Now considering subscription status as well
-  const hasUserPurchased = hasPurchased || bookUserHasAccess || hasSubscription;
+  const hasUserPurchased = bookUserHasAccess || hasSubscription;
+  
+  // Check if user can download - only subscribed users can download premium books
+  const canDownload = isPremiumBook ? hasSubscription : true;
+  
+  // User can always view PDFs regardless of premium status or subscription
+  const canView = true;
   
   const userHasEnoughCoins = user && book ? (
     Number(user.coins || 0) >= Number(book.price || 0)
@@ -189,10 +189,6 @@ export default function BookPageClient({ id }) {
           
           if (parsedData.hasPurchased) {
             console.log('Cached data indicates user has purchased this book');
-            setHasPurchased(true);
-            setPurchaseSuccess(true);
-            
-            // Update book state to reflect access
             setBook(prevBook => ({
               ...prevBook,
               userHasAccess: true
@@ -214,7 +210,11 @@ export default function BookPageClient({ id }) {
       // First check if the book already has userHasAccess set to true
       if (book && book.userHasAccess === true) {
         console.log('Book already marked as purchased in local state');
-        setPurchaseSuccess(true);
+        setBook(prevBook => ({
+          ...prevBook,
+          userHasAccess: true
+        }));
+        
         return;
       }
       
@@ -245,19 +245,10 @@ export default function BookPageClient({ id }) {
         }));
         
         if (hasPurchased) {
-          setHasPurchased(true);
-          setPurchaseSuccess(true);
-          
-          // If book is purchased, we can disable subscription checks
-          if (subscriptionCheckTimerRef.current) {
-            console.log('Book purchased, disabling subscription checks');
-            clearInterval(subscriptionCheckTimerRef.current);
-            subscriptionCheckTimerRef.current = null;
-            setSubscriptionCheckerActive(false);
-          }
-        } else {
-          setHasPurchased(false);
-          // Do not reset purchaseSuccess here as it might have been set by a just-completed purchase
+          setBook(prevBook => ({
+            ...prevBook,
+            userHasAccess: true
+          }));
         }
       } else {
         console.warn('Purchase check API returned success:false or invalid response');
@@ -276,22 +267,10 @@ export default function BookPageClient({ id }) {
             console.log(`Fallback: Local storage indicates user ${hasPurchased ? 'has' : 'has not'} purchased this book`);
             
             if (hasPurchased) {
-              setHasPurchased(true);
-              setPurchaseSuccess(true);
-              
-              // Also update the book state
               setBook(prevBook => ({
                 ...prevBook,
                 userHasAccess: true
               }));
-              
-              // If book is purchased (from local storage), we can disable subscription checks
-              if (subscriptionCheckTimerRef.current) {
-                console.log('Book purchased (local storage), disabling subscription checks');
-                clearInterval(subscriptionCheckTimerRef.current);
-                subscriptionCheckTimerRef.current = null;
-                setSubscriptionCheckerActive(false);
-              }
             }
           }
         }
@@ -301,188 +280,152 @@ export default function BookPageClient({ id }) {
     } finally {
       isFetchingRef.current = false;
     }
-  }, [isLoggedIn, id, isPremiumBook, book, hasSubscription, setPurchaseSuccess, setHasPurchased, setBook]);
+  }, [isLoggedIn, id, isPremiumBook, book, hasSubscription, setBook]);
   
   // Function to check user's subscription status
   const checkSubscriptionStatus = useCallback(async () => {
-    if (!isLoggedIn || !isPremiumBook) {
-      return;
+    if (!isLoggedIn) {
+      console.log('Skipping subscription check - user not logged in');
+      setHasSubscription(false);
+      return false;
     }
     
-    // Skip if user already has purchased the book (avoids double request)
-    if (hasPurchased || bookUserHasAccess) {
-      console.log('User already has access through purchase, skipping subscription check');
-      return;
-    }
-    
-    // Avoid concurrent requests
-    if (isFetchingRef.current) {
-      console.log('Already fetching data, skipping duplicate subscription check');
-      return;
-    }
-    
-    console.log('Subscription check starting for premium book');
-    
-    // Check if enough time has passed since last API call (reduced to 1 minute for more frequent checks)
-    if (!shouldMakeApiCall('checkSubscription', 60000)) {
-      return;
-    }
-    
-    // Check if we've recently checked the subscription status (using localStorage)
     try {
-      const cachedSubscriptionData = localStorage.getItem('subscriptionCheckData');
-      if (cachedSubscriptionData) {
-        try {
-          const parsedData = JSON.parse(cachedSubscriptionData);
-          const lastCheckTime = new Date(parsedData.timestamp);
-          const now = new Date();
-          
-          // If we've checked in the last 2 minutes, use the cached result
-          const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
-          if (lastCheckTime > twoMinutesAgo) {
-            console.log('Using cached subscription data from', lastCheckTime);
-            
-            if (parsedData.hasSubscription) {
-              console.log('Cached data indicates user has active subscription');
-              setHasSubscription(true);
-              
-              // Update book state to reflect access
-              setBook(prevBook => ({
-                ...prevBook,
-                userHasAccess: true
-              }));
-              
-              // Disable subscription checks since we have confirmed access
-              if (subscriptionCheckTimerRef.current) {
-                clearInterval(subscriptionCheckTimerRef.current);
-                subscriptionCheckTimerRef.current = null;
-                setSubscriptionCheckerActive(false);
-              }
-              
-              return;
-            } else {
-              console.log('Cached data indicates user has no subscription');
-            }
-          } else {
-            console.log('Cached subscription data is stale, checking again');
-          }
-        } catch (parseError) {
-          console.error('Error parsing cached subscription data:', parseError);
-          // Continue with fresh API call
-        }
+      console.log('Checking subscription status for premium book access');
+      setIsSubscriptionChecking(true);
+      
+      // Avoid concurrent requests
+      if (isFetchingRef.current) {
+        console.log('Already fetching data, skipping duplicate subscription check');
+        return hasSubscription; // Return current state
       }
-    } catch (cacheError) {
-      console.error('Error checking cached subscription data:', cacheError);
-    }
-    
-    try {
-      console.log('Checking subscription status from API...');
+      
+      // Check if enough time has passed since last API call (1 minute minimum)
+      if (!shouldMakeApiCall('checkSubscription', 60000)) {
+        return hasSubscription; // Return current state
+      }
+      
+      // Log call time to avoid duplicate calls
+      markApiCallTime('checkSubscription');
+      
       isFetchingRef.current = true;
       
-      // Use fresh token to avoid token issues
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.error('No authentication token found for subscription check');
-        setHasSubscription(false);
-        isFetchingRef.current = false;
-        return;
-      }
-
-      // Force a fresh check by passing forceFresh = true to avoid stale data
-      const result = await getCurrentSubscription(true);
+      // Use the updated subscription API endpoint
+      const { getCurrentSubscription } = await import('../../api/subscriptions.js');
+      const result = await getCurrentSubscription();
       
-      console.log('Subscription check result:', result);
+      console.log('Subscription check response:', result);
       
-      // Enhanced validation of subscription data
-      const isActive = Boolean(
-        result && 
-        result.hasSubscription === true && 
-        result.subscription && 
-        result.subscription.status === 'active' &&
-        new Date(result.subscription.endDate) > new Date() // Ensure end date is in the future
-      );
+      const subscriptionActive = !!(result && result.success && result.active);
       
-      // Cache the result in localStorage with a timestamp
-      try {
-        localStorage.setItem('subscriptionCheckData', JSON.stringify({
-          hasSubscription: isActive,
-          timestamp: new Date().toISOString(),
-          // Store additional data for debugging
-          details: {
-            planName: result?.subscription?.plan?.name || 'Unknown',
-            endDate: result?.subscription?.endDate || null,
-            status: result?.subscription?.status || 'unknown'
-          }
-        }));
-      } catch (cacheError) {
-        console.error('Error caching subscription data:', cacheError);
-      }
+      // Update subscription state
+      setHasSubscription(subscriptionActive);
       
-      if (isActive) {
-        console.log('User has active subscription, granting access to premium book');
-        console.log('Subscription details:', {
-          plan: result.subscription.plan?.name,
-          endDate: result.subscription.endDate,
-          status: result.subscription.status
-        });
+      // Update book access state based on subscription
+      if (subscriptionActive) {
+        console.log('User has active subscription with access to premium books');
         
-        setHasSubscription(true);
-        
-        // Also update the book state to reflect access
         setBook(prevBook => ({
           ...prevBook,
           userHasAccess: true
         }));
         
-        // If subscription is found, we can disable periodic checks
-        if (subscriptionCheckTimerRef.current) {
-          console.log('Subscription found, disabling periodic checks');
-          clearInterval(subscriptionCheckTimerRef.current);
-          subscriptionCheckTimerRef.current = null;
-          setSubscriptionCheckerActive(false);
+        // Cache subscription status
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(`subscription_${id}`, JSON.stringify({
+            hasSubscription: true,
+            timestamp: new Date().getTime()
+          }));
         }
       } else {
-        console.log('User does not have an active subscription');
-        setHasSubscription(false);
+        console.log('User does not have an active subscription with premium access');
         
-        // If we had a subscription before but now we don't, we should update the UI
-        setBook(prevBook => ({
-          ...prevBook,
-          userHasAccess: hasPurchased || bookUserHasAccess
-        }));
+        // Only update book access if it's not already set by other means (e.g., direct purchase)
+        if (!bookUserHasAccess) {
+          setBook(prevBook => ({
+            ...prevBook,
+            userHasAccess: false
+          }));
+        }
+        
+        // Cache subscription status
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(`subscription_${id}`, JSON.stringify({
+            hasSubscription: false,
+            timestamp: new Date().getTime()
+          }));
+        }
       }
+      
+      return subscriptionActive;
     } catch (error) {
       console.error('Error checking subscription status:', error);
       setHasSubscription(false);
-      
-      // Try to gracefully recover using local storage as fallback
-      try {
-        const userInfo = localStorage.getItem('userInfo');
-        if (userInfo) {
-          const userData = JSON.parse(userInfo);
-          if (userData.isSubscribed === true && userData.isPremium === true) {
-            console.log('Fallback: User info in localStorage indicates active subscription');
-            setHasSubscription(true);
-            setBook(prevBook => ({
-              ...prevBook,
-              userHasAccess: true
-            }));
-          }
-        }
-      } catch (fallbackError) {
-        console.error('Error checking fallback subscription data:', fallbackError);
-      }
+      return false;
     } finally {
+      setIsSubscriptionChecking(false);
       isFetchingRef.current = false;
     }
-  }, [isLoggedIn, isPremiumBook, hasPurchased, bookUserHasAccess, setBook]);
+  }, [isLoggedIn, id, bookUserHasAccess]);
+  
+  // Function to check subscription status with API key
+  const checkSubscriptionWithApiKey = useCallback(async (apiKey) => {
+    if (!apiKey) {
+      console.error('No API key provided for subscription check');
+      return false;
+    }
+
+    try {
+      console.log('Checking subscription status using API key');
+      setIsSubscriptionChecking(true);
+      
+      // Avoid concurrent requests
+      if (isFetchingRef.current) {
+        console.log('Already fetching data, skipping duplicate API key subscription check');
+        return hasSubscription;
+      }
+      
+      isFetchingRef.current = true;
+      
+      // Import the API key subscription check utility
+      const { checkSubscriptionWithApiKey } = await import('../../api/subscriptions.js');
+      const result = await checkSubscriptionWithApiKey(apiKey);
+      
+      console.log('API key subscription check response:', result);
+      
+      const subscriptionActive = !!(result && result.success && result.active);
+      
+      // Update subscription state if the API key check is successful
+      if (subscriptionActive) {
+        console.log('API key has access to premium content through active subscription');
+        setHasSubscription(true);
+        
+        // Update book access state based on subscription
+        setBook(prevBook => ({
+          ...prevBook,
+          userHasAccess: true
+        }));
+        
+        return true;
+      } else {
+        console.log('API key does not have an active subscription with premium access');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error checking subscription status with API key:', error);
+      return false;
+    } finally {
+      setIsSubscriptionChecking(false);
+      isFetchingRef.current = false;
+    }
+  }, [id]);
   
   // Set up subscription checker with 5-minute interval (significantly slower than before)
   useEffect(() => {
     // Initial check when component mounts or when login/premium status changes
     if (isLoggedIn && isPremiumBook && !subscriptionCheckerActive) {
       // Skip if user already has purchased the book
-      if (hasPurchased || bookUserHasAccess) {
+      if (bookUserHasAccess) {
         console.log('User already has access through purchase, not setting up subscription checker');
         return;
       }
@@ -542,7 +485,7 @@ export default function BookPageClient({ id }) {
         setSubscriptionCheckerActive(false);
       }
     };
-  }, [isLoggedIn, isPremiumBook, checkSubscriptionStatus, subscriptionCheckerActive, hasPurchased, bookUserHasAccess]);
+  }, [isLoggedIn, isPremiumBook, checkSubscriptionStatus, subscriptionCheckerActive, bookUserHasAccess]);
   
   // Check purchase status when auth state changes or after purchase
   useEffect(() => {
@@ -550,6 +493,23 @@ export default function BookPageClient({ id }) {
       checkPurchaseStatus();
     }
   }, [isLoggedIn, id, isPremiumBook, checkPurchaseStatus]);
+  
+  // Check subscription status when user logs in
+  useEffect(() => {
+    if (isLoggedIn && !prevIsLoggedInRef.current) {
+      console.log('User just logged in - checking subscription status');
+      checkSubscriptionStatus();
+    }
+    
+    prevIsLoggedInRef.current = isLoggedIn;
+  }, [isLoggedIn, checkSubscriptionStatus]);
+
+  // Also check subscription status when the component mounts
+  useEffect(() => {
+    if (isLoggedIn) {
+      checkSubscriptionStatus();
+    }
+  }, [isLoggedIn, checkSubscriptionStatus]);
   
   // Function to fetch book details
   const fetchBookDetails = useCallback(async (bookId) => {
@@ -611,8 +571,6 @@ export default function BookPageClient({ id }) {
         // First check if the book response already indicates access
         if (normalizedData.userHasAccess === true) {
           console.log('API response indicates user already has access');
-          setHasPurchased(true);
-          setPurchaseSuccess(true);
           accessVerified = true;
         }
         
@@ -622,7 +580,7 @@ export default function BookPageClient({ id }) {
             await checkPurchaseStatus();
             
             // If purchase check granted access, we can skip subscription check
-            if (hasPurchased || bookUserHasAccess) {
+            if (hasUserPurchased) {
               console.log('Purchase check confirmed access');
               accessVerified = true;
             }
@@ -662,7 +620,7 @@ export default function BookPageClient({ id }) {
     } finally {
       setLoading(false);
     }
-  }, [isLoggedIn, getToken, checkPurchaseStatus, checkSubscriptionStatus, hasPurchased, bookUserHasAccess]);
+  }, [isLoggedIn, getToken, checkPurchaseStatus, checkSubscriptionStatus, hasUserPurchased, bookUserHasAccess]);
 
   const fetchPdfForViewing = async () => {
     if (!book || !id) {
@@ -679,16 +637,53 @@ export default function BookPageClient({ id }) {
         'Content-Type': 'application/json'
       };
       
+      // Check if we have an API key in the URL params (for external applications)
+      const urlParams = new URLSearchParams(window.location.search);
+      const apiKeyParam = urlParams.get('apiKey');
+      
       if (book.isPremium) {
-        const token = getToken();
-        const apiKey = getApiKey();
-        
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
+        let subscriptionVerified = false;
+
+        // First check if user already has verified access through the component state
+        if (hasSubscription || hasUserPurchased) {
+          console.log('User has already verified subscription or purchase');
+          subscriptionVerified = true;
         }
         
-        if (apiKey) {
-          headers['X-API-Key'] = apiKey;
+        // If a URL API key is provided, verify subscription with it
+        if (apiKeyParam && !subscriptionVerified) {
+          console.log('API key provided in URL, checking subscription status');
+          
+          try {
+            const hasActiveSubscription = await checkSubscriptionWithApiKey(apiKeyParam);
+            if (hasActiveSubscription) {
+              subscriptionVerified = true;
+              console.log('Subscription verified with API key from URL');
+            }
+          } catch (apiKeyError) {
+            console.error('Error verifying subscription with API key:', apiKeyError);
+          }
+        }
+        
+        // If no URL API key or verification failed, try with authentication token
+        if (!subscriptionVerified) {
+          const token = getToken();
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+            console.log('Using auth token for PDF access');
+          }
+        }
+        
+        // Add API key to headers if provided in URL or available from auth context
+        if (apiKeyParam) {
+          headers['X-API-Key'] = apiKeyParam;
+          console.log('Using API key from URL parameter');
+        } else {
+          const storedApiKey = getApiKey();
+          if (storedApiKey) {
+            headers['X-API-Key'] = storedApiKey;
+            console.log('Using stored API key');
+          }
         }
       }
       
@@ -698,12 +693,20 @@ export default function BookPageClient({ id }) {
       
       if (!response.ok) {
         // Handle premium authentication error
-        if (response.status === 401) {
-          const errorData = await response.json();
-          if (errorData.isPremium) {
-            setPremiumError('This is premium content. Please log in to access it.');
-            throw new Error('Premium content requires authentication');
+        if (response.status === 401 || response.status === 403) {
+          let errorMessage = 'Access denied.';
+          try {
+            const errorData = await response.json();
+            if (errorData.message) {
+              errorMessage = errorData.message;
+            }
+            if (errorData.isPremium) {
+              setPremiumError('This is premium content. Please log in to access it.');
+            }
+          } catch (e) {
+            // If we can't parse the error JSON, use a generic message
           }
+          throw new Error(`Access denied: ${errorMessage}`);
         }
         throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
       }
@@ -731,9 +734,8 @@ export default function BookPageClient({ id }) {
       // Fallback for non-premium errors
       try {
         if (book.pdfUrl) {
-          const directUrl = book.pdfUrl.endsWith('.pdf') ? book.pdfUrl : `${book.pdfUrl}.pdf`;
-          console.log(`Fallback: Using direct PDF URL: ${directUrl}`);
-          setPdfUrl(directUrl);
+          console.log(`Fallback: Using direct PDF URL: ${book.pdfUrl}`);
+          setPdfUrl(book.pdfUrl);
           setShowPdfViewer(true);
         } else {
           throw new Error('No PDF URL available for viewing');
@@ -748,19 +750,7 @@ export default function BookPageClient({ id }) {
   };
 
   const handleViewPdf = async () => {
-    // Check for premium content
-    if (isPremiumBook && !isLoggedIn) {
-      setPremiumError('This is premium content. Please log in to access it.');
-      router.push('/login');
-      return;
-    }
-    
-    // Check if user has purchased this premium content
-    if (isPremiumBook && isLoggedIn && !hasUserPurchased && !purchaseSuccess) {
-      setPremiumError('You need to purchase this book to access it.');
-      return;
-    }
-    
+    // Allow view for everyone regardless of premium status
     fetchPdfForViewing();
   };
 
@@ -770,21 +760,52 @@ export default function BookPageClient({ id }) {
       return;
     }
     
-    // Check for premium content
-    if (isPremiumBook && !isLoggedIn) {
-      setPremiumError('This is premium content. Please log in to access it.');
-      router.push('/login');
-      return;
-    }
-    
-    // Check if user has purchased this premium content
-    if (isPremiumBook && isLoggedIn && !hasUserPurchased && !purchaseSuccess) {
-      setPremiumError('You need to purchase this book to download it.');
-      return;
+    // Check for premium content - only allow download with subscription
+    if (isPremiumBook) {
+      // Check if the request has an API key in the URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const apiKeyParam = urlParams.get('apiKey');
+      
+      let hasAccess = false;
+      
+      // Check if the user already has verified access through subscription or purchase
+      if (hasSubscription || hasUserPurchased) {
+        hasAccess = true;
+        console.log('User has subscription or has purchased the book, allowing download');
+      }
+      
+      // If no access yet and API key is provided, check subscription with API key
+      if (!hasAccess && apiKeyParam) {
+        try {
+          const hasActiveSubscription = await checkSubscriptionWithApiKey(apiKeyParam);
+          if (hasActiveSubscription) {
+            hasAccess = true;
+            console.log('API key has valid subscription, allowing download');
+          }
+        } catch (apiKeyError) {
+          console.error('Error verifying subscription with API key:', apiKeyError);
+        }
+      }
+      
+      // If still no access, block download
+      if (!hasAccess) {
+        if (!isLoggedIn) {
+          setPremiumError('You need to log in and subscribe to download this premium book.');
+          router.push('/login');
+          return;
+        } else {
+          setPremiumError('You need an active subscription to download this premium book.');
+          toast.error('Subscription required to download premium books', {
+            position: "top-center",
+            autoClose: 3000
+          });
+          return;
+        }
+      }
     }
       
     try {
-      setDownloading(true);
+      setViewing(true);
       console.log('Downloading book with ID:', id);
       
       // For premium content, add authentication headers
@@ -792,16 +813,28 @@ export default function BookPageClient({ id }) {
         'Content-Type': 'application/json'
       };
       
+      // Check for API key in URL parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const apiKeyParam = urlParams.get('apiKey');
+      
       if (book.isPremium) {
-        const token = getToken();
-        const apiKey = getApiKey();
-        
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-        
-        if (apiKey) {
-          headers['X-API-Key'] = apiKey;
+        // Add API key to headers if provided in URL or available from auth context
+        if (apiKeyParam) {
+          headers['X-API-Key'] = apiKeyParam;
+          console.log('Using API key from URL parameter for download');
+        } else {
+          const token = getToken();
+          const storedApiKey = getApiKey();
+          
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+            console.log('Using auth token for PDF download');
+          }
+          
+          if (storedApiKey) {
+            headers['X-API-Key'] = storedApiKey;
+            console.log('Using stored API key for download');
+          }
         }
       }
       
@@ -828,10 +861,25 @@ export default function BookPageClient({ id }) {
         
         if (!response.ok) {
           // Handle premium authentication error
-          if (response.status === 401) {
+          if (response.status === 401 || response.status === 403) {
             const errorData = await response.json();
-            if (errorData.isPremium) {
-              setPremiumError('This is premium content. Please log in to access it.');
+            if (errorData.isPremium && errorData.requiresSubscription) {
+              setPremiumError(errorData.message || 'You need an active subscription to download this premium book.');
+              
+              // Show a toast notification
+              toast.error('Subscription required for download', {
+                position: "top-center",
+                autoClose: 3000
+              });
+              
+              // If user isn't logged in, redirect to login page
+              if (!isLoggedIn) {
+                setTimeout(() => router.push('/login'), 1500);
+              }
+              
+              throw new Error('Premium content requires subscription for downloads');
+            } else if (errorData.isPremium) {
+              setPremiumError(errorData.message || 'This is premium content. Please log in to access it.');
               throw new Error('Premium content requires authentication');
             }
           }
@@ -849,11 +897,37 @@ export default function BookPageClient({ id }) {
         }
         
         console.log(`PDF downloaded as: ${fileName}`);
+        
+        // Show success toast
+        toast.success('Download successful!', {
+          position: "top-center",
+          autoClose: 2000
+        });
       } catch (directDownloadError) {
         console.warn('Direct download failed, using fallback:', directDownloadError);
+        
+        // Show notification about the error but trying fallback
+        toast.info('Trying alternative download method...', {
+          position: "top-center",
+          autoClose: 2000
+        });
+        
+        // Check if this was a subscription error before falling back
+        if (directDownloadError.message.includes('subscription')) {
+          return; // Don't proceed with fallback for subscription errors
+        }
+        
         // Fallback to original backend endpoint if proxy fails - public access, no authentication needed
-        const fallbackUrl = `${API_ENDPOINTS.BOOKS.PDF(id)}?download=true&counted=true`;
-        window.open(fallbackUrl, '_blank');
+        try {
+          const fallbackUrl = `${API_ENDPOINTS.BOOKS.PDF(id)}?download=true&counted=true`;
+          window.open(fallbackUrl, '_blank');
+        } catch (fallbackError) {
+          console.error('Fallback download also failed:', fallbackError);
+          toast.error('Download failed. Please try again later.', {
+            position: "top-center",
+            autoClose: 3000
+          });
+        }
       }
       
       // Update local state to show download count increased
@@ -863,8 +937,16 @@ export default function BookPageClient({ id }) {
       }));
     } catch (err) {
       console.error('Error downloading book:', err);
+      
+      // If this is a premium subscription error, don't show a generic error
+      if (!err.message.includes('subscription') && !err.message.includes('Premium content')) {
+        toast.error('Download failed. Please try again later.', {
+          position: "top-center",
+          autoClose: 3000
+        });
+      }
     } finally {
-      setDownloading(false);
+      setViewing(false);
     }
   };
 
@@ -883,7 +965,6 @@ export default function BookPageClient({ id }) {
     }
     
     try {
-      setOpeningCustomUrl(true);
       const customUrl = book.customURLPDF || book.pdfUrl;
       
       // Log the action for debugging and potential analytics
@@ -907,18 +988,17 @@ export default function BookPageClient({ id }) {
           // Still open the URL even if tracking fails
           window.open(customUrl, '_blank');
         }).finally(() => {
-          setOpeningCustomUrl(false);
+          // Still try to open the URL directly as a fallback
+          window.open(customUrl, '_blank');
         });
       } catch (err) {
         console.error('Error opening custom URL:', err);
         // Still try to open the URL directly as a fallback
         window.open(customUrl, '_blank');
-        setOpeningCustomUrl(false);
       }
     } catch (err) {
       console.error('Error opening custom URL:', err);
       alert('Failed to open the PDF. Please try again or contact support if the problem persists.');
-      setOpeningCustomUrl(false);
     }
   };
 
@@ -926,232 +1006,6 @@ export default function BookPageClient({ id }) {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
-
-  // Function to initiate the purchase process
-  const initiateBookPurchase = () => {
-    if (!book || !id) {
-      console.error('Cannot purchase: Book data or ID is missing');
-      return;
-    }
-    
-    if (!isLoggedIn) {
-      setPremiumError('You need to be logged in to purchase this book');
-      router.push('/login');
-      return;
-    }
-    
-    // Check if user already owns the book
-    if (hasUserPurchased || purchaseSuccess) {
-      toast.info('You already own this book');
-      return;
-    }
-    
-    // Check if user has an active subscription
-    if (hasSubscription) {
-      toast.info('You already have access to this book through your subscription');
-      return;
-    }
-    
-    // Check if user has enough coins
-    if (!userHasEnoughCoins) {
-      setPurchaseError(`You need ${bookPrice - user.coins} more coins to purchase this book`);
-      return;
-    }
-    
-    // Show confirmation dialog
-    setShowConfirmation(true);
-  };
-  
-  // Function to actually purchase the book after confirmation
-  const handlePurchase = async () => {
-    try {
-      // First close the confirmation modal
-      setShowConfirmation(false);
-      
-      // Show the purchase is in progress
-      setPurchasing(true);
-      setPurchaseError(null);
-      
-      console.log(`Initiating book purchase for ID: ${id}`);
-      
-      // Call the purchase API
-      const result = await purchaseBook(id);
-      
-      if (result && result.success) {
-        console.log('Purchase successful:', result);
-        
-        // Update user's coin balance
-        if (user && result.coins !== undefined) {
-          console.log(`Updating user coins from ${user.coins} to ${result.coins}`);
-          updateUserCoins(result.coins);
-        }
-        
-        // Check purchase status to update UI
-        await checkPurchaseStatus();
-        
-        setPurchaseSuccess(true);
-        toast.success(result.message || 'Book purchased successfully!');
-      } else if (result && result.message) {
-        // It's possible the book was already purchased, check that case
-        if (result.message.includes('already purchased') || result.message.includes('already own')) {
-          console.log('Book was already purchased');
-          setPurchaseSuccess(true);
-          toast.info('You already own this book');
-          await checkPurchaseStatus();
-        } else {
-          // Generic success if we don't have exact coin details
-          toast.success(result.message);
-          setPurchaseSuccess(true);
-        }
-      } else {
-        // Handle strange success case with no message
-        console.warn('Purchase returned success but without details');
-        toast.success('Book purchase successful!');
-        
-        // Check if we can refresh book state
-        try {
-          // If already owned, we can still consider it a "success"
-          setPurchaseSuccess(true);
-          await checkPurchaseStatus();
-        } catch (err) {
-          console.error('Error refreshing purchase status:', err);
-        }
-      }
-    } catch (err) {
-      console.error('Purchase error:', err);
-      
-      if (err.message) {
-        setPurchaseError(err.message);
-        toast.error(err.message);
-      } else {
-        setPurchaseError('An unknown error occurred during purchase');
-        toast.error('Failed to purchase book. Please try again later.');
-      }
-    } finally {
-      setPurchasing(false);
-    }
-  };
-  
-  // Function to cancel purchase
-  const cancelPurchase = () => {
-    setShowConfirmation(false);
-  };
-  
-  // Force check login state
-  const forceCheckLogin = () => {
-    // Check local storage directly
-    const token = localStorage.getItem('token');
-    const userInfo = localStorage.getItem('userInfo');
-    
-    if (token && userInfo) {
-      try {
-        // Fetch book with auth token to refresh state
-        fetchBookDetails(id);
-        
-        // Show success message
-        toast.info('Auth state refreshed');
-      } catch (e) {
-        console.error('Error refreshing auth state:', e);
-      }
-    } else {
-      toast.error('No login data found in local storage');
-    }
-  };
-
-  // Enhanced forceCheckPremium function
-  const forceCheckPremium = useCallback(() => {
-    if (!book) return;
-    
-    setDebugMode(true);
-    
-    console.log('======= PREMIUM STATUS DEBUG =======');
-    console.log('Raw values:');
-    console.log(`- isPremium = ${String(book.isPremium)} (${typeof book.isPremium})`);
-    console.log(`- price = ${String(book.price)} (${typeof book.price})`);
-    console.log(`- Current computed isPremiumBook: ${isPremiumBook}`);
-    console.log(`- Has user purchased: ${hasUserPurchased}`);
-    console.log(`- Has subscription: ${hasSubscription}`);
-    
-    // Safeguard raw values - create fixed copies with proper types
-    let fixedIsPremium = false;
-    let fixedPrice = 0;
-    
-    // Normalize isPremium value
-    if (book.isPremium === true || 
-        book.isPremium === 'true' || 
-        book.isPremium === 1 ||
-        String(book.isPremium).toLowerCase() === 'true') {
-      fixedIsPremium = true;
-    }
-    
-    // Normalize price value
-    if (book.price) {
-      if (typeof book.price === 'number') {
-        fixedPrice = book.price;
-      } else if (typeof book.price === 'string') {
-        fixedPrice = parseFloat(book.price.replace(/[^0-9.-]+/g, ''));
-      } else if (typeof book.price === 'object' && book.price.$numberLong) {
-        // Handle MongoDB long values
-        fixedPrice = Number(book.price.$numberLong);
-      } else {
-        fixedPrice = Number(book.price);
-      }
-    }
-    
-    // Logic to determine premium status
-    let shouldBePremium = fixedIsPremium;
-    
-    // If has price but not marked premium, should be premium
-    if (!shouldBePremium && fixedPrice > 0) {
-      shouldBePremium = true;
-    }
-    
-    // Default price for premium books
-    if (shouldBePremium && fixedPrice <= 0) {
-      fixedPrice = 25;
-    }
-    
-    console.log('\nFixed values:');
-    console.log(`- fixedIsPremium = ${fixedIsPremium}`);
-    console.log(`- fixedPrice = ${fixedPrice}`);
-    console.log(`- shouldBePremium = ${shouldBePremium}`);
-    
-    // Update the book state with the fixed values
-    setBook(prevBook => ({
-      ...prevBook,
-      isPremium: shouldBePremium,
-      price: fixedPrice
-    }));
-    
-    console.log('\nBook state updated with fixed values.');
-    console.log('==================================');
-    
-    // Show a toast notification
-    toast.success('Premium status check complete');
-    
-    // Try to request a fresh copy from the server
-    setTimeout(() => {
-      try {
-        fetchBookDetails(id);
-        console.log('Refreshed book data from server');
-      } catch (err) {
-        console.error('Error refreshing book data:', err);
-      }
-    }, 1000);
-  }, [book, isPremiumBook, hasUserPurchased, hasSubscription, id, fetchBookDetails]);
-
-  // Improved debug logging for premium detection
-  useEffect(() => {
-    if (book) {
-      console.log('Premium detection debug:', {
-        rawIsPremium: book.isPremium,
-        isPremiumType: typeof book.isPremium,
-        rawPrice: book.price,
-        priceType: typeof book.price,
-        computedIsPremium: isPremiumBook
-      });
-    }
-  }, [book, isPremiumBook]);
 
   // Function to refresh the user's coin balance
   const refreshUserCoins = useCallback(async () => {
@@ -1281,8 +1135,6 @@ export default function BookPageClient({ id }) {
             const parsedData = JSON.parse(cachedPurchaseData);
             if (parsedData.hasPurchased) {
               console.log('Using cached purchase data on initial mount');
-              setHasPurchased(true);
-              setPurchaseSuccess(true);
               setBook(prevBook => ({
                 ...prevBook,
                 userHasAccess: true
@@ -1323,7 +1175,7 @@ export default function BookPageClient({ id }) {
             <FaArrowLeft /> Back to Search
           </Link>
           <button 
-            onClick={forceCheckPremium}
+            onClick={() => setDebugMode(true)}
             style={{
               display: 'none', // Hide the debug button but keep it available
               marginLeft: '10px',
@@ -1412,7 +1264,7 @@ export default function BookPageClient({ id }) {
         
         {/* Debug button in price section */}
         <button
-          onClick={forceCheckPremium}
+          onClick={() => setDebugMode(true)}
           style={{
             display: 'none', // Hide debug button
             marginLeft: '10px',
@@ -1509,8 +1361,7 @@ export default function BookPageClient({ id }) {
               </div>
             </div>
             
-            {/* Display price for premium books with improved condition */}
-            {/* More robust condition check for production environments */}
+            {/* Display premium info for premium books */}
             {(isPremiumBook || book?.price > 0) && (
               <div className={styles.premiumPurchaseContainer}>
                 {/* Debug info - visible if debug mode is on */}
@@ -1534,12 +1385,8 @@ export default function BookPageClient({ id }) {
                       <li><strong>price type:</strong> {typeof book?.price}</li>
                       <li><strong>Computed isPremiumBook:</strong> {String(isPremiumBook)}</li>
                       <li><strong>Premium Status:</strong> {isPremiumBook ? 'Premium Book' : 'Free Book'}</li>
-                      <li><strong>Has Purchased:</strong> {hasUserPurchased ? 'Yes' : 'No'}</li>
+                      <li><strong>Has Subscription:</strong> {hasSubscription ? 'Yes' : 'No'}</li>
                       <li><strong>Is Logged In:</strong> {isLoggedIn ? 'Yes' : 'No'}</li>
-                      <li><strong>User Coins:</strong> {user?.coins || 0}</li>
-                      <li><strong>Book Price:</strong> {bookPrice}</li>
-                      <li><strong>Has Enough Coins:</strong> {userHasEnoughCoins ? 'Yes' : 'No'}</li>
-                      <li><strong>API URL:</strong> {API_ENDPOINTS.BOOKS.DETAILS(id)}</li>
                     </ul>
                     
                     <div style={{ marginTop: '15px', display: 'flex', gap: '10px' }}>
@@ -1558,26 +1405,12 @@ export default function BookPageClient({ id }) {
                       </button>
                       
                       <button
-                        onClick={forceCheckPremium}
-                        style={{
-                          background: '#28a745',
-                          color: 'white',
-                          border: 'none',
-                          padding: '5px 10px',
-                          borderRadius: '4px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Force Premium Check
-                      </button>
-                      
-                      <button
                         onClick={() => {
                           // Force refresh API data with cache busting
                           fetchBookDetails(id);
                         }}
                         style={{
-                          background: '#007bff',
+                          background: '#28a745',
                           color: 'white',
                           border: 'none',
                           padding: '5px 10px',
@@ -1616,141 +1449,78 @@ export default function BookPageClient({ id }) {
                   <FaCrown className={styles.crownIcon} /> Premium Book
                 </div>
                 
-                <div className={styles.premiumInfo}>
-                  <div className={styles.premiumPrice}>
-                    <FaCoins className={styles.coinIcon} />
-                    <span className={styles.priceValue}>{bookPrice}</span> coins
-                  </div>
-                  
-                  {isLoggedIn && (
-                    <div className={styles.userCoins}>
-                      <span>Your balance: </span>
-                      <FaCoins className={styles.coinIcon} />
-                      <span className={styles.coinValue}>{user?.coins || 0}</span> coins
+                {/* Subscription access message for logged in users with active subscription */}
+                {isLoggedIn && hasSubscription && (
+                  <div className={styles.subscriptionAccess}>
+                    <FaCheckCircle className={styles.checkIcon} />
+                    <div>
+                      <div className={styles.accessTitle}>Premium Access</div>
+                      <div className={styles.accessText}>You have access to this book through your active subscription.</div>
                     </div>
-                  )}
-                </div>
-                
-                {/* Purchase section for logged in users */}
-                {isLoggedIn && !hasUserPurchased && !hasSubscription && bookPrice > 0 && !purchaseSuccess && (
-                  <>
-                    {purchaseError && (
-                      <div className={styles.purchaseError}>
-                        {purchaseError}
-                      </div>
-                    )}
-                    
-                    <button 
-                      onClick={initiateBookPurchase}
-                      className={`${styles.purchaseButton} ${!userHasEnoughCoins ? styles.disabledPurchase : ''}`}
-                      disabled={purchasing || !userHasEnoughCoins}
-                    >
-                      {purchasing ? 'Processing...' : (
-                        <>
-                          <FaCoins className={styles.buttonCoinIcon} />
-                          Purchase with Coins
-                        </>
-                      )}
-                    </button>
-                    
-                    {!userHasEnoughCoins && user && (
-                      <div className={styles.insufficientCoins}>
-                        You need <strong>{bookPrice - Number(user.coins || 0)}</strong> more coins to purchase this book.
-                        <Link href="/coins" className={styles.getCoinsLink}>
-                          <FaCoins className={styles.coinIcon} /> Get more coins
-                        </Link>
-                      </div>
-                    )}
-                  </>
+                  </div>
                 )}
-                
-                {/* Success message after purchase - show for both userHasPurchased or purchaseSuccess */}
-                {(hasUserPurchased === true || purchaseSuccess === true) && (
-                  <div className={styles.purchaseSuccess}>
-                    <FaCheck /> You own this book! You can now access the full content.
+                {console.log('hasSubscription', hasSubscription)}
+                {/* Subscription required message for logged in users without subscription */}
+                {isLoggedIn && !hasSubscription && (
+                  <div className={styles.subscriptionRequired}>
+                    <div className={styles.subscriptionMessage}>
+                      <FaCrown className={styles.crownIcon} />
+                      <div>
+                        <div className={styles.subscriptionTitle}>Subscription Required</div>
+                        <div className={styles.subscriptionText}>
+                          This premium book is only available to subscribers. Subscribe to access all premium books.
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <Link href="/plans" className={styles.subscribeButton}>
+                      <FaCrown className={styles.buttonCrownIcon} />
+                      Subscribe Now
+                    </Link>
                   </div>
                 )}
                 
                 {/* Message for non-logged in users */}
                 {!isLoggedIn && (
-                  <div className={styles.purchaseLogin}>
-                    <Link href="/login" className={styles.loginLink}>
-                      <FaUser className={styles.userIcon} /> Log in
-                    </Link> 
-                    to purchase this premium book.
-                    
-                    {process.env.NODE_ENV === 'development' && (
-                      <button 
-                        onClick={forceCheckLogin}
-                        style={{
-                          display: 'none', // Hide in UI but keep for debugging
-                          marginLeft: '10px',
-                          fontSize: '11px',
-                          padding: '3px 6px',
-                          background: '#f0f0f0',
-                          border: '1px solid #ccc',
-                          borderRadius: '3px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Retry login check
-                      </button>
-                    )}
+                  <div className={styles.loginRequired}>
+                    <div className={styles.loginMessage}>
+                      This premium book requires a subscription. Please log in to access with your subscription or to subscribe.
+                    </div>
+                    <div className={styles.loginButtons}>
+                      <Link href="/login" className={styles.loginButton}>
+                        <FaUser className={styles.userIcon} /> Log In
+                      </Link>
+                      <Link href="/signup" className={styles.signupButton}>
+                        <FaUserPlus className={styles.userPlusIcon} /> Sign Up
+                      </Link>
+                    </div>
                   </div>
                 )}
               </div>
             )}
 
             <div className={styles.actions}>
-              {book.isCustomUrl ? (
-                // For custom URL PDFs, show a single "Open PDF" button that redirects to the URL
-                <button 
-                  onClick={handleOpenCustomUrl}
-                  className={`${styles.openUrlButton} ${(isPremiumBook && !hasUserPurchased && !hasSubscription && !purchaseSuccess) ? styles.disabledButton : ''}`}
-                  disabled={openingCustomUrl || (isPremiumBook && !hasUserPurchased && !hasSubscription && !purchaseSuccess)}
-                >
-                  <FaFileAlt /> {openingCustomUrl ? 'Opening...' : 'Open PDF'}
-                </button>
-              ) : (
-                // For regular PDFs, show the standard View and Download buttons
-                <>
-                  <button 
-                    onClick={handleViewPdf} 
-                    className={`${styles.viewButton} ${(isPremiumBook && !hasUserPurchased && !hasSubscription && !purchaseSuccess) ? styles.disabledButton : ''}`}
-                    disabled={viewing || (isPremiumBook && !hasUserPurchased && !hasSubscription && !purchaseSuccess)}
-                  >
-                    <FaFileAlt /> {viewing ? 'Opening...' : 'View PDF'}
-                  </button>
-                  
-                  <button 
-                    onClick={handleDownload} 
-                    className={`${styles.downloadButton} ${(isPremiumBook && !hasUserPurchased && !hasSubscription && !purchaseSuccess) ? styles.disabledButton : ''}`}
-                    disabled={downloading || (isPremiumBook && !hasUserPurchased && !hasSubscription && !purchaseSuccess)}
-                  >
-                    <FaDownload /> {downloading ? 'Downloading...' : 'Download PDF'}
-                  </button>
-                </>
-              )}
+              <button 
+                onClick={handleViewPdf} 
+                className={`${styles.viewButton}`}
+                disabled={viewing}
+              >
+                <FaFileAlt /> {viewing ? 'Opening...' : 'View PDF'}
+              </button>
+                
+              <button 
+                onClick={handleDownload} 
+                className={`${styles.downloadButton} ${(!canDownload) ? styles.disabledButton : ''}`}
+                disabled={viewing || !canDownload}
+              >
+                <FaDownload /> {viewing ? 'Downloading...' : 'Download PDF'}
+              </button>
             </div>
           </div>
         </div>
 
         <BookReview bookId={id} />
       </div>
-
-      {/* Purchase confirmation dialog */}
-      {showConfirmation && (
-        <div className={styles.confirmationOverlay}>
-          <div className={styles.confirmationDialog}>
-            <h3>Confirm Purchase</h3>
-            <p>Are you sure you want to purchase "{book.title}" for {bookPrice} coins?</p>
-            <div className={styles.confirmationButtons}>
-              <button onClick={cancelPurchase} className={styles.cancelButton}>Cancel</button>
-              <button onClick={handlePurchase} className={styles.confirmButton}>Confirm Purchase</button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showPdfViewer && pdfUrl && typeof window !== 'undefined' && (
         <PdfViewer 
@@ -1796,28 +1566,6 @@ export default function BookPageClient({ id }) {
         </div>
       )}
 
-      {/* Show purchase success message */}
-      {isLoggedIn && isPremiumBook && (hasUserPurchased === true || purchaseSuccess === true) && !hasSubscription && (
-        <div className={`${styles.purchaseSuccess} ${styles.accessNotice}`} style={{
-          margin: '10px 0', 
-          padding: '15px', 
-          background: '#e9fae9', 
-          borderRadius: '8px',
-          border: '1px solid #4caf50',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-          fontWeight: '500'
-        }}>
-          <FaCheck style={{ color: '#4caf50', fontSize: '24px' }} />
-          <div>
-            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Purchased</div>
-            <span>You own this book! You've purchased this premium content.</span>
-          </div>
-        </div>
-      )}
-
       {/* Add status indicator for debugging if enabled */}
       {debugMode && (
         <div style={{
@@ -1836,9 +1584,59 @@ export default function BookPageClient({ id }) {
           <div><strong>Book Premium:</strong> {isPremiumBook ? '✅ Yes' : '❌ No'}</div>
           <div><strong>Access:</strong> {hasUserPurchased ? '✅ Yes' : '❌ No'}</div>
           {hasUserPurchased && (
-            <div><strong>Access Type:</strong> {hasSubscription ? '🔑 Subscription' : (hasPurchased ? '💰 Purchased' : '❓ Unknown')}</div>
+            <div><strong>Access Type:</strong> {hasSubscription ? '🔑 Subscription' : '💰 Purchased'}</div>
           )}
-          <div><strong>Subscription Check:</strong> {subscriptionCheckerActive ? '🔄 Active' : '⏹️ Inactive'}</div>
+          <div><strong>Subscription Check:</strong> {isSubscriptionChecking ? '🔄 Active' : '⏹️ Inactive'}</div>
+        </div>
+      )}
+
+      {/* Premium book subscription message for download */}
+      {isPremiumBook && !hasSubscription && (
+        <div className={styles.subscriptionNotice} style={{ 
+          margin: '10px 0', 
+          padding: '15px', 
+          background: '#fff6e6', 
+          borderRadius: '8px',
+          border: '1px solid #ffe0b2',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+          fontWeight: '500'
+        }}>
+          <FaDownload style={{ color: '#e65100', fontSize: '24px' }} />
+          <div>
+            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Download Requires Subscription</div>
+            <span>You can view this premium PDF, but you need an active subscription to download it. {!isLoggedIn && 'Please log in and subscribe to download.'}
+            {isLoggedIn && (
+              <Link href="/plans" style={{ color: '#0070f3', fontWeight: 'bold', marginLeft: '6px' }}>
+                Subscribe Now
+              </Link>
+            )}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Add subscription notification if user has subscription */}
+      {isLoggedIn && isPremiumBook && hasSubscription && (
+        <div className={`${styles.subscriptionNotice} ${styles.accessNotice}`} style={{ 
+          margin: '10px 0', 
+          padding: '15px', 
+          background: '#e9f7ff', 
+          borderRadius: '8px',
+          border: '1px solid #4c9aff',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+          fontWeight: '500'
+        }}>
+          <FaCrown style={{ color: '#ffd700', fontSize: '24px' }} />
+          <div>
+            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Premium Access</div>
+            <span>You have full access to this premium book through your active subscription. You can view and download.</span>
+          </div>
         </div>
       )}
     </div>

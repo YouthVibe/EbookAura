@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { FaArrowLeft, FaTrash, FaBookmark, FaStar, FaExclamationTriangle, FaCrown, FaCoins, FaInfoCircle } from 'react-icons/fa';
+import { FaArrowLeft, FaTrash, FaBookmark, FaStar, FaExclamationTriangle, FaCrown, FaCoins, FaInfoCircle, FaKey } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import styles from './settings.module.css';
 import { API_BASE_URL } from '../utils/config';
 import { deleteAPI, postAPI } from '../api/apiUtils';
 import { getCurrentSubscription, getSubscriptionHistory, updateSubscription, cancelSubscription } from '../api/subscriptions';
+import SimpleApiKeyManager from '../components/profile/SimpleApiKeyManager';
+import SubscriptionStatus from '../components/profile/SubscriptionStatus';
 
 export default function Settings() {
   const { user, logout, getToken, updateUserCoins } = useAuth();
@@ -423,6 +425,30 @@ export default function Settings() {
         {error && <div className={styles.errorMessage}>{error}</div>}
         {success && <div className={styles.successMessage}>{success}</div>}
 
+        {/* Subscription Status Section */}
+        <div className={styles.settingsSection}>
+          <h2 className={styles.sectionTitle}>
+            <FaCrown className={styles.sectionIcon} />
+            Subscription
+          </h2>
+          <p className={styles.sectionDescription}>
+            Manage your subscription plan and access to premium content
+          </p>
+          <SubscriptionStatus />
+        </div>
+
+        {/* API Key Management Section */}
+        <div className={styles.settingsSection}>
+          <h2 className={styles.sectionTitle}>
+            <FaKey className={styles.sectionIcon} />
+            API Key
+          </h2>
+          <p className={styles.sectionDescription}>
+            Manage your API key for external applications and services
+          </p>
+          <SimpleApiKeyManager />
+        </div>
+        
         <div className={styles.settingsSection}>
           <h2 className={styles.sectionTitle}>Account Settings</h2>
           <div className={styles.settingItem}>

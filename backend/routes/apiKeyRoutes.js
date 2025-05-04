@@ -1,39 +1,33 @@
 const express = require('express');
-const { protect } = require('../middleware/auth');
+const router = express.Router();
 const {
   createApiKey,
   getApiKeys,
-  getApiKeyById,
   updateApiKey,
+  revokeApiKeyById,
   revokeApiKey,
   activateApiKey,
-  deleteApiKey
+  deleteApiKey,
+  generateApiKey,
+  getCurrentApiKey,
+  verifyApiKey
 } = require('../controllers/apiKeyController');
+const { protect, admin } = require('../middleware/auth');
 
-const router = express.Router();
+// Private routes (require authentication)
+router.post('/generate', protect, generateApiKey);
+router.get('/current', protect, getCurrentApiKey);
+router.delete('/revoke', protect, revokeApiKey);
 
-// All routes are protected with JWT authentication
-router.use(protect);
+// Public routes
+router.post('/verify', verifyApiKey);
 
-// GET /api/api-keys - Get all API keys for the current user
-router.get('/', getApiKeys);
-
-// POST /api/api-keys - Create a new API key
-router.post('/', createApiKey);
-
-// GET /api/api-keys/:id - Get a specific API key
-router.get('/:id', getApiKeyById);
-
-// PUT /api/api-keys/:id - Update API key permissions
-router.put('/:id', updateApiKey);
-
-// PUT /api/api-keys/:id/revoke - Revoke an API key
-router.put('/:id/revoke', revokeApiKey);
-
-// PUT /api/api-keys/:id/activate - Activate an API key
-router.put('/:id/activate', activateApiKey);
-
-// DELETE /api/api-keys/:id - Delete an API key
-router.delete('/:id', deleteApiKey);
+// Admin routes
+router.post('/', protect, admin, createApiKey);
+router.get('/', protect, admin, getApiKeys);
+router.put('/:id', protect, admin, updateApiKey);
+router.put('/:id/revoke', protect, admin, revokeApiKeyById);
+router.put('/:id/activate', protect, admin, activateApiKey);
+router.delete('/:id', protect, admin, deleteApiKey);
 
 module.exports = router; 

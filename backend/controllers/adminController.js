@@ -4,6 +4,7 @@ const Review = require('../models/Review');
 const Bookmark = require('../models/Bookmark');
 const mongoose = require('mongoose');
 const { cloudinary } = require('../config/cloudinary');
+const fs = require('fs');
 
 // @desc    Get all users
 // @route   GET /api/admin/users
@@ -209,6 +210,197 @@ const deleteBook = async (req, res) => {
   }
 };
 
+// @desc    Update a book (Admin only)
+// @route   PUT /api/admin/books/:id
+// @access  Private/Admin
+const updateBook = async (req, res) => {
+  try {
+    // Check if the user is an admin
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ message: 'Not authorized. Admin access required' });
+    }
+
+    const { id } = req.params;
+    
+    // Find the book to update
+    const book = await Book.findById(id);
+    
+    if (!book) {
+      return res.status(404).json({ message: 'Book not found' });
+    }
+    
+    console.log('Updating book:', book.title);
+    
+    // Extract the basic book data from the request body
+    const { 
+      title, 
+      author, 
+      description, 
+      category, 
+      pageSize, 
+      tags, 
+      isPremium, 
+      price 
+    } = req.body;
+    
+    // Prepare updated book data
+    const updatedBookData = {
+      // Keep the original data if not provided in the request
+      title: title || book.title,
+      author: author || book.author,
+      description: description || book.description,
+      category: category || book.category,
+      pageSize: pageSize || book.pageSize,
+      isPremium: isPremium === undefined ? book.isPremium : isPremium === 'true' || isPremium === true,
+      price: isPremium === 'true' || isPremium === true ? (price || book.price || 0) : 0
+    };
+    
+    // Handle tags - they might come as a string, array, or JSON string
+    if (tags) {
+      try {
+        if (typeof tags === 'string') {
+          // First try to parse as JSON
+          try {
+            updatedBookData.tags = JSON.parse(tags);
+          } catch (e) {
+            // If not valid JSON, split by comma
+            updatedBookData.tags = tags.split(',').map(tag => tag.trim());
+          }
+        } else if (Array.isArray(tags)) {
+          updatedBookData.tags = tags;
+        }
+      } catch (err) {
+        console.error('Error processing tags:', err);
+        // Fallback to original tags
+        updatedBookData.tags = book.tags;
+      }
+    }
+    
+    // Check if files are being updated
+    let pdfUpdated = false;
+    let coverUpdated = false;
+    
+    // Handle PDF update if a new file is uploaded
+    if (req.files && req.files.pdf) {
+      try {
+        console.log('Updating PDF file');
+        
+        // Upload the new PDF to Cloudinary
+        const timestamp = Date.now();
+        const sanitizedTitle = title ? title.replace(/[^a-zA-Z0-9]/g, '_') : book.title.replace(/[^a-zA-Z0-9]/g, '_');
+        
+        // Upload the PDF as a raw file
+        const pdfResult = await cloudinary.uploader.upload(req.files.pdf.tempFilePath, {
+          public_id: sanitizedTitle + '_' + timestamp,
+          folder: 'ebook_aura/pdfs',
+          resource_type: 'raw',
+          type: 'upload',
+          tags: ['pdf', 'ebook'],
+          use_filename: true,
+          timeout: 900000 // 15 minute timeout for PDF upload
+        });
+        
+        console.log('PDF updated successfully:', pdfResult.public_id);
+        
+        // Delete the old PDF file from Cloudinary if it exists
+        if (book.pdfId) {
+          try {
+            await cloudinary.uploader.destroy(book.pdfId, { resource_type: 'raw' });
+            console.log('Deleted old PDF:', book.pdfId);
+          } catch (err) {
+            console.error('Error deleting old PDF:', err);
+            // Continue even if deletion fails
+          }
+        }
+        
+        // Remove temp file
+        fs.unlinkSync(req.files.pdf.tempFilePath);
+        
+        // Update book data with new PDF info
+        updatedBookData.pdfUrl = pdfResult.secure_url;
+        updatedBookData.pdfId = pdfResult.public_id;
+        pdfUpdated = true;
+        
+        // Calculate file size
+        const fileSizeMB = (req.files.pdf.size / (1024 * 1024)).toFixed(2);
+        updatedBookData.fileSizeMB = parseFloat(fileSizeMB);
+      } catch (err) {
+        console.error('Error uploading new PDF:', err);
+        return res.status(500).json({ 
+          message: 'Error uploading new PDF file',
+          error: err.message
+        });
+      }
+    }
+    
+    // Handle cover image update if a new file is uploaded
+    if (req.files && req.files.cover) {
+      try {
+        console.log('Updating cover image');
+        
+        // Upload the new cover to Cloudinary
+        const coverResult = await cloudinary.uploader.upload(req.files.cover.tempFilePath, {
+          folder: 'ebook_aura/covers',
+          width: 500,
+          height: 750,
+          crop: 'fill',
+          timeout: 120000 // 2 minute timeout
+        });
+        
+        console.log('Cover image updated successfully:', coverResult.public_id);
+        
+        // Delete the old cover image from Cloudinary if it exists
+        if (book.coverImageId) {
+          try {
+            await cloudinary.uploader.destroy(book.coverImageId);
+            console.log('Deleted old cover image:', book.coverImageId);
+          } catch (err) {
+            console.error('Error deleting old cover image:', err);
+            // Continue even if deletion fails
+          }
+        }
+        
+        // Remove temp file
+        fs.unlinkSync(req.files.cover.tempFilePath);
+        
+        // Update book data with new cover info
+        updatedBookData.coverImage = coverResult.secure_url;
+        updatedBookData.coverImageId = coverResult.public_id;
+        coverUpdated = true;
+      } catch (err) {
+        console.error('Error uploading new cover image:', err);
+        return res.status(500).json({ 
+          message: 'Error uploading new cover image',
+          error: err.message
+        });
+      }
+    }
+    
+    // Update the book in the database
+    const updatedBook = await Book.findByIdAndUpdate(
+      id,
+      updatedBookData,
+      { new: true, runValidators: true }
+    );
+    
+    console.log('Book updated successfully');
+    
+    // Return the updated book
+    res.status(200).json({
+      message: 'Book updated successfully',
+      book: updatedBook,
+      pdfUpdated,
+      coverUpdated
+    });
+  } catch (error) {
+    console.error('Error updating book:', error);
+    res.status(500).json({ 
+      message: 'Server error updating book',
+      error: error.message
+    });
+  }
+};
+
 // @desc    Check for orphaned Cloudinary resources and clean them up
 // @route   POST /api/admin/cleanup-cloudinary
 // @access  Private/Admin
@@ -358,5 +550,6 @@ module.exports = {
   deleteUser,
   getAllBooks,
   deleteBook,
+  updateBook,
   cleanupCloudinaryResources
 }; 

@@ -190,90 +190,42 @@ const checkProPlanBookAccess = async (req, res, next) => {
   try {
     const userId = req.user._id;
     
-    // Try to get the Subscription model safely
-    let SubscriptionToUse;
+    // Get the user with subscription information
+    const user = await User.findById(userId);
     
-    // First, check if models are already registered
-    if (mongoose.models.Subscription) {
-      SubscriptionToUse = mongoose.models.Subscription;
-    } else {
-      // If not found, try to require them (but handle potential errors)
-      try {
-        SubscriptionToUse = require('../models/Subscription');
-      } catch (mainErr) {
-        try {
-          SubscriptionToUse = require('../models/subscriptionModel');
-        } catch (altErr) {
-          console.error('Could not load any Subscription model:', altErr);
-        }
-      }
-    }
-    
-    if (!SubscriptionToUse) {
-      console.error('Could not find valid Subscription model');
+    if (!user) {
+      console.error(`User not found: ${userId}`);
       req.user.hasProAccess = false;
       return next();
     }
     
-    // Get SubscriptionPlan model if needed for population
-    let SubscriptionPlanModel;
-    if (mongoose.models.SubscriptionPlan) {
-      SubscriptionPlanModel = mongoose.models.SubscriptionPlan;
+    // Check if the plan is still active
+    if (user.planExpiresAt && user.planActive) {
+      const now = new Date();
+      if (new Date(user.planExpiresAt) < now) {
+        // Plan has expired, update the database
+        user.planActive = false;
+        await user.save();
+        
+        req.user.hasProAccess = false;
+        console.log(`User ${userId} subscription has expired`);
+        return next();
+      }
+    }
+    
+    // Check if user has an active Pro plan
+    const hasProAccess = user.planActive === true && user.planType === 'pro';
+    
+    // Set the access flag on the request object
+    req.user.hasProAccess = hasProAccess;
+    
+    if (hasProAccess) {
+      console.log(`User ${userId} has Pro plan access to all premium books`);
     } else {
-      try {
-        SubscriptionPlanModel = require('../models/subscriptionPlanModel');
-      } catch (err) {
-        // Non-critical, as we'll check the plan info carefully later
-        console.warn('Could not load SubscriptionPlan model, will proceed with caution');
-      }
+      console.log(`User ${userId} does not have Pro plan access`);
     }
     
-    // Check for current active subscriptions first
-    const activeSubscription = await SubscriptionToUse.findOne({
-      user: userId,
-      status: 'active'
-    }).populate('plan');
-
-    // If user has an active subscription
-    if (activeSubscription && activeSubscription.plan) {
-      // Check if it's a pro plan that should have access to all premium books
-      // We're looking for plans with 'Pro' in the name or with unlimited premium books
-      const isPlanPro = activeSubscription.plan.name && 
-                        activeSubscription.plan.name.toLowerCase().includes('pro') ||
-                        (activeSubscription.plan.benefits && 
-                         activeSubscription.plan.benefits.maxPremiumBooks === Infinity);
-      
-      if (isPlanPro) {
-        req.user.hasProAccess = true;
-        console.log(`User ${userId} has Pro plan access to all premium books`);
-        return next();
-      }
-    }
-
-    // If no active pro subscription, check for past pro subscriptions
-    const pastProSubscription = await SubscriptionToUse.findOne({
-      user: userId,
-      status: { $in: ['expired', 'canceled'] }
-    }).populate('plan');
-
-    if (pastProSubscription && pastProSubscription.plan) {
-      // Check if it was a pro plan
-      const wasPlanPro = pastProSubscription.plan.name && 
-                         pastProSubscription.plan.name.toLowerCase().includes('pro') ||
-                         (pastProSubscription.plan.benefits && 
-                          pastProSubscription.plan.benefits.maxPremiumBooks === Infinity);
-      
-      if (wasPlanPro) {
-        req.user.hasProAccess = true;
-        console.log(`User ${userId} has Pro plan access from past subscription`);
-        return next();
-      }
-    }
-
-    // If neither current nor past pro subscription exists
-    req.user.hasProAccess = false;
     return next();
-    
   } catch (error) {
     console.error('Error checking pro plan access:', error);
     // Don't block the request if there's an error checking subscription

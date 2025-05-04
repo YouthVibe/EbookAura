@@ -1,3 +1,21 @@
+/* Premium Label */
+.premiumLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 15px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.crownIcon {
+  color: #ffd700;
+  font-size: 1.4rem;
+}
+
 /* Premium Purchase Container */
 .premiumPurchaseContainer {
   margin: 20px 0;

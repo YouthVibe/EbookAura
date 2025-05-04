@@ -316,9 +316,6 @@ const purchaseBook = async (req, res) => {
       return res.status(404).json({ message: 'Book not found' });
     }
     
-    // FIXED: Use the robust premium check that handles serialization issues 
-    // Similar to what we have in bookController.js
-    
     // Check if the book is premium using multiple methods
     let isPremiumBook = false;
     
@@ -364,11 +361,17 @@ const purchaseBook = async (req, res) => {
     console.log(`[COIN PURCHASE] - Raw isPremium: ${book.isPremium} (${typeof book.isPremium})`);
     console.log(`[COIN PURCHASE] - Raw price: ${book.price} (${typeof book.price})`);
     
-    // If the book is not premium after all checks, return an error
-    if (!isPremiumBook) {
-      console.log(`[COIN PURCHASE] Book ${bookId} is not premium, cannot purchase`);
-      return res.status(400).json({ message: 'This book is not a premium book' });
+    // For premium books, return a message that they can only be accessed with a subscription
+    if (isPremiumBook) {
+      console.log(`[COIN PURCHASE] Book ${bookId} is premium, informing user about subscription requirement`);
+      return res.status(403).json({ 
+        message: 'Premium books can only be accessed with an active subscription. Please subscribe to access this book.',
+        requiresSubscription: true
+      });
     }
+    
+    // For non-premium books, process normal purchase
+    console.log(`[COIN PURCHASE] Book ${bookId} is not premium, proceeding with normal purchase`);
     
     // Ensure the price is a number
     const bookPrice = typeof book.price === 'number' ? book.price : 
@@ -624,8 +627,8 @@ const purchaseBook = async (req, res) => {
       transactionId
     });
   } catch (error) {
-    console.error('[COIN PURCHASE] ❌ Error purchasing book:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Error in purchaseBook:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 

@@ -22,6 +22,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const apiKeyRoutes = require('./routes/apiKeyRoutes');
 const coinRoutes = require('./routes/coinRoutes');
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
+const { apiKeyAuth } = require('./middleware/apiKeyAuth');
 
 // Load environment variables
 dotenv.config();
@@ -73,6 +74,10 @@ const fileUploadOptions = {
   preserveExtension: true,
   debug: false // Turn off debug mode to reduce console logs
 };
+
+// Apply API key authentication globally
+// This middleware will not block requests, it will just authenticate if a valid API key is provided
+app.use(apiKeyAuth);
 
 // API routes
 // Apply normal middleware for user routes without file upload

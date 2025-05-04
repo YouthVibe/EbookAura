@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaUser, FaBook, FaTrash, FaBan, FaUnlock, FaEye, FaDownload, FaStar, FaCalendarAlt, FaFilter, FaSearch, FaPlusCircle, FaBookOpen, FaEdit, FaCloudUploadAlt, FaBroom } from 'react-icons/fa';
-import { getAllUsers, toggleUserBan, deleteUser, getAllBooks, deleteBook, cleanupCloudinaryResources } from '../api/admin';
+import { getAllUsers, toggleUserBan, deleteUser, getAllBooks, deleteBook, updateBook, cleanupCloudinaryResources } from '../api/admin';
 import { useAuth } from '../context/AuthContext';
 import styles from './admin.module.css';
 import Link from 'next/link';
@@ -22,19 +22,366 @@ const ConfirmationModal = ({ isOpen, title, message, onConfirm, onCancel, isDele
         <div className={styles.modalButtons}>
           <button 
             onClick={onCancel}
-            className={styles.cancelButton}
+            className={`${styles.cancelButton} ${isDeleting ? styles.disabledButton : ''}`}
             disabled={isDeleting}
           >
             Cancel
           </button>
           <button 
             onClick={onConfirm}
-            className={styles.confirmButton}
+            className={`${styles.confirmButton} ${isDeleting ? styles.disabledButton : ''}`}
             disabled={isDeleting}
           >
             {isDeleting ? 'Processing...' : 'Confirm'}
           </button>
         </div>
+      </div>
+    </div>
+  );
+};
+
+// Edit Book Modal Component
+const EditBookModal = ({ isOpen, book, onSave, onCancel, isSaving }) => {
+  const [editedBook, setEditedBook] = useState({
+    title: '',
+    author: '',
+    description: '',
+    category: '',
+    tags: [],
+    pageSize: 0,
+    isPremium: false,
+    price: 0
+  });
+  const [newPdfFile, setNewPdfFile] = useState(null);
+  const [newCoverFile, setNewCoverFile] = useState(null);
+  const [pdfFileName, setPdfFileName] = useState('No new PDF selected');
+  const [coverFileName, setCoverFileName] = useState('No new cover image selected');
+  const [tagInput, setTagInput] = useState('');
+  const [error, setError] = useState('');
+  
+  // Initialize form with book data when modal opens
+  useEffect(() => {
+    if (book && isOpen) {
+      setEditedBook({
+        title: book.title || '',
+        author: book.author || '',
+        description: book.description || '',
+        category: book.category || '',
+        tags: book.tags || [],
+        pageSize: book.pageSize || 0,
+        isPremium: book.isPremium || false,
+        price: book.price || 0
+      });
+      setPdfFileName('No new PDF selected');
+      setCoverFileName('No new cover image selected');
+      setNewPdfFile(null);
+      setNewCoverFile(null);
+      setError('');
+    }
+  }, [book, isOpen]);
+  
+  if (!isOpen) return null;
+  
+  const handlePdfChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      if (selectedFile.type !== 'application/pdf') {
+        setError('Please select a PDF file');
+        setNewPdfFile(null);
+        setPdfFileName('No new PDF selected');
+        return;
+      }
+
+      if (selectedFile.size > 20 * 1024 * 1024) {
+        setError('PDF file size should be less than 20MB');
+        setNewPdfFile(null);
+        setPdfFileName('No new PDF selected');
+        return;
+      }
+
+      setNewPdfFile(selectedFile);
+      setPdfFileName(selectedFile.name);
+      setError('');
+    }
+  };
+
+  const handleCoverChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      if (!selectedFile.type.startsWith('image/')) {
+        setError('Please select an image file for the cover');
+        setNewCoverFile(null);
+        setCoverFileName('No new cover image selected');
+        return;
+      }
+
+      if (selectedFile.size > 5 * 1024 * 1024) {
+        setError('Cover image size should be less than 5MB');
+        setNewCoverFile(null);
+        setCoverFileName('No new cover image selected');
+        return;
+      }
+
+      setNewCoverFile(selectedFile);
+      setCoverFileName(selectedFile.name);
+      setError('');
+    }
+  };
+  
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setEditedBook(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+  
+  const handleTagInputChange = (e) => {
+    setTagInput(e.target.value);
+  };
+  
+  const handleTagInputKeyDown = (e) => {
+    if (e.key === 'Enter' && tagInput.trim()) {
+      e.preventDefault();
+      const newTag = tagInput.trim();
+      
+      if (!editedBook.tags.includes(newTag)) {
+        setEditedBook(prev => ({
+          ...prev,
+          tags: [...prev.tags, newTag]
+        }));
+      }
+      
+      setTagInput('');
+    }
+  };
+  
+  const removeTag = (tagToRemove) => {
+    setEditedBook(prev => ({
+      ...prev,
+      tags: prev.tags.filter(tag => tag !== tagToRemove)
+    }));
+  };
+  
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // Form validation
+    if (!editedBook.title || !editedBook.author || !editedBook.description || !editedBook.category) {
+      setError('Please fill all required fields');
+      return;
+    }
+    
+    // Create FormData object
+    const formData = new FormData();
+    
+    // Add book metadata
+    Object.keys(editedBook).forEach(key => {
+      if (key === 'tags') {
+        formData.append(key, JSON.stringify(editedBook[key]));
+      } else {
+        formData.append(key, editedBook[key]);
+      }
+    });
+    
+    // Add files if selected
+    if (newPdfFile) {
+      formData.append('pdf', newPdfFile);
+    }
+    
+    if (newCoverFile) {
+      formData.append('cover', newCoverFile);
+    }
+    
+    // Call the save function with the form data
+    onSave(book._id, formData);
+  };
+  
+  return (
+    <div className={styles.modalOverlay}>
+      <div className={`${styles.modal} ${styles.editBookModal}`}>
+        <div className={styles.modalHeader}>
+          <h2>Edit Book</h2>
+          <button onClick={onCancel} className={`${styles.closeButton} ${isSaving ? styles.disabledButton : ''}`} disabled={isSaving}>
+            <FiX />
+          </button>
+        </div>
+        
+        {error && <div className={styles.error}>{error}</div>}
+        
+        <form onSubmit={handleSubmit} className={styles.editBookForm}>
+          <div className={styles.formGrid}>
+            <div className={styles.formGroup}>
+              <label htmlFor="title">Title *</label>
+              <input
+                type="text"
+                id="title"
+                name="title"
+                value={editedBook.title}
+                onChange={handleInputChange}
+                required
+                maxLength={100}
+              />
+            </div>
+            
+            <div className={styles.formGroup}>
+              <label htmlFor="author">Author *</label>
+              <input
+                type="text"
+                id="author"
+                name="author"
+                value={editedBook.author}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            
+            <div className={styles.formGroup}>
+              <label htmlFor="description">Description *</label>
+              <textarea
+                id="description"
+                name="description"
+                value={editedBook.description}
+                onChange={handleInputChange}
+                rows={3}
+                required
+                maxLength={200}
+              />
+              <small>{editedBook.description.length}/200 characters</small>
+            </div>
+            
+            <div className={styles.formGroup}>
+              <label htmlFor="category">Category *</label>
+              <input
+                type="text"
+                id="category"
+                name="category"
+                value={editedBook.category}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            
+            <div className={styles.formGroup}>
+              <label htmlFor="pageSize">Page Count *</label>
+              <input
+                type="number"
+                id="pageSize"
+                name="pageSize"
+                value={editedBook.pageSize}
+                onChange={handleInputChange}
+                min={1}
+                required
+              />
+            </div>
+            
+            <div className={styles.formGroup}>
+              <div className={styles.checkboxGroup}>
+                <input
+                  type="checkbox"
+                  id="isPremium"
+                  name="isPremium"
+                  checked={editedBook.isPremium}
+                  onChange={handleInputChange}
+                />
+                <label htmlFor="isPremium">Premium Book</label>
+              </div>
+            </div>
+            
+            {editedBook.isPremium && (
+              <div className={styles.formGroup}>
+                <label htmlFor="price">Price (coins) *</label>
+                <input
+                  type="number"
+                  id="price"
+                  name="price"
+                  value={editedBook.price}
+                  onChange={handleInputChange}
+                  min={0}
+                  required={editedBook.isPremium}
+                />
+              </div>
+            )}
+          </div>
+          
+          <div className={styles.formGroup}>
+            <label>Tags</label>
+            <div className={styles.tagInput}>
+              <input
+                type="text"
+                value={tagInput}
+                onChange={handleTagInputChange}
+                onKeyDown={handleTagInputKeyDown}
+                placeholder="Add a tag and press Enter"
+              />
+            </div>
+            <div className={styles.selectedTags}>
+              {editedBook.tags.map((tag, index) => (
+                <span key={index} className={styles.tag}>
+                  {tag}
+                  <button type="button" onClick={() => removeTag(tag)}>×</button>
+                </span>
+              ))}
+            </div>
+            <small>Press Enter to add a tag</small>
+          </div>
+          
+          <div className={styles.fileUploads}>
+            <div className={styles.fileGroup}>
+              <label>Update PDF File</label>
+              <div className={styles.fileInputContainer}>
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handlePdfChange}
+                  id="pdf-upload"
+                  className={styles.fileInput}
+                />
+                <label htmlFor="pdf-upload" className={styles.fileInputLabel}>
+                  <FaCloudUploadAlt /> Choose New PDF
+                </label>
+                <span className={styles.fileName}>{pdfFileName}</span>
+              </div>
+              <small>Leave empty to keep the current PDF</small>
+            </div>
+            
+            <div className={styles.fileGroup}>
+              <label>Update Cover Image</label>
+              <div className={styles.fileInputContainer}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCoverChange}
+                  id="cover-upload"
+                  className={styles.fileInput}
+                />
+                <label htmlFor="cover-upload" className={styles.fileInputLabel}>
+                  <FaCloudUploadAlt /> Choose New Cover
+                </label>
+                <span className={styles.fileName}>{coverFileName}</span>
+              </div>
+              <small>Leave empty to keep the current cover</small>
+            </div>
+          </div>
+          
+          <div className={styles.modalFooter}>
+            <button
+              type="button"
+              onClick={onCancel}
+              className={`${styles.cancelButton} ${isSaving ? styles.disabledButton : ''}`}
+              disabled={isSaving}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className={`${styles.saveButton} ${isSaving ? styles.disabledButton : ''}`}
+              disabled={isSaving}
+            >
+              {isSaving ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
@@ -54,6 +401,9 @@ export default function AdminDashboard() {
   const [cleanupResult, setCleanupResult] = useState(null);
   const [isCleanupLoading, setIsCleanupLoading] = useState(false);
   const [cleanupResults, setCleanupResults] = useState(null);
+  const [editBookModalOpen, setEditBookModalOpen] = useState(false);
+  const [selectedBook, setSelectedBook] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
   const router = useRouter();
   const { user } = useAuth();
   
@@ -187,6 +537,37 @@ export default function AdminDashboard() {
     }
   };
   
+  // Handle edit book
+  const handleEditBook = (book) => {
+    setSelectedBook(book);
+    setEditBookModalOpen(true);
+  };
+  
+  // Handle save book changes
+  const handleSaveBookChanges = async (bookId, formData) => {
+    try {
+      setIsSaving(true);
+      setError(null);
+      
+      // Call the updateBook API function
+      const result = await updateBook(bookId, formData);
+      
+      // Update the book in the state
+      setBooks(books.map(book => 
+        book._id === bookId ? result.book : book
+      ));
+      
+      // Close the modal
+      setEditBookModalOpen(false);
+      setSelectedBook(null);
+    } catch (err) {
+      console.error('Error updating book:', err);
+      setError(`Failed to update book: ${err.message}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
   // Conditional rendering for auth check
   if (!user) {
     return <div className={styles.loading}>Checking authentication...</div>;
@@ -221,7 +602,7 @@ export default function AdminDashboard() {
       {/* Admin Actions */}
       <div className={styles.adminActions}>
         <button 
-          className={styles.adminActionButton}
+          className={`${styles.adminActionButton} ${isCleanupLoading ? styles.disabledButton : ''}`}
           onClick={handleCloudinaryCleanup}
           disabled={isCleanupLoading}
         >
@@ -402,6 +783,13 @@ export default function AdminDashboard() {
                     </div>
                     <div className={styles.bookActions}>
                       <button 
+                        className={`${styles.bookAction} ${styles.editButton}`}
+                        onClick={() => handleEditBook(book)}
+                        title="Edit Book"
+                      >
+                        <FaEdit /> Edit
+                      </button>
+                      <button 
                         className={`${styles.bookAction} ${styles.deleteButton}`}
                         onClick={() => openModal(
                           'delete-book', 
@@ -431,6 +819,14 @@ export default function AdminDashboard() {
         onConfirm={confirmAction}
         onCancel={closeModal}
         isDeleting={isProcessing}
+      />
+      
+      <EditBookModal
+        isOpen={editBookModalOpen}
+        book={selectedBook}
+        onSave={handleSaveBookChanges}
+        onCancel={() => setEditBookModalOpen(false)}
+        isSaving={isSaving}
       />
     </div>
   );

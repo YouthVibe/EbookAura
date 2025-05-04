@@ -1,6 +1,10 @@
 const Book = require('../models/Book');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
+const jwt = require('jsonwebtoken');
+const axios = require('axios');
+const path = require('path');
+const fs = require('fs');
 
 // @desc    Get all books
 // @route   GET /api/books
@@ -335,10 +339,347 @@ const incrementDownloads = asyncHandler(async (req, res) => {
   res.json({ message: 'Download count incremented', downloads: book.downloads });
 });
 
+// Function to serve the PDF file for a book
+exports.servePdf = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const isDownload = req.query.download === 'true';
+    const isCounted = req.query.counted === 'true';
+    
+    console.log(`PDF request - Book ID: ${id}, Download: ${isDownload}, Counted: ${isCounted}`);
+    
+    // Find the book
+    const book = await Book.findById(id);
+    
+    if (!book) {
+      console.log(`Book not found with ID: ${id}`);
+      return res.status(404).json({ message: 'Book not found' });
+    }
+    
+    // Check if this is a premium book
+    const isPremium = book.isPremium || book.premiumOnly || book.isExclusive;
+    
+    console.log(`Serving PDF for book: ${book.title}, Premium: ${isPremium}, Download: ${isDownload}`);
+
+    // Only check authentication and subscription if this is a premium book AND it's a download request
+    // Viewing is allowed for everyone
+    if (isPremium && isDownload) {
+      console.log('Premium book download requested, checking authentication');
+      
+      // Check if user is authenticated via API key (set by apiKeyAuth middleware)
+      if (req.apiKeyAuthenticated && req.user) {
+        console.log(`User authenticated via API key: ${req.user.email}`);
+        
+        // Check subscription status (set by apiKeyAuth middleware)
+        if (!req.hasSubscription) {
+          console.log(`User ${req.user.email} does not have an active subscription`);
+          return res.status(403).json({
+            message: 'Active subscription required to download premium content',
+            isPremium: true,
+            requiresSubscription: true
+          });
+        }
+        
+        console.log(`Subscription verified for API key user: ${req.user.email}`);
+      }
+      // If not authenticated via API key, check for JWT token
+      else {
+        // Check for authorization header
+        const authHeader = req.headers.authorization;
+        
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+          console.log('No authentication token provided for premium download');
+          return res.status(401).json({
+            message: 'Authentication required to download premium content',
+            isPremium: true,
+            requiresSubscription: true
+          });
+        }
+        
+        try {
+          // Extract and verify the token
+          const token = authHeader.split(' ')[1];
+          const decoded = jwt.verify(token, process.env.JWT_SECRET);
+          
+          // Find the user
+          const user = await User.findById(decoded.id);
+          
+          if (!user) {
+            console.log(`User not found for token ID: ${decoded.id}`);
+            return res.status(401).json({
+              message: 'User not found',
+              isPremium: true,
+              requiresSubscription: true
+            });
+          }
+          
+          // Check if user has an active subscription
+          if (!user.planActive) {
+            console.log(`User ${user.email} does not have an active subscription`);
+            return res.status(403).json({
+              message: 'Active subscription required to download premium content',
+              isPremium: true,
+              requiresSubscription: true
+            });
+          }
+          
+          // Check if plan is active but expired
+          if (user.planExpiresAt) {
+            const now = new Date();
+            if (new Date(user.planExpiresAt) < now) {
+              console.log(`User ${user.email} subscription has expired`);
+              // Update the user record
+              user.planActive = false;
+              await user.save();
+              
+              return res.status(403).json({
+                message: 'Your subscription has expired',
+                isPremium: true,
+                requiresSubscription: true
+              });
+            }
+          }
+          
+          // Check if user has Pro plan access
+          // This can be expanded based on your subscription tiers
+          if (user.planType !== 'pro') {
+            console.log(`User ${user.email} does not have Pro plan access`);
+            return res.status(403).json({
+              message: 'Pro plan subscription required for this content',
+              isPremium: true,
+              requiresSubscription: true,
+              requiresProPlan: true
+            });
+          }
+          
+          console.log(`Subscription verified for user: ${user.email}`);
+        } catch (tokenError) {
+          console.error('Token verification error:', tokenError);
+          return res.status(401).json({
+            message: 'Invalid or expired authentication token',
+            isPremium: true,
+            requiresSubscription: true
+          });
+        }
+      }
+    }
+    
+    // Increment download count if this is a direct access (not already counted)
+    // and it's a download request
+    if (isDownload && !isCounted) {
+      console.log(`Incrementing download count for book: ${book.title}`);
+      book.downloads = (book.downloads || 0) + 1;
+      await book.save();
+    }
+    
+    // Determine the PDF URL
+    let pdfUrl = book.customURLPDF;
+    if (!pdfUrl && book.pdfUrl) {
+      pdfUrl = book.pdfUrl;
+    }
+    
+    if (!pdfUrl) {
+      console.log(`No PDF URL found for book: ${book.title}`);
+      return res.status(404).json({ message: 'PDF not available for this book' });
+    }
+    
+    console.log(`Serving PDF from URL: ${pdfUrl}`);
+    
+    // Set the appropriate headers for either viewing or downloading
+    res.setHeader('Content-Type', 'application/pdf');
+    
+    if (isDownload) {
+      // Create a sanitized filename from the book title
+      const sanitizedTitle = book.title.replace(/[^a-zA-Z0-9]/g, '_');
+      res.setHeader('Content-Disposition', `attachment; filename="${sanitizedTitle}.pdf"`);
+    } else {
+      res.setHeader('Content-Disposition', 'inline');
+    }
+    
+    // Check if the PDF URL is remote or local
+    if (pdfUrl.startsWith('http://') || pdfUrl.startsWith('https://')) {
+      // For remote URLs, proxy the request
+      try {
+        const pdfResponse = await axios.get(pdfUrl, { responseType: 'stream' });
+        pdfResponse.data.pipe(res);
+      } catch (proxyError) {
+        console.error(`Error proxying PDF from ${pdfUrl}:`, proxyError);
+        return res.status(500).json({ message: 'Error retrieving PDF from remote server' });
+      }
+    } else {
+      // For local files, stream from the filesystem
+      try {
+        // Ensure the path is resolved to prevent directory traversal attacks
+        const pdfPath = path.resolve(__dirname, '..', pdfUrl.replace(/^\//, ''));
+        
+        // Check if the file exists
+        if (!fs.existsSync(pdfPath)) {
+          console.error(`PDF file not found at path: ${pdfPath}`);
+          return res.status(404).json({ message: 'PDF file not found on server' });
+        }
+        
+        const fileStream = fs.createReadStream(pdfPath);
+        fileStream.pipe(res);
+      } catch (fsError) {
+        console.error('Error streaming PDF from filesystem:', fsError);
+        return res.status(500).json({ message: 'Error reading PDF file from server' });
+      }
+    }
+  } catch (error) {
+    console.error('Error serving PDF:', error);
+    res.status(500).json({ message: 'Error serving PDF file' });
+  }
+};
+
+// Function to serve PDF content directly
+exports.servePdfContent = async (req, res) => {
+  try {
+    // Redirect to the main servePdf function with the same parameters
+    return exports.servePdf(req, res);
+  } catch (error) {
+    console.error('Error serving PDF content:', error);
+    res.status(500).json({ message: 'Error serving PDF content' });
+  }
+};
+
+// @desc    Create a new book
+// @route   POST /api/books
+// @access  Private/Admin
+const createBook = asyncHandler(async (req, res) => {
+  try {
+    const { 
+      title, 
+      author, 
+      description, 
+      category, 
+      tags, 
+      pdfUrl, 
+      pdfId, 
+      coverImage,
+      pageSize,
+      fileSizeMB,
+      isPremium,
+      price,
+      isCustomUrl,
+      customURLPDF
+    } = req.body;
+
+    // Validation - required fields
+    if (!title || !author || !description || !category) {
+      res.status(400);
+      throw new Error('Please add all required fields: title, author, description, category');
+    }
+
+    // Create the book with provided data
+    const book = await Book.create({
+      title,
+      author,
+      description,
+      category,
+      tags: tags || [],
+      pdfUrl,
+      pdfId,
+      coverImage,
+      pageSize: pageSize || 0,
+      fileSizeMB: fileSizeMB || 0,
+      isPremium: isPremium || false,
+      price: price || 0,
+      isCustomUrl: isCustomUrl || false,
+      customURLPDF: customURLPDF || '',
+      views: 0,
+      downloads: 0
+    });
+
+    if (book) {
+      res.status(201).json({
+        success: true,
+        book
+      });
+    } else {
+      res.status(400);
+      throw new Error('Invalid book data');
+    }
+  } catch (error) {
+    console.error('Error creating book:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error creating book', 
+      error: error.message 
+    });
+  }
+});
+
+// @desc    Update a book
+// @route   PUT /api/books/:id
+// @access  Private/Admin
+const updateBook = asyncHandler(async (req, res) => {
+  try {
+    const book = await Book.findById(req.params.id);
+
+    if (!book) {
+      res.status(404);
+      throw new Error('Book not found');
+    }
+
+    // Update book with new data
+    const updatedBook = await Book.findByIdAndUpdate(
+      req.params.id,
+      { ...req.body },
+      { new: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      book: updatedBook
+    });
+  } catch (error) {
+    console.error('Error updating book:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error updating book', 
+      error: error.message 
+    });
+  }
+});
+
+// @desc    Delete a book
+// @route   DELETE /api/books/:id
+// @access  Private/Admin
+const deleteBook = asyncHandler(async (req, res) => {
+  try {
+    const book = await Book.findById(req.params.id);
+
+    if (!book) {
+      res.status(404);
+      throw new Error('Book not found');
+    }
+
+    await Book.findByIdAndDelete(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Book deleted successfully',
+      id: req.params.id
+    });
+  } catch (error) {
+    console.error('Error deleting book:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error deleting book', 
+      error: error.message 
+    });
+  }
+});
+
 module.exports = {
   getBooks,
   getCategories,
   getTags,
   getBook,
-  incrementDownloads
+  incrementDownloads,
+  servePdf: exports.servePdf,
+  servePdfContent: exports.servePdfContent,
+  createBook,
+  updateBook,
+  deleteBook
 }; 

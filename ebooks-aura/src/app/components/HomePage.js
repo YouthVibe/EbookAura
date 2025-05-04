@@ -118,7 +118,7 @@ export default function HomePage() {
             </a>
           </div>
         </div>
-        <HomeAdComponent />
+        {/* <HomeAdComponent /> */}
       </div>
     </>
   );

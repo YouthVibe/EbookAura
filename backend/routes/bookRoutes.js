@@ -26,6 +26,9 @@ const axios = require('axios');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const mongoose = require('mongoose');
+const bookController = require('../controllers/bookController');
+const fs = require('fs');
+const path = require('path');
 
 // Helper function to safely get a Subscription model
 const getSubscriptionModel = () => {
@@ -49,8 +52,65 @@ const getSubscriptionModel = () => {
 
 // Authentication middleware that supports both JWT and API key auth
 const flexAuth = async (req, res, next) => {
-  // Allow request to proceed without authentication for public routes
-  // We'll check for auth only when needed for premium content
+  // Check if token exists in headers
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    try {
+      // Get token from header
+      const token = req.headers.authorization.split(' ')[1];
+
+      // Verify token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+      // Get user from token
+      req.user = await User.findById(decoded.id || decoded._id).select('-password');
+
+      if (!req.user) {
+        // If user not found but we need strict auth, send error
+        // Otherwise just continue without user
+        if (req.path.includes('/reviews') && req.method === 'POST') {
+          return res.status(401).json({ 
+            message: 'User not found with this token',
+            code: 'USER_NOT_FOUND'
+          });
+        }
+      }
+
+      // Check if user is banned
+      if (req.user && req.user.isBanned) {
+        return res.status(403).json({
+          message: 'Your account has been suspended. Please contact support.',
+          code: 'ACCOUNT_SUSPENDED'
+        });
+      }
+    } catch (error) {
+      console.error('Token verification error in flexAuth:', error);
+      
+      // If this is a review creation route, handle auth errors
+      if (req.path.includes('/reviews') && req.method === 'POST') {
+        if (error.name === 'JsonWebTokenError') {
+          return res.status(401).json({ 
+            message: 'Invalid token format',
+            code: 'INVALID_TOKEN'
+          });
+        } else if (error.name === 'TokenExpiredError') {
+          return res.status(401).json({ 
+            message: 'Token expired',
+            code: 'TOKEN_EXPIRED'
+          });
+        }
+        
+        return res.status(401).json({ 
+          message: 'Not authorized, token failed',
+          code: 'AUTH_FAILED',
+          error: error.message
+        });
+      }
+      // For other routes, just continue without user auth
+    }
+  }
+  
+  // Allow request to proceed
+  // For review creation, we'll check for auth in the route handler
   next();
 };
 
@@ -72,6 +132,14 @@ router.get('/:bookId/rating', getBookRating);
 
 // Create review route - requires authentication and checks permissions for API keys
 router.post('/:bookId/reviews', flexAuth, async (req, res, next) => {
+  // Ensure the user is authenticated
+  if (!req.user || !req.user._id) {
+    return res.status(401).json({ 
+      message: 'Authentication required to post reviews',
+      code: 'AUTH_REQUIRED'
+    });
+  }
+  
   // If using API key, check for review posting permission and track usage
   if (req.apiKey) {
     return apiKeyPostReviewsPermission(req, res, async (err) => {
@@ -88,361 +156,14 @@ router.post('/:bookId/reviews', flexAuth, async (req, res, next) => {
   }
 });
 
-// PDF routes - public access without authentication
-router.get('/:id/pdf', servePdf);
+// PDF routes - support both new and legacy URLs (with API key auth)
+router.get('/pdf/:id', apiKeyAuth, bookController.servePdf);
 
-// Proxy endpoint to fetch PDF content - public access
-router.get('/:id/pdf-content', servePdfContent);
+// Legacy endpoint for backward compatibility (with API key auth)
+router.get('/:id/pdf', apiKeyAuth, bookController.servePdf);
 
-// Function to serve PDF
-async function servePdf(req, res) {
-  try {
-    console.log(`PDF request received for book ID: ${req.params.id}, download: ${req.query.download}, counted: ${req.query.counted}`);
-    
-    const book = await Book.findById(req.params.id);
-    
-    if (!book) {
-      console.error(`Book not found with ID: ${req.params.id}`);
-      return res.status(404).json({ message: 'Book not found' });
-    }
-    
-    console.log(`Found book: ${book.title}, PDF URL: ${book.pdfUrl}, PDF ID: ${book.pdfId}, isCustomUrl: ${book.isCustomUrl}, isPremium: ${book.isPremium}`);
-    
-    // Check if the book is premium and require authentication
-    if (book.isPremium) {
-      // Check if user is authenticated via token or API key
-      const token = req.headers.authorization?.split(' ')[1];
-      const apiKey = req.headers['x-api-key'];
-      
-      if (!token && !apiKey) {
-        console.log('Premium content access denied: No authentication provided');
-        return res.status(401).json({ 
-          message: 'Authentication required to access premium content',
-          isPremium: true
-        });
-      }
-      
-      // If token is provided, verify it
-      if (token) {
-        try {
-          const decoded = jwt.verify(token, process.env.JWT_SECRET);
-          req.user = decoded;
-          console.log(`User ${decoded._id} accessing premium content`);
-          
-          // Check if user has purchased the book or has Pro plan access
-          const user = await User.findById(decoded._id);
-          
-          if (user) {
-            // Check for book in user's purchased books
-            const hasPurchased = user.purchasedBooks && user.purchasedBooks.some(id => 
-              id.toString() === book._id.toString()
-            );
-            
-            // If user hasn't purchased this specific book, check for Pro plan access
-            if (!hasPurchased) {
-              // Get the Subscription model
-              const SubscriptionToUse = getSubscriptionModel();
-              
-              if (!SubscriptionToUse) {
-                console.error('Could not find valid Subscription model');
-                return res.status(403).json({
-                  message: 'You need to purchase this book to access it',
-                  isPremium: true
-                });
-              }
-              
-              // Check for active Pro subscription
-              const subscription = await SubscriptionToUse.findOne({
-                user: decoded._id,
-                status: 'active'
-              }).populate('plan');
-              
-              // Check for expired/canceled Pro subscription
-              const pastProSubscription = !subscription ? await SubscriptionToUse.findOne({
-                user: decoded._id,
-                status: { $in: ['expired', 'canceled'] }
-              }).populate('plan') : null;
-              
-              // Check if current or past subscription is a Pro plan
-              const hasProAccess = (subscription && subscription.plan && 
-                                    subscription.plan.name && 
-                                    subscription.plan.name.toLowerCase().includes('pro') || 
-                                    (subscription.plan.benefits && 
-                                     subscription.plan.benefits.maxPremiumBooks === Infinity)) ||
-                                  (pastProSubscription && pastProSubscription.plan && 
-                                   pastProSubscription.plan.name && 
-                                   pastProSubscription.plan.name.toLowerCase().includes('pro') || 
-                                   (pastProSubscription.plan.benefits && 
-                                    pastProSubscription.plan.benefits.maxPremiumBooks === Infinity));
-              
-              if (hasProAccess) {
-                console.log(`User ${decoded._id} granted access to premium book through Pro plan`);
-              } else if (!hasPurchased) {
-                console.log(`User ${decoded._id} has not purchased this premium book and has no Pro access`);
-                return res.status(403).json({
-                  message: 'You need to purchase this book or have a Pro subscription to access it',
-                  isPremium: true
-                });
-              }
-            }
-          }
-        } catch (error) {
-          console.log('Premium content access denied: Invalid token');
-          return res.status(401).json({ 
-            message: 'Invalid authentication token',
-            isPremium: true
-          });
-        }
-      }
-      
-      // If API key is provided, verify it
-      if (apiKey && !req.user) {
-        try {
-          // This would need the actual API key verification logic
-          // For now, we'll assume it's handled by a middleware
-          // but we'd need to implement the check here
-          console.log('API key authentication for premium content not fully implemented');
-          return res.status(401).json({ 
-            message: 'Premium content requires full authentication',
-            isPremium: true
-          });
-        } catch (error) {
-          console.log('Premium content access denied: Invalid API key');
-          return res.status(401).json({ 
-            message: 'Invalid API key',
-            isPremium: true
-          });
-        }
-      }
-    }
-    
-    // Get filename
-    const fileName = `${book.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
-    
-    // Check if this is a download request
-    const isDownload = req.query.download === 'true';
-    
-    // Only increment download count if this is a direct access and not counted yet
-    const alreadyCounted = req.query.counted === 'true';
-    if (!alreadyCounted && isDownload) {
-      book.downloads += 1;
-      await book.save();
-      console.log(`Incremented download count for book: ${book.title} to ${book.downloads}`);
-    }
-    
-    // Get the PDF URL based on whether it's a custom URL or standard upload
-    let pdfUrl;
-    if (book.isCustomUrl && book.customURLPDF) {
-      // Use the custom URL directly without modification
-      pdfUrl = book.customURLPDF;
-      console.log(`Using custom PDF URL: ${pdfUrl}`);
-    } else {
-      // Standard Cloudinary URL
-      pdfUrl = book.pdfUrl;
-      // Add .pdf extension if needed for standard uploads
-      if (!pdfUrl.endsWith('.pdf')) {
-        pdfUrl = `${pdfUrl}.pdf`;
-      }
-      console.log(`Using standard PDF URL with .pdf extension: ${pdfUrl}`);
-    }
-    
-    // Set appropriate headers based on whether this is a download or view request
-    res.setHeader('Content-Type', 'application/pdf');
-    
-    if (isDownload) {
-      // For downloads, use attachment disposition
-      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-      console.log(`Set for download: ${fileName}`);
-    } else {
-      // For viewing, use inline disposition
-      res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
-      console.log(`Set for viewing: ${fileName}`);
-    }
-    
-    // Redirect to the processed PDF URL
-    console.log(`Redirecting to: ${pdfUrl}`);
-    res.redirect(pdfUrl);
-  } catch (error) {
-    console.error('Error serving PDF:', error);
-    res.status(500).json({ message: 'Error serving PDF', error: error.message });
-  }
-}
-
-// Function to serve PDF content
-async function servePdfContent(req, res) {
-  try {
-    console.log(`PDF content request received for book ID: ${req.params.id}`);
-    
-    const book = await Book.findById(req.params.id);
-    
-    if (!book) {
-      console.error(`Book not found with ID: ${req.params.id}`);
-      return res.status(404).json({ message: 'Book not found' });
-    }
-    
-    // Enhanced logging for premium books
-    if (book.isPremium) {
-      console.log(`Premium book accessed: "${book.title}" (ID: ${book._id}), isPremium: ${book.isPremium}`);
-    }
-    
-    // Check if the book is premium and require authentication
-    if (book.isPremium) {
-      // Check if user is authenticated via token or API key
-      const token = req.headers.authorization?.split(' ')[1];
-      const apiKey = req.headers['x-api-key'];
-      
-      if (!token && !apiKey) {
-        console.log('Premium content access denied: No authentication provided');
-        return res.status(401).json({ 
-          message: 'Authentication required to access premium content',
-          isPremium: true
-        });
-      }
-      
-      // If token is provided, verify it
-      if (token) {
-        try {
-          const decoded = jwt.verify(token, process.env.JWT_SECRET);
-          req.user = decoded;
-          console.log(`User ${decoded._id} accessing premium content`);
-          
-          // Check if user has purchased the book or has Pro plan access
-          const user = await User.findById(decoded._id);
-          
-          if (user) {
-            // Check for book in user's purchased books
-            const hasPurchased = user.purchasedBooks && user.purchasedBooks.some(id => 
-              id.toString() === book._id.toString()
-            );
-            
-            // If user hasn't purchased this specific book, check for Pro plan access
-            if (!hasPurchased) {
-              // Get the Subscription model
-              const SubscriptionToUse = getSubscriptionModel();
-              
-              if (!SubscriptionToUse) {
-                console.error('Could not find valid Subscription model');
-                return res.status(403).json({
-                  message: 'You need to purchase this book to access it',
-                  isPremium: true
-                });
-              }
-              
-              // Check for active Pro subscription
-              const subscription = await SubscriptionToUse.findOne({
-                user: decoded._id,
-                status: 'active'
-              }).populate('plan');
-              
-              // Check for expired/canceled Pro subscription
-              const pastProSubscription = !subscription ? await SubscriptionToUse.findOne({
-                user: decoded._id,
-                status: { $in: ['expired', 'canceled'] }
-              }).populate('plan') : null;
-              
-              // Check if current or past subscription is a Pro plan
-              const hasProAccess = (subscription && subscription.plan && 
-                                    subscription.plan.name && 
-                                    subscription.plan.name.toLowerCase().includes('pro') || 
-                                    (subscription.plan.benefits && 
-                                     subscription.plan.benefits.maxPremiumBooks === Infinity)) ||
-                                  (pastProSubscription && pastProSubscription.plan && 
-                                   pastProSubscription.plan.name && 
-                                   pastProSubscription.plan.name.toLowerCase().includes('pro') || 
-                                   (pastProSubscription.plan.benefits && 
-                                    pastProSubscription.plan.benefits.maxPremiumBooks === Infinity));
-              
-              if (hasProAccess) {
-                console.log(`User ${decoded._id} granted access to premium book through Pro plan`);
-              } else if (!hasPurchased) {
-                console.log(`User ${decoded._id} has not purchased this premium book and has no Pro access`);
-                return res.status(403).json({
-                  message: 'You need to purchase this book or have a Pro subscription to access it',
-                  isPremium: true
-                });
-              }
-            }
-          }
-        } catch (error) {
-          console.log('Premium content access denied: Invalid token');
-          return res.status(401).json({ 
-            message: 'Invalid authentication token',
-            isPremium: true
-          });
-        }
-      }
-      
-      // If API key is provided, verify it
-      if (apiKey && !req.user) {
-        // Similar logic as above - would need verification
-        console.log('API key authentication for premium content not fully implemented');
-        return res.status(401).json({ 
-          message: 'Premium content requires full authentication',
-          isPremium: true
-        });
-      }
-    }
-    
-    // Get the PDF URL based on whether it's a custom URL or standard upload
-    let pdfUrl;
-    if (book.isCustomUrl && book.customURLPDF) {
-      // Use the custom URL directly without modification
-      pdfUrl = book.customURLPDF;
-      console.log(`Using custom PDF URL: ${pdfUrl}`);
-    } else {
-      // Standard Cloudinary URL
-      pdfUrl = book.pdfUrl;
-      // Add .pdf extension if needed for standard uploads
-      if (!pdfUrl.endsWith('.pdf')) {
-        pdfUrl = `${pdfUrl}.pdf`;
-      }
-      console.log(`Using standard PDF URL: ${pdfUrl}`);
-    }
-    
-    console.log(`Found book: ${book.title}, fetching PDF content from: ${pdfUrl}`);
-    
-    // Check if this is a download request (for download counter)
-    const isDownload = req.query.download === 'true';
-    
-    // Only increment download count if this is a direct access and not counted yet
-    const alreadyCounted = req.query.counted === 'true';
-    if (!alreadyCounted && isDownload) {
-      book.downloads += 1;
-      await book.save();
-      console.log(`Incremented download count for book: ${book.title} to ${book.downloads}`);
-    }
-    
-    // Fetch the PDF content
-    try {
-      const pdfResponse = await axios.get(pdfUrl, {
-        responseType: 'arraybuffer',
-        headers: {
-          // Add common headers to help with various services
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-          'Accept': 'application/pdf,*/*'
-        },
-        // Increase timeout for large files or slow servers
-        timeout: 30000
-      });
-      
-      // Set appropriate headers
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Length', pdfResponse.data.length);
-      
-      // Return the PDF content
-      return res.send(pdfResponse.data);
-    } catch (fetchError) {
-      console.error('Error fetching PDF content:', fetchError);
-      return res.status(500).json({ 
-        message: 'Error fetching PDF content', 
-        error: fetchError.message 
-      });
-    }
-  } catch (error) {
-    console.error('Error in PDF content endpoint:', error);
-    res.status(500).json({ message: 'Error serving PDF content', error: error.message });
-  }
-}
+// PDF content endpoints (with API key auth)
+router.get('/:id/pdf-content', apiKeyAuth, bookController.servePdfContent);
 
 // Diagnostic endpoint to test PDF URL parsing
 router.get('/test-pdf-url/:id', async (req, res) => {
@@ -462,12 +183,8 @@ router.get('/test-pdf-url/:id', async (req, res) => {
       pdfUrl = book.customURLPDF;
       pdfType = "custom";
     } else {
-      // Standard Cloudinary URL
+      // Standard Cloudinary URL - use it directly without adding extension
       pdfUrl = book.pdfUrl;
-      // Add .pdf extension if needed for standard uploads
-      if (!pdfUrl.endsWith('.pdf')) {
-        pdfUrl = `${pdfUrl}.pdf`;
-      }
       pdfType = "standard";
     }
     
@@ -491,5 +208,13 @@ router.get('/test-pdf-url/:id', async (req, res) => {
     res.status(500).json({ message: 'Error testing PDF URL', error: error.message });
   }
 });
+
+// Protected routes
+router.use(protect);
+
+// Admin routes
+router.post('/', checkProPlanBookAccess, bookController.createBook);
+router.put('/:id', checkProPlanBookAccess, bookController.updateBook);
+router.delete('/:id', checkProPlanBookAccess, bookController.deleteBook);
 
 module.exports = router; 
