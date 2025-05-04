@@ -23,6 +23,7 @@ const apiKeyRoutes = require('./routes/apiKeyRoutes');
 const coinRoutes = require('./routes/coinRoutes');
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const { apiKeyAuth } = require('./middleware/apiKeyAuth');
+const { verifySubscription } = require('./middleware/subscriptionVerification');
 
 // Load environment variables
 dotenv.config();
@@ -79,6 +80,10 @@ const fileUploadOptions = {
 // This middleware will not block requests, it will just authenticate if a valid API key is provided
 app.use(apiKeyAuth);
 
+// Add the verifySubscription middleware globally to sync subscription status on all authenticated routes
+// This will attach hasSubscription flag to any authenticated user
+app.use(verifySubscription);
+
 // API routes
 // Apply normal middleware for user routes without file upload
 app.use('/api/users', userRoutes);
@@ -99,7 +104,7 @@ app.get('/ping', (req, res) => {
 // Routes
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/bookmarks', bookmarkRoutes);
-app.use('/api/books', bookRoutes);
+app.use('/api/books', verifySubscription, bookRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/api-keys', apiKeyRoutes);
 app.use('/api/coins', coinRoutes);

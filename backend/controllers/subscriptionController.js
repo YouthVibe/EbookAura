@@ -853,6 +853,98 @@ async function handleSubscriptionExpired(data) {
   }
 }
 
+/**
+ * @desc    Sync subscription status from Subscription model to User model
+ * @route   N/A - Internal function
+ * @access  N/A 
+ */
+const syncSubscriptionStatus = asyncHandler(async (userId) => {
+  try {
+    // Find the user
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      console.error(`Sync subscription failed: User not found with ID ${userId}`);
+      return { success: false, message: 'User not found' };
+    }
+    
+    // Check existing User model status
+    const currentPlanActive = user.planActive || false;
+    
+    // Find active subscription for this user
+    const subscription = await Subscription.findOne({
+      user: userId,
+      status: 'active'
+    }).sort({ endDate: -1 }); // Get the most recent active subscription
+    
+    let isPlanActive = false;
+    let planType = null;
+    let planExpiresAt = null;
+    
+    if (subscription) {
+      // Check if the subscription is still valid
+      const now = new Date();
+      if (new Date(subscription.endDate) > now) {
+        isPlanActive = true;
+        planType = subscription.plan.toString().includes('pro') ? 'pro' : 'basic';
+        planExpiresAt = subscription.endDate;
+        
+        console.log(`Active subscription found for user ${userId} - expires: ${planExpiresAt}`);
+      } else {
+        // Subscription has expired, update its status in the database
+        subscription.status = 'expired';
+        await subscription.save();
+        
+        console.log(`Subscription for user ${userId} has expired - updating status`);
+      }
+    } else {
+      // If no active subscription is found, also check legacy planExpiresAt field
+      if (user.planExpiresAt) {
+        const now = new Date();
+        if (new Date(user.planExpiresAt) > now && user.planActive) {
+          isPlanActive = true;
+          planType = user.planType || 'basic';
+          planExpiresAt = user.planExpiresAt;
+          
+          console.log(`No subscription record but valid planExpiresAt found for user ${userId}`);
+        }
+      }
+    }
+    
+    // If status has changed, update the User document
+    if (isPlanActive !== currentPlanActive || 
+        (user.planType !== planType && planType !== null) || 
+        (user.planExpiresAt !== planExpiresAt && planExpiresAt !== null)) {
+      
+      user.planActive = isPlanActive;
+      
+      if (planType !== null) {
+        user.planType = planType;
+      }
+      
+      if (planExpiresAt !== null) {
+        user.planExpiresAt = planExpiresAt;
+      }
+      
+      await user.save();
+      
+      console.log(`Updated user ${userId} subscription status: active=${isPlanActive}, type=${planType}`);
+    } else {
+      console.log(`No changes needed for user ${userId} subscription status`);
+    }
+    
+    return { 
+      success: true, 
+      planActive: isPlanActive, 
+      planType: planType, 
+      planExpiresAt: planExpiresAt 
+    };
+  } catch (error) {
+    console.error('Error syncing subscription status:', error);
+    return { success: false, error: error.message };
+  }
+});
+
 module.exports = {
   getSubscriptionPlans,
   getUserSubscription,
@@ -868,5 +960,6 @@ module.exports = {
   activateSubscription,
   deactivateSubscription,
   checkSubscriptionByApiKey,
-  subscriptionWebhook
+  subscriptionWebhook,
+  syncSubscriptionStatus
 }; 

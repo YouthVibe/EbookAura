@@ -61,6 +61,8 @@ export const getCurrentSubscription = async () => {
       return { success: false, hasSubscription: false, message: 'Not authenticated' };
     }
     
+    console.log('Checking current subscription status from server...');
+    
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscriptions/current`, {
       method: 'GET',
       headers: {
@@ -68,23 +70,44 @@ export const getCurrentSubscription = async () => {
       }
     });
     
+    // Log response status to help with debugging
+    console.log(`Subscription status API response status: ${response.status}`);
+    
     const data = await response.json();
+    console.log('Subscription status API response:', data);
     
     if (response.ok) {
+      // Make sure we have consistent property names (both hasSubscription and active)
+      if (data.hasSubscription === undefined && data.active !== undefined) {
+        data.hasSubscription = data.active;
+      } else if (data.active === undefined && data.hasSubscription !== undefined) {
+        data.active = data.hasSubscription;
+      }
+      
       // Cache the subscription status with timestamp
       try {
         localStorage.setItem('subscriptionStatus', JSON.stringify({
           hasSubscription: data.hasSubscription,
+          active: data.hasSubscription, // Duplicate for API consistency
           planType: data.planType,
           expiresAt: data.expiresAt,
           timestamp: new Date().toISOString()
         }));
+        console.log('Subscription status cached successfully');
       } catch (cacheError) {
         console.warn('Failed to cache subscription status:', cacheError);
       }
       
+      // Log the result
+      if (data.success && data.hasSubscription) {
+        console.log(`User has an active subscription (${data.planType || 'unknown'} plan), expires: ${data.expiresAt || 'unknown'}`);
+      } else {
+        console.log('User does not have an active subscription');
+      }
+      
       return data;
     } else {
+      console.error('Subscription check failed with error:', data.message);
       throw new Error(data.message || 'Failed to check subscription status');
     }
   } catch (error) {
@@ -100,15 +123,24 @@ export const getCurrentSubscription = async () => {
         
         // Use cache if it's less than 5 minutes old
         if ((now - cacheTime) < 5 * 60 * 1000) {
-          console.log('Using cached subscription status');
+          console.log('Using cached subscription status from', 
+                     new Date(parsedStatus.timestamp).toLocaleTimeString());
+          console.log('Cached subscription value:', parsedStatus.hasSubscription ? 'Active' : 'Inactive');
+          
           return {
             success: true,
             hasSubscription: parsedStatus.hasSubscription,
+            active: parsedStatus.hasSubscription, // Add alias for consistency
             planType: parsedStatus.planType,
             expiresAt: parsedStatus.expiresAt,
             fromCache: true
           };
+        } else {
+          console.log('Cached subscription data is too old:', 
+                     Math.round((now - cacheTime) / 60000), 'minutes old');
         }
+      } else {
+        console.log('No cached subscription data found');
       }
     } catch (cacheError) {
       console.error('Error reading cached subscription status:', cacheError);
@@ -117,7 +149,8 @@ export const getCurrentSubscription = async () => {
     // Return default response if cache fails
     return { 
       success: false, 
-      hasSubscription: false, 
+      hasSubscription: false,
+      active: false,
       error: error.message || 'Failed to check subscription status'
     };
   }
@@ -196,17 +229,45 @@ export const purchaseSubscription = async (data) => {
       throw new Error('Authentication required');
     }
     
-    const response = await postAPI('/subscriptions', data, {
+    console.log('Purchasing subscription with data:', data);
+    
+    // Add better validation before making API call
+    if (!data.planId) {
+      throw new Error('Plan ID is required');
+    }
+    
+    if (!data.paymentMethod) {
+      data.paymentMethod = 'coins'; // Default to coins if not specified
+    }
+    
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscriptions`, {
+      method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
-      }
+      },
+      body: JSON.stringify(data)
     });
     
-    // Invalidate current subscription and history caches
-    cacheApiCallResult('current_subscription', null);
-    cacheApiCallResult('subscription_history', null);
+    console.log(`Subscription purchase API response status: ${response.status}`);
     
-    return response;
+    const responseData = await response.json();
+    console.log('Subscription purchase API response:', responseData);
+    
+    if (!response.ok) {
+      // Throw specific error message from API
+      throw new Error(responseData.message || 'Failed to purchase subscription');
+    }
+    
+    // Invalidate current subscription and history caches
+    try {
+      localStorage.removeItem('subscriptionStatus');
+      console.log('Cleared subscription cache after purchase');
+    } catch (cacheError) {
+      console.warn('Failed to clear subscription cache:', cacheError);
+    }
+    
+    return responseData;
   } catch (error) {
     console.error('Error purchasing subscription:', error);
     throw error;
@@ -256,8 +317,11 @@ export const cancelSubscription = async (subscriptionId, cancelReason) => {
 export const checkSubscriptionWithApiKey = async (apiKey) => {
   try {
     if (!apiKey) {
+      console.error('checkSubscriptionWithApiKey called without an API key');
       throw new Error('API key is required');
     }
+    
+    console.log(`Checking subscription status with API key: ${apiKey.substring(0, 5)}...`);
     
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/subscriptions/check-api`, {
       method: 'GET',
@@ -266,18 +330,35 @@ export const checkSubscriptionWithApiKey = async (apiKey) => {
       }
     });
     
+    // Log response status to help with debugging
+    console.log(`Subscription check API response status: ${response.status}`);
+    
     const data = await response.json();
+    console.log('Subscription check API response:', data);
     
     if (response.ok) {
+      // Add convenient active property for consistent access pattern
+      if (data.hasSubscription === undefined && data.active !== undefined) {
+        data.hasSubscription = data.active;
+      }
+      
+      if (data.success && data.hasSubscription) {
+        console.log('API key has valid subscription - granting access');
+      } else {
+        console.log('API key does not have an active subscription');
+      }
+      
       return data;
     } else {
+      console.error('Subscription check failed with error:', data.message);
       throw new Error(data.message || 'Failed to check subscription status');
     }
   } catch (error) {
     console.error('Error checking subscription with API key:', error);
     return { 
       success: false, 
-      hasSubscription: false, 
+      hasSubscription: false,
+      active: false,
       error: error.message || 'Failed to check subscription status'
     };
   }

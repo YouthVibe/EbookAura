@@ -21,6 +21,7 @@ export default function PlansPage() {
   const [success, setSuccess] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
+  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
 
   const initializePage = async () => {
     setLoading(true);
@@ -31,21 +32,37 @@ export default function PlansPage() {
       const plansData = await getSubscriptionPlans();
       if (plansData && plansData.plans) {
         setPlans(plansData.plans);
+        console.log(`Loaded ${plansData.plans.length} subscription plans`);
       } else if (plansData && plansData.data) {
         // Handle potential different response structure
         setPlans(plansData.data);
+        console.log(`Loaded ${plansData.data.length} subscription plans (alt format)`);
       }
       
       // Try to fetch current subscription (if any)
       try {
+        console.log('Checking current subscription status...');
         const subscriptionData = await getCurrentSubscription();
+        console.log('Subscription check response:', subscriptionData);
         
         // Check if user has a subscription using the hasSubscription flag
-        if (subscriptionData && subscriptionData.hasSubscription && subscriptionData.subscription) {
+        // Check multiple potential response formats
+        const hasActiveSubscription = 
+          (subscriptionData && subscriptionData.hasSubscription === true) || 
+          (subscriptionData && subscriptionData.active === true);
+        
+        if (hasActiveSubscription && subscriptionData.subscription) {
           setCurrentSubscription(subscriptionData.subscription);
+          setHasActiveSubscription(true);
+          console.log('Active subscription found:', subscriptionData.subscription);
+        } else if (hasActiveSubscription) {
+          // For cases where we just get a flag without full subscription details
+          setHasActiveSubscription(true);
+          console.log('User has an active subscription (basic details only)');
         } else {
           // User doesn't have an active subscription, which is expected for many users
           console.log('No active subscription found');
+          setHasActiveSubscription(false);
           
           // If the subscription was expired, show a message
           if (subscriptionData && subscriptionData.wasExpired) {
@@ -58,12 +75,18 @@ export default function PlansPage() {
         // Handle any unexpected errors
         console.error('Error fetching subscription:', err);
         // Don't set an error message for users without subscriptions
+        setHasActiveSubscription(false);
       }
       
       // Refresh user's coin balance
-      const coinsData = await getUserCoins();
-      if (coinsData && typeof coinsData.coins === 'number') {
-        updateUserCoins(coinsData.coins);
+      try {
+        const coinsData = await getUserCoins();
+        if (coinsData && typeof coinsData.coins === 'number') {
+          updateUserCoins(coinsData.coins);
+          console.log(`User has ${coinsData.coins} coins`);
+        }
+      } catch (coinErr) {
+        console.error('Error fetching coin balance:', coinErr);
       }
     } catch (err) {
       console.error('Error initializing plans page:', err);
@@ -94,19 +117,33 @@ export default function PlansPage() {
     setSuccess('');
     
     try {
-      const result = await purchaseSubscription({
+      console.log(`Attempting to purchase plan: ${selectedPlan.name}`);
+      
+      const purchaseData = {
         planId: selectedPlan._id,
         paymentMethod: 'coins'
-      });
+      };
       
-      if (result && result.subscription) {
+      console.log('Purchase data:', purchaseData);
+      
+      const result = await purchaseSubscription(purchaseData);
+      
+      console.log('Purchase result:', result);
+      
+      if (result && result.success && result.subscription) {
         setCurrentSubscription(result.subscription);
+        setHasActiveSubscription(true);
         setSuccess(`Successfully subscribed to ${selectedPlan.name}!`);
         
         // Update user's coin balance
-        const coinsData = await getUserCoins();
-        if (coinsData && typeof coinsData.coins === 'number') {
-          updateUserCoins(coinsData.coins);
+        try {
+          const coinsData = await getUserCoins();
+          if (coinsData && typeof coinsData.coins === 'number') {
+            updateUserCoins(coinsData.coins);
+            console.log(`Updated user coins to: ${coinsData.coins}`);
+          }
+        } catch (coinErr) {
+          console.error('Error updating coin balance after purchase:', coinErr);
         }
         
         // Close modal
@@ -116,10 +153,27 @@ export default function PlansPage() {
         
         // Scroll to top to show success message
         window.scrollTo(0, 0);
+      } else {
+        // Handle unexpected success response format
+        throw new Error('Unexpected response format from subscription purchase');
       }
     } catch (err) {
       console.error('Error purchasing subscription:', err);
-      setError(err.message || 'Failed to purchase subscription');
+      
+      // Provide more specific error messages based on common error cases
+      if (err.message.includes('enough coins')) {
+        setError(`You don't have enough coins to purchase this plan. Please get more coins and try again.`);
+      } else if (err.message.includes('already has an active subscription')) {
+        setError('You already have an active subscription. Only one subscription can be active at a time.');
+        setHasActiveSubscription(true);
+      } else {
+        setError(err.message || 'Failed to purchase subscription. Please try again later.');
+      }
+      
+      // Close modal on error to show the error message
+      setShowConfirmModal(false);
+      document.body.style.overflow = '';
+      window.scrollTo(0, 0);
     } finally {
       setPurchaseLoading(false);
     }
@@ -128,6 +182,13 @@ export default function PlansPage() {
   const openConfirmModal = (plan) => {
     if (!isLoggedIn) {
       router.push('/login?redirect=plans');
+      return;
+    }
+    
+    // Prevent purchase if user already has an active subscription
+    if (hasActiveSubscription) {
+      setError('You already have an active subscription. Only one subscription can be active at a time.');
+      window.scrollTo(0, 0);
       return;
     }
     
@@ -165,6 +226,66 @@ export default function PlansPage() {
     // Restore body scrolling
     document.body.style.overflow = '';
   };
+
+  // Function to check if a plan matches the current subscription
+  const isActivePlan = (plan) => {
+    if (!currentSubscription || !currentSubscription.plan) {
+      // Also check hasActiveSubscription state for cases where we only have subscription status but not details
+      if (hasActiveSubscription) {
+        console.log('Using hasActiveSubscription state to determine active plan (no full subscription details available)');
+      }
+      return false;
+    }
+    
+    console.log('Checking if plan matches current subscription:', { 
+      planId: plan._id, 
+      subscriptionPlan: currentSubscription.plan
+    });
+    
+    // Check if the plan ID matches the current subscription's plan ID
+    const currentPlanId = typeof currentSubscription.plan === 'object' 
+      ? currentSubscription.plan._id 
+      : currentSubscription.plan;
+    
+    const isActive = currentPlanId === plan._id;
+    if (isActive) {
+      console.log(`Plan "${plan.name}" is the active subscription`);
+    }
+    return isActive;
+  };
+
+  // Add an effect to re-fetch subscription status when user navigates to the page
+  useEffect(() => {
+    // When component mounts and user is logged in
+    const checkSubscriptionStatus = async () => {
+      if (isLoggedIn) {
+        try {
+          console.log('Checking subscription status on mount/navigation...');
+          const subscriptionData = await getCurrentSubscription();
+          
+          // Set hasActiveSubscription based on response
+          const isActive = 
+            subscriptionData.hasSubscription === true || 
+            subscriptionData.active === true;
+          
+          console.log('Subscription status check result:', { 
+            isActive, 
+            response: subscriptionData 
+          });
+          
+          setHasActiveSubscription(isActive);
+          
+          if (isActive && subscriptionData.subscription) {
+            setCurrentSubscription(subscriptionData.subscription);
+          }
+        } catch (err) {
+          console.error('Error checking subscription status on mount:', err);
+        }
+      }
+    };
+    
+    checkSubscriptionStatus();
+  }, [isLoggedIn]); // Only re-run when login status changes
 
   if (loading) {
     return (
@@ -217,6 +338,14 @@ export default function PlansPage() {
         </div>
       )}
 
+      {/* Message about one subscription at a time when user has active subscription */}
+      {hasActiveSubscription && (
+        <div className={styles.subscriptionNote}>
+          <FaInfoCircle className={styles.infoIcon} />
+          <p>You already have an active subscription. Only one subscription can be active at a time.</p>
+        </div>
+      )}
+
       <div className={styles.coinsBalance}>
         <FaCoins className={styles.coinIcon} />
         <span className={styles.coinCount}>{user?.coins || 0}</span>
@@ -231,9 +360,10 @@ export default function PlansPage() {
           plans.map((plan) => (
             <div 
               key={plan._id} 
-              className={`${styles.planCard} ${plan.isPopular ? styles.popularPlan : ''}`}
+              className={`${styles.planCard} ${plan.isPopular ? styles.popularPlan : ''} ${isActivePlan(plan) ? styles.activePlan : ''}`}
             >
               {plan.isPopular && <div className={styles.popularBadge}>Most Popular</div>}
+              {isActivePlan(plan) && <div className={styles.activePlanBadge}>Your Active Plan</div>}
               
               <h2 className={styles.planName}>{plan.name}</h2>
               <p className={styles.planDescription}>{plan.description}</p>
@@ -295,19 +425,21 @@ export default function PlansPage() {
               
               <button 
                 className={`${styles.subscribeButton} ${
-                  currentSubscription ? styles.disabledButton : ''
-                }`}
+                  hasActiveSubscription ? styles.disabledButton : ''
+                } ${isActivePlan(plan) ? styles.activePlanButton : ''}`}
                 onClick={() => openConfirmModal(plan)}
-                disabled={!!currentSubscription}
+                disabled={hasActiveSubscription}
               >
-                {currentSubscription 
-                  ? 'Already Subscribed' 
+                {isActivePlan(plan) 
+                  ? 'Current Plan' 
+                  : hasActiveSubscription
+                  ? 'Subscription Active'
                   : user?.coins < plan.price
                   ? 'Need More Coins'
                   : 'Subscribe Now'}
               </button>
               
-              {user?.coins < plan.price && (
+              {!hasActiveSubscription && user?.coins < plan.price && (
                 <p className={styles.insufficientCoins}>
                   You need {plan.price - user.coins} more coins
                 </p>

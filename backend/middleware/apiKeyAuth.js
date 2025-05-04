@@ -121,13 +121,7 @@ const requireProPlan = (req, res, next) => {
     });
   }
   
-  if (req.planType !== 'pro') {
-    return res.status(403).json({
-      success: false,
-      message: 'Pro plan subscription required'
-    });
-  }
-  
+  console.log(`API key authenticated user with active subscription: plan type = ${req.planType}`);
   next();
 };
 

@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const path = require('path');
 const fs = require('fs');
+const mongoose = require('mongoose');
 
 // @desc    Get all books
 // @route   GET /api/books
@@ -257,16 +258,112 @@ const getBook = asyncHandler(async (req, res) => {
       const user = await User.findById(userId);
       
       if (user) {
+        // ENHANCEMENT: Check if user has an active subscription in the Subscription collection
+        // Import the Subscription model if it exists
+        let Subscription;
+        try {
+          Subscription = mongoose.model('Subscription');
+        } catch (err) {
+          try {
+            Subscription = require('../models/Subscription');
+          } catch (modelErr) {
+            console.log('Subscription model not available, using only User model for subscription checks');
+          }
+        }
+        
+        let hasActiveSubscription = false;
+        
+        // Check subscription in Subscription collection if model is available
+        if (Subscription) {
+          console.log(`Checking subscription status in Subscription collection for user ${userId}`);
+          
+          const subscription = await Subscription.findOne({
+            user: userId,
+            status: 'active'
+          }).sort({ endDate: -1 }); // Get most recent active subscription
+          
+          if (subscription) {
+            const now = new Date();
+            if (new Date(subscription.endDate) > now) {
+              // Subscription is active
+              hasActiveSubscription = true;
+              console.log(`Found active subscription in Subscription collection for user ${userId}, expires: ${subscription.endDate}`);
+              
+              // Update planActive in User model if needed
+              if (!user.planActive) {
+                console.log(`Updating planActive=true in User model for user ${userId}`);
+                user.planActive = true;
+                user.planType = subscription.plan.toString().includes('pro') ? 'pro' : 'basic';
+                user.planExpiresAt = subscription.endDate;
+                await user.save();
+              }
+            } else {
+              // Subscription has expired, update its status
+              console.log(`Subscription has expired for user ${userId}, updating status`);
+              subscription.status = 'expired';
+              await subscription.save();
+              
+              // Update User model if needed
+              if (user.planActive) {
+                console.log(`Updating planActive=false in User model for user ${userId} due to expired subscription`);
+                user.planActive = false;
+                await user.save();
+              }
+            }
+          } else {
+            console.log(`No active subscription found in Subscription collection for user ${userId}`);
+            
+            // Check if user has planExpiresAt set with valid expiration
+            if (user.planExpiresAt) {
+              const now = new Date();
+              if (new Date(user.planExpiresAt) > now) {
+                // Legacy expiration date is still valid
+                hasActiveSubscription = user.planActive;
+                console.log(`Using legacy planExpiresAt check for user ${userId}, active: ${hasActiveSubscription}`);
+              } else if (user.planActive) {
+                // Expired but planActive is true - update it
+                console.log(`Legacy planExpiresAt has expired for user ${userId}, updating planActive=false`);
+                user.planActive = false;
+                await user.save();
+              }
+            } else if (user.planActive) {
+              // No expiration date but planActive is true - assume it's invalid
+              console.log(`No planExpiresAt found but planActive=true for user ${userId}, updating planActive=false`);
+              user.planActive = false;
+              await user.save();
+            }
+          }
+        } else {
+          // Fallback to just checking User model if Subscription model is not available
+          hasActiveSubscription = user.planActive === true;
+          
+          // Also check if the planExpiresAt is valid
+          if (hasActiveSubscription && user.planExpiresAt) {
+            const now = new Date();
+            if (new Date(user.planExpiresAt) < now) {
+              // Plan has expired, update the user record
+              console.log(`User ${userId} has expired plan, updating planActive=false`);
+              user.planActive = false;
+              hasActiveSubscription = false;
+              await user.save();
+            }
+          }
+        }
+        
         // Check if the book ID exists in the user's purchased books array
         const hasPurchased = user.purchasedBooks && user.purchasedBooks.some(id => 
           id.toString() === book._id.toString()
         );
         
-        // Check if user has Pro plan access (set by the checkProPlanBookAccess middleware)
-        const hasProAccess = req.user.hasProAccess === true;
+        // User has Pro plan access if planActive is true (from our checks above)
+        // or it's set in the request by the checkProPlanBookAccess middleware
+        const hasProAccess = req.user.hasProAccess === true || hasActiveSubscription;
         
         // User has access if they purchased the book OR they have Pro plan access
         bookData.userHasAccess = hasPurchased || hasProAccess;
+        
+        // Add the subscription status to the response
+        bookData.hasSubscription = hasActiveSubscription;
         
         if (hasProAccess && !hasPurchased) {
           console.log(`User ${userId} granted access to premium book ${book._id} through Pro plan`);
@@ -278,10 +375,12 @@ const getBook = asyncHandler(async (req, res) => {
       console.error('Error checking user purchase status:', err);
       // Don't let this error block the response
       bookData.userHasAccess = false;
+      bookData.hasSubscription = false;
     }
   } else {
     // No authenticated user
     bookData.userHasAccess = false;
+    bookData.hasSubscription = false;
   }
   
   // Log transformed book data for debugging
@@ -289,6 +388,7 @@ const getBook = asyncHandler(async (req, res) => {
   console.log(`- isPremium = ${bookData.isPremium} (${typeof bookData.isPremium})`);
   console.log(`- price = ${bookData.price} (${typeof bookData.price})`);
   console.log(`- userHasAccess = ${bookData.userHasAccess}`);
+  console.log(`- hasSubscription = ${bookData.hasSubscription}`);
   
   res.json(bookData);
 });
@@ -440,19 +540,19 @@ exports.servePdf = async (req, res) => {
             }
           }
           
-          // Check if user has Pro plan access
-          // This can be expanded based on your subscription tiers
-          if (user.planType !== 'pro') {
-            console.log(`User ${user.email} does not have Pro plan access`);
-            return res.status(403).json({
-              message: 'Pro plan subscription required for this content',
-              isPremium: true,
-              requiresSubscription: true,
-              requiresProPlan: true
-            });
-          }
+          // FIXED: Remove the pro plan check - Allow any active subscription to download premium content
+          // The following check was preventing users with basic plans from downloading premium content
+          // if (user.planType !== 'pro') {
+          //   console.log(`User ${user.email} does not have Pro plan access`);
+          //   return res.status(403).json({
+          //     message: 'Pro plan subscription required for this content',
+          //     isPremium: true,
+          //     requiresSubscription: true,
+          //     requiresProPlan: true
+          //   });
+          // }
           
-          console.log(`Subscription verified for user: ${user.email}`);
+          console.log(`Subscription verified for user: ${user.email} with plan type: ${user.planType}`);
         } catch (tokenError) {
           console.error('Token verification error:', tokenError);
           return res.status(401).json({

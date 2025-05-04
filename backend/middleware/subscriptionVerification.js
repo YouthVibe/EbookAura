@@ -1,5 +1,6 @@
-import asyncHandler from 'express-async-handler';
-import User from '../models/User.js';
+const asyncHandler = require('express-async-handler');
+const User = require('../models/User');
+const { syncSubscriptionStatus } = require('../controllers/subscriptionController');
 
 /**
  * Middleware to verify that a user has an active subscription
@@ -46,4 +47,38 @@ const subscriptionRequired = asyncHandler(async (req, res, next) => {
   next();
 });
 
-export { subscriptionRequired }; 
+/**
+ * Middleware to verify and sync subscription status
+ * This should be used after the protect middleware to ensure req.user is available
+ */
+const verifySubscription = async (req, res, next) => {
+  try {
+    // Only run for authenticated users
+    if (!req.user || !req.user._id) {
+      return next();
+    }
+    
+    const userId = req.user._id;
+    
+    // Don't block the request flow, but start the sync process
+    syncSubscriptionStatus(userId)
+      .then(result => {
+        if (result.success) {
+          // Set planActive in the req.user object so it's available to the route handler
+          req.user.planActive = result.planActive;
+          req.user.hasSubscription = result.planActive; // Alias for backward compatibility
+        }
+      })
+      .catch(error => {
+        console.error('Error in subscription verification middleware:', error);
+      });
+    
+    // Continue with the request without waiting for sync to complete
+    next();
+  } catch (error) {
+    console.error('Error in subscription verification middleware:', error);
+    next();
+  }
+};
+
+module.exports = { subscriptionRequired, verifySubscription }; 

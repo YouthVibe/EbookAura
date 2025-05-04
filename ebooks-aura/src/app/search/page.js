@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { FaSearch, FaSort, FaEye, FaDownload, FaBook, FaStar, FaRegStar, FaBookmark, FaRegBookmark, FaStarHalfAlt, FaFileAlt, FaFile, FaChevronLeft, FaChevronRight, FaLock, FaCrown, FaCoins } from 'react-icons/fa';
+import { FaSearch, FaSort, FaEye, FaDownload, FaBook, FaStar, FaRegStar, FaBookmark, FaRegBookmark, FaStarHalfAlt, FaFileAlt, FaFile, FaChevronLeft, FaChevronRight, FaLock, FaCrown, FaCoins, FaThLarge, FaList, FaArrowRight } from 'react-icons/fa';
 import Link from 'next/link';
 import styles from './search.module.css';
 import { useRouter } from 'next/navigation';
@@ -57,6 +57,25 @@ export default function SearchPage() {
   const [totalBooks, setTotalBooks] = useState(0);
   const observer = useRef();
   const lastBookElementRef = useRef(null);
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+
+  // Load view mode preference from localStorage on component mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedViewMode = localStorage.getItem('bookViewMode');
+      if (savedViewMode === 'grid' || savedViewMode === 'list') {
+        setViewMode(savedViewMode);
+      }
+    }
+  }, []);
+
+  // Update localStorage when view mode changes
+  const handleViewModeChange = (mode) => {
+    setViewMode(mode);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bookViewMode', mode);
+    }
+  };
 
   // Add function to show toast
   const showToast = (message, type = 'success') => {
@@ -527,109 +546,221 @@ export default function SearchPage() {
             Found {totalBooks > 0 ? totalBooks : books.length} {totalBooks === 1 ? 'book' : 'books'}
             {showPremiumOnly && ' (Premium Only)'}
           </div>
-          <div className={styles.bookGrid}>
-            {books.map((book, index) => {
-              // Explicitly check premium status for rendering
-              const isPremium = book.isPremium === true;
-              const price = Number(book.price || 0);
-              
-              return (
-                <div 
-                  key={book._id} 
-                  className={`${styles.bookCard} ${isPremium ? styles.premiumBook : ''}`}
-                  ref={index === books.length - 1 ? lastBookRef : null}
-                >
-                  <Link href={`/books/${book._id}`} className={styles.bookLink}>
-                    <div className={styles.bookCover}>
-                      {book.coverImage ? (
-                        <div className={styles.coverImageContainer}>
+
+          {/* View toggle buttons */}
+          <div className={styles.viewToggle}>
+            <button 
+              className={`${styles.viewToggleButton} ${viewMode === 'grid' ? styles.active : ''}`}
+              onClick={() => handleViewModeChange('grid')}
+              title="Grid View"
+            >
+              <FaThLarge />
+            </button>
+            <button 
+              className={`${styles.viewToggleButton} ${viewMode === 'list' ? styles.active : ''}`}
+              onClick={() => handleViewModeChange('list')}
+              title="List View"
+            >
+              <FaList />
+            </button>
+          </div>
+
+          {/* Grid view */}
+          {viewMode === 'grid' && (
+            <div className={styles.bookGrid}>
+              {books.map((book, index) => {
+                // Explicitly check premium status for rendering
+                const isPremium = book.isPremium === true;
+                const price = Number(book.price || 0);
+                
+                return (
+                  <div 
+                    key={book._id} 
+                    className={`${styles.bookCard} ${isPremium ? styles.premiumBook : ''}`}
+                    ref={index === books.length - 1 ? lastBookRef : null}
+                  >
+                    <Link href={`/books/${book._id}`} className={styles.bookLink}>
+                      <div className={styles.bookCover}>
+                        {book.coverImage ? (
+                          <div className={styles.coverImageContainer}>
+                            <img 
+                              src={book.coverImage} 
+                              alt={`${book.title} by ${book.author}`} 
+                              className={styles.coverImage}
+                              loading="lazy"
+                            />
+                            {isPremium && price > 0 && (
+                              <div className={styles.premiumPrice}>
+                                {price} <FaCoins className={styles.miniCoin} />
+                              </div>
+                            )}
+                            
+                            {/* Premium badge is always shown if book is premium */}
+                            {isPremium && (
+                              <div className={styles.premiumBadge}>
+                                <FaCrown className={styles.premiumIcon} /> Premium
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className={styles.placeholderCover}>
+                            <FaBook className={styles.bookIcon} />
+                            {isPremium && price > 0 && (
+                              <div className={styles.premiumPrice}>
+                                {price} <FaCoins className={styles.miniCoin} />
+                              </div>
+                            )}
+                            
+                            {/* Premium badge for placeholder covers */}
+                            {isPremium && (
+                              <div className={styles.premiumBadge}>
+                                <FaCrown className={styles.premiumIcon} /> Premium
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className={styles.bookInfo}>
+                        <h3 className={styles.bookTitle}>{book.title}</h3>
+                        <p className={styles.bookAuthor}>by {book.author}</p>
+                        {renderRatingStars(book.averageRating)}
+                        <div className={styles.categoryInfo}>
+                          <p className={styles.bookCategory}>{book.category}</p>
+                        </div>
+                        <div className={styles.bookStats}>
+                          <span className={styles.stat}>
+                            <FaEye /> {book.views || 0}
+                          </span>
+                          <span className={styles.stat}>
+                            <FaDownload /> {book.downloads || 0}
+                          </span>
+                          {book.pageSize > 0 && (
+                            <span className={styles.stat}>
+                              <FaFileAlt /> {book.pageSize}p
+                            </span>
+                          )}
+                          {book.fileSizeMB > 0 && (
+                            <span className={styles.stat}>
+                              <FaFile /> {book.fileSizeMB}MB
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                    
+                    <button 
+                      className={styles.inlineBookmarkButton}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleBookmark(book._id);
+                      }}
+                      title={bookmarkedBooks.has(book._id) ? "Remove from bookmarks" : "Add to bookmarks"}
+                    >
+                      {bookmarkedBooks.has(book._id) ? (
+                        <>
+                          <FaBookmark /> Bookmarked
+                        </>
+                      ) : (
+                        <>
+                          <FaRegBookmark /> Bookmark
+                        </>
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* List view */}
+          {viewMode === 'list' && (
+            <div className={styles.bookList}>
+              {books.map((book, index) => {
+                // Explicitly check premium status for rendering
+                const isPremium = book.isPremium === true;
+                const price = Number(book.price || 0);
+                
+                return (
+                  <div 
+                    key={book._id} 
+                    className={styles.bookListItem}
+                    ref={index === books.length - 1 ? lastBookRef : null}
+                  >
+                    <div className={styles.bookListInfo}>
+                      <div className={styles.bookListCover}>
+                        {book.coverImage ? (
                           <img 
                             src={book.coverImage} 
                             alt={`${book.title} by ${book.author}`} 
-                            className={styles.coverImage}
+                            className={styles.bookListCoverImage}
                             loading="lazy"
                           />
-                          {isPremium && price > 0 && (
-                            <div className={styles.premiumPrice}>
-                              {price} <FaCoins className={styles.miniCoin} />
-                            </div>
-                          )}
+                        ) : (
+                          <div className={styles.bookListPlaceholder}>
+                            <FaBook />
+                          </div>
+                        )}
+                        
+                        {/* Premium badge for list view */}
+                        {isPremium && (
+                          <div className={styles.listPremiumBadge}>
+                            <FaCrown className={styles.listPremiumIcon} />
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className={styles.bookListDetails}>
+                        <div>
+                          <h3 className={styles.bookListTitle}>{book.title}</h3>
+                          <p className={styles.bookListAuthor}>by {book.author}</p>
                           
-                          {/* Premium badge is always shown if book is premium */}
-                          {isPremium && (
-                            <div className={styles.premiumBadge}>
-                              <FaCrown className={styles.premiumIcon} /> Premium
+                          {isPremium && price > 0 && (
+                            <div className={styles.listPrice}>
+                              <FaCoins className={styles.listPriceIcon} /> {price} coins
                             </div>
                           )}
                         </div>
-                      ) : (
-                        <div className={styles.placeholderCover}>
-                          <FaBook className={styles.bookIcon} />
-                          {isPremium && price > 0 && (
-                            <div className={styles.premiumPrice}>
-                              {price} <FaCoins className={styles.miniCoin} />
-                            </div>
-                          )}
+                        
+                        <div className={styles.bookListMeta}>
+                          <span className={styles.bookListCategory}>{book.category}</span>
                           
-                          {/* Premium badge for placeholder covers */}
-                          {isPremium && (
-                            <div className={styles.premiumBadge}>
-                              <FaCrown className={styles.premiumIcon} /> Premium
-                            </div>
+                          <span className={styles.bookListStat}>
+                            <FaEye /> {book.views || 0}
+                          </span>
+                          <span className={styles.bookListStat}>
+                            <FaDownload /> {book.downloads || 0}
+                          </span>
+                          {book.pageSize > 0 && (
+                            <span className={styles.bookListStat}>
+                              <FaFileAlt /> {book.pageSize}p
+                            </span>
                           )}
                         </div>
-                      )}
-                    </div>
-                    <div className={styles.bookInfo}>
-                      <h3 className={styles.bookTitle}>{book.title}</h3>
-                      <p className={styles.bookAuthor}>by {book.author}</p>
-                      {renderRatingStars(book.averageRating)}
-                      <div className={styles.categoryInfo}>
-                        <p className={styles.bookCategory}>{book.category}</p>
-                      </div>
-                      <div className={styles.bookStats}>
-                        <span className={styles.stat}>
-                          <FaEye /> {book.views || 0}
-                        </span>
-                        <span className={styles.stat}>
-                          <FaDownload /> {book.downloads || 0}
-                        </span>
-                        {book.pageSize > 0 && (
-                          <span className={styles.stat}>
-                            <FaFileAlt /> {book.pageSize}p
-                          </span>
-                        )}
-                        {book.fileSizeMB > 0 && (
-                          <span className={styles.stat}>
-                            <FaFile /> {book.fileSizeMB}MB
-                          </span>
-                        )}
                       </div>
                     </div>
-                  </Link>
-                  
-                  <button 
-                    className={styles.inlineBookmarkButton}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleBookmark(book._id);
-                    }}
-                    title={bookmarkedBooks.has(book._id) ? "Remove from bookmarks" : "Add to bookmarks"}
-                  >
-                    {bookmarkedBooks.has(book._id) ? (
-                      <>
-                        <FaBookmark /> Bookmarked
-                      </>
-                    ) : (
-                      <>
-                        <FaRegBookmark /> Bookmark
-                      </>
-                    )}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
+                    
+                    <div className={styles.bookListActions}>
+                      <button 
+                        className={`${styles.bookListAction} ${bookmarkedBooks.has(book._id) ? styles.bookListBookmark : ''}`}
+                        onClick={() => handleBookmark(book._id)}
+                        title={bookmarkedBooks.has(book._id) ? "Remove from bookmarks" : "Add to bookmarks"}
+                      >
+                        {bookmarkedBooks.has(book._id) ? <FaBookmark /> : <FaRegBookmark />}
+                      </button>
+                      
+                      <Link 
+                        href={`/books/${book._id}`} 
+                        className={styles.bookListAction}
+                        title="View book details"
+                      >
+                        <FaArrowRight />
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
           
           {books.length === 0 && (
             <div className={styles.noResults}>
