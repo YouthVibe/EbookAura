@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
+/**
  * Utility to check and fix model file case sensitivity issues
  * This script ensures that all model files exist with the correct casing
  * to prevent "module not found" errors on case-sensitive file systems like Linux

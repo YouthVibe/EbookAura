@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
+/**
  * Simple Sitemap Generator for EbookAura
  * 
  * This script generates a sitemap.xml file without external dependencies.

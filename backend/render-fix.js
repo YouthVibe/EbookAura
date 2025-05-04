@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
+/**
  * Render.com Deployment Fix Script
  *
  * This script fixes common issues with deploying Node.js applications to Render.com:

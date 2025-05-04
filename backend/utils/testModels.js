@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
+/**
  * Test script to verify model functionality
  * Run with: node utils/testModels.js
  */

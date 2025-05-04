@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
+/**
  * This file contains paths for admin routes that need to be statically generated
  * Generated on: 2025-05-03T17:13:34.600Z
  * 

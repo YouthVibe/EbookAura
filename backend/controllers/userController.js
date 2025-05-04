@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
 const User = require('../models/User');
 const TempUser = require('../models/TempUser');
 const jwt = require('jsonwebtoken');

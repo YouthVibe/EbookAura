@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
+/**
  * Script to check for case-sensitivity issues in imports
  * Run this script before deploying to catch potential issues on case-sensitive file systems
  */

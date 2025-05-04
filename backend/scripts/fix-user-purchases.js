@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
+/**
  * Script to check and fix user purchasedBooks arrays
  * Ensures consistency between user's purchasedBooks and purchase records
  */

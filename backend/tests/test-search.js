@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
+/**
  * Simple test script to verify public search functionality
  * 
  * Run this script with Node.js to test if anonymous users can search for books

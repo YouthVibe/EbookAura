@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
+/**
  * MongoDB Utilities
  * 
  * Helper functions to normalize MongoDB data types when they come through JSON

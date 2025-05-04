@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
+/**
  * Script to generate a list of all book IDs directly from the MongoDB database
  * This is useful for static exports where we need to pre-render all book pages
  * 

@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
 const express = require('express');
 const router = express.Router();
 const { 

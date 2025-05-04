@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
+/**
  * API URL Consistency Update Script
  * This script ensures all API URLs in the codebase are consistent
  * It will update all API URLs to use the NEXT_PUBLIC_API_URL environment variable

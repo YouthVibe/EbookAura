@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
+/**
  * Test Open Graph Metadata Implementation
  * This script helps verify if Open Graph tags are correctly implemented
  * on book detail pages

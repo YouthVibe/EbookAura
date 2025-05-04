@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
+/**
  * IMMEDIATE FIX for premium book status in the database
  * This script ensures all premium-related fields are properly set
  * Run with: node fix-premium-now.js

@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
+/**
  * Script to create purchase records for books in users' purchasedBooks arrays
  * This ensures data consistency between the user's purchasedBooks and the Purchase collection
  */

@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
 const Book = require('../models/Book');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/User');

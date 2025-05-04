@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
 const cloudinary = require('cloudinary').v2;
 const dotenv = require('dotenv');
 

@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
 import React from 'react';
 import { FaStar, FaRegStar, FaUserCircle, FaTrash, FaPen, FaClock } from 'react-icons/fa';
 import styles from './ReviewItem.module.css';

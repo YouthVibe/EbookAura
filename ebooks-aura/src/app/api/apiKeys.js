@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
 import { getAPI, postAPI, deleteAPI } from './apiUtils';
 import { API_ENDPOINTS } from '../utils/config';
 import { getAuthToken } from '../utils/auth';

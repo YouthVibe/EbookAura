@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
+/**
  * Script to fix all premium book issues in the database
  * - Sets isPremium=true for all books with price > 0
  * - Sets a default price for books marked as premium but with no price

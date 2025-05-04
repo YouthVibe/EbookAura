@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
+/**
  * Pre-deployment check script
  * Run this before deploying to Render or other Linux-based environments
  * to catch common deployment issues

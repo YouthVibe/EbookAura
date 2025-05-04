@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
+/**
  * API functions for handling book reviews
  */
 import { API_ENDPOINTS, API_BASE_URL } from '../utils/config';

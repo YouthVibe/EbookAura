@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
+/**
  * Debug and fix PDF upload issues
  * 
  * This utility helps diagnose and fix issues with PDF uploads

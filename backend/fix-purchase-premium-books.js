@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
+/**
  * Script to fix premium status for books with purchase records
  * This ensures that any book that has been purchased has proper premium status
  * Run with: node fix-purchase-premium-books.js

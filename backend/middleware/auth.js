@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const mongoose = require('mongoose');

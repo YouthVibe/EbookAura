@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
+/**
  * This file contains a list of all book IDs for static generation
  * Generated on: 2025-05-04T14:29:46.475Z
  * Total books: 3

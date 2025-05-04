@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
+/**
  * PRODUCTION-SPECIFIC Premium Book Fix Script
  * This script addresses issues with premium book properties not being
  * properly serialized or handled in the production environment.

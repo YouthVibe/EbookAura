@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
+/**
  * Render.com Setup Script
  * This script helps configure EbookAura for deployment on Render.com
  * Run with: node setup-render.js

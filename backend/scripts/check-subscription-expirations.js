@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
+/**
  * Script to check for expired subscriptions and update their status
  * This script should be run on a schedule (e.g., daily via cron job)
  * 

@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
+/**
  * Test Search and Home Page Metadata Implementation
  * This script helps verify if metadata tags are correctly implemented on the search and home pages
  */

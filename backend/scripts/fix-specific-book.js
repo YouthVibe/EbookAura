@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
+ * https://github.com/UltronTheAI
+ * All rights reserved.
+ */
+/**
  * Script to fix a specific book's premium status and price
  * This ensures the book has correct isPremium flag if price is set
  * Usage: node fix-specific-book.js [bookId]
