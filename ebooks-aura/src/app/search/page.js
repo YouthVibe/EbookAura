@@ -740,6 +740,11 @@ export default function SearchPage() {
                               <FaFileAlt /> {book.pageSize}p
                             </span>
                           )}
+                          {book.fileSizeMB > 0 && (
+                            <span className={styles.bookListStat}>
+                              <FaFile /> {book.fileSizeMB}MB
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>

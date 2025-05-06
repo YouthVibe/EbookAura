@@ -5,9 +5,9 @@
  */
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaUser, FaBook, FaTrash, FaBan, FaUnlock, FaEye, FaDownload, FaStar, FaCalendarAlt, FaFilter, FaSearch, FaPlusCircle, FaBookOpen, FaEdit, FaCloudUploadAlt, FaBroom } from 'react-icons/fa';
+import { FaUser, FaBook, FaTrash, FaBan, FaUnlock, FaEye, FaDownload, FaStar, FaCalendarAlt, FaFilter, FaSearch, FaPlusCircle, FaBookOpen, FaEdit, FaCloudUploadAlt, FaBroom, FaPlus, FaTimes, FaFileUpload, FaImage, FaFile } from 'react-icons/fa';
 import { getAllUsers, toggleUserBan, deleteUser, getAllBooks, deleteBook, updateBook, cleanupCloudinaryResources } from '../api/admin';
 import { useAuth } from '../context/AuthContext';
 import styles from './admin.module.css';
@@ -64,6 +64,43 @@ const EditBookModal = ({ isOpen, book, onSave, onCancel, isSaving }) => {
   const [tagInput, setTagInput] = useState('');
   const [error, setError] = useState('');
   
+  // Additional states for enhanced functionality
+  const [isPdfUrl, setIsPdfUrl] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState('');
+  const [titleChars, setTitleChars] = useState(0);
+  const [authorChars, setAuthorChars] = useState(0);
+  const [descChars, setDescChars] = useState(0);
+  const [categoryInput, setCategoryInput] = useState('');
+  const [showCategorySuggestions, setShowCategorySuggestions] = useState(false);
+  const [filteredCategories, setFilteredCategories] = useState([]);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState('');
+  const categoryContainerRef = useRef(null);
+  const tagContainerRef = useRef(null);
+  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
+  const [filteredTags, setFilteredTags] = useState([]);
+  
+  // Predefined categories and tags
+  const PREDEFINED_CATEGORIES = [
+    'Contemporary Fiction', 'Literary Fiction', 'Historical Fiction', 'Science Fiction',
+    'Fantasy', 'Mystery', 'Thriller', 'Horror', 'Romance', 'Western',
+    'Crime Fiction', 'Adventure', 'Military Fiction', 'Urban Fiction', 'Short Stories',
+    'Young Adult Fiction', 'Children\'s Fiction', 'Classic Literature', 'Mythology',
+    'Folk Tales', 'Biography', 'Autobiography', 'Memoir', 'History', 'Philosophy',
+    'Psychology', 'Self-Help', 'Business', 'Economics', 'Science',
+    'Technology', 'Computer Science', 'Programming', 'Art', 'Music',
+    'Sports', 'Travel', 'Cooking', 'Health', 'Religion'
+  ].sort();
+
+  const PREDEFINED_TAGS = [
+    'Adventure', 'Romance', 'Mystery', 'Thriller', 'Fantasy', 'Science Fiction',
+    'Horror', 'Historical', 'Contemporary', 'Literary Fiction', 'Young Adult',
+    'Children', 'Biography', 'Self-Help', 'Business', 'Psychology',
+    'Science', 'Technology', 'Programming', 'Health', 'Education',
+    'Politics', 'Sports', 'Art', 'Music'
+  ].sort();
+  
   // Initialize form with book data when modal opens
   useEffect(() => {
     if (book && isOpen) {
@@ -75,15 +112,64 @@ const EditBookModal = ({ isOpen, book, onSave, onCancel, isSaving }) => {
         tags: book.tags || [],
         pageSize: book.pageSize || 0,
         isPremium: book.isPremium || false,
-        price: book.price || 0
+        price: book.price || 0,
+        fileSizeMB: book.fileSizeMB || 0
       });
       setPdfFileName('No new PDF selected');
       setCoverFileName('No new cover image selected');
       setNewPdfFile(null);
       setNewCoverFile(null);
       setError('');
+      setPdfUrl(book.isCustomUrl ? book.pdfUrl : '');
+      setIsPdfUrl(book.isCustomUrl || false);
+      setTitleChars(book.title ? book.title.length : 0);
+      setAuthorChars(book.author ? book.author.length : 0);
+      setDescChars(book.description ? book.description.length : 0);
+      setCategoryInput(book.category || '');
     }
   }, [book, isOpen]);
+  
+  useEffect(() => {
+    // Filter categories based on input
+    if (categoryInput) {
+      const filtered = PREDEFINED_CATEGORIES.filter(cat => 
+        cat.toLowerCase().includes(categoryInput.toLowerCase())
+      ).slice(0, 5);
+      setFilteredCategories(filtered);
+    } else {
+      setFilteredCategories(PREDEFINED_CATEGORIES.slice(0, 5));
+    }
+  }, [categoryInput]);
+
+  useEffect(() => {
+    // Filter tags based on input
+    if (tagInput) {
+      const filtered = PREDEFINED_TAGS.filter(tag => 
+        tag.toLowerCase().includes(tagInput.toLowerCase()) && 
+        !editedBook.tags.includes(tag)
+      ).slice(0, 5);
+      setFilteredTags(filtered);
+    } else {
+      setFilteredTags(PREDEFINED_TAGS.filter(tag => !editedBook.tags.includes(tag)).slice(0, 5));
+    }
+  }, [tagInput, editedBook.tags]);
+  
+  // Click outside handlers for dropdowns
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (categoryContainerRef.current && !categoryContainerRef.current.contains(event.target)) {
+        setShowCategorySuggestions(false);
+      }
+      if (tagContainerRef.current && !tagContainerRef.current.contains(event.target)) {
+        setShowTagSuggestions(false);
+      }
+    }
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
   
   if (!isOpen) return null;
   
@@ -110,7 +196,66 @@ const EditBookModal = ({ isOpen, book, onSave, onCancel, isSaving }) => {
     }
   };
 
-  const handleCoverChange = (e) => {
+  const togglePdfInputMethod = (useUrl) => {
+    setIsPdfUrl(useUrl);
+    if (useUrl) {
+      setNewPdfFile(null);
+      setPdfFileName('No new PDF selected');
+    } else {
+      setPdfUrl('');
+    }
+  };
+
+  const handlePdfUrlChange = (e) => {
+    const url = e.target.value;
+    setPdfUrl(url);
+    
+    // Basic URL validation
+    if (url && !url.startsWith('http')) {
+      setError('Please enter a valid URL starting with http:// or https://');
+    } else {
+      setError('');
+    }
+  };
+
+  const checkImageDimensions = (file) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(img.src);
+        
+        // Get image dimensions
+        const width = img.width;
+        const height = img.height;
+        
+        // Check if dimensions match 500x700 pixels
+        if (width === 500 && height === 700) {
+          resolve({ 
+            valid: true, 
+            width, 
+            height,
+            message: `Image dimensions are correct: ${width}x${height} pixels`
+          });
+        } else {
+          resolve({ 
+            valid: false, 
+            width, 
+            height,
+            message: `Image must be exactly 500x700 pixels, but got ${width}x${height} pixels`
+          });
+        }
+      };
+      
+      img.onerror = () => {
+        URL.revokeObjectURL(img.src);
+        reject(new Error('Failed to load the image. Please try another file.'));
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handleCoverChange = async (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
       if (!selectedFile.type.startsWith('image/')) {
@@ -126,15 +271,59 @@ const EditBookModal = ({ isOpen, book, onSave, onCancel, isSaving }) => {
         setCoverFileName('No new cover image selected');
         return;
       }
-
-      setNewCoverFile(selectedFile);
-      setCoverFileName(selectedFile.name);
-      setError('');
+      
+      try {
+        // Check image dimensions
+        const dimensionCheck = await checkImageDimensions(selectedFile);
+        
+        if (!dimensionCheck.valid) {
+          setError(dimensionCheck.message);
+          setNewCoverFile(null);
+          setCoverFileName('No new cover image selected');
+          return;
+        }
+        
+        setNewCoverFile(selectedFile);
+        setCoverFileName(selectedFile.name);
+        setError('');
+      } catch (err) {
+        setError(err.message);
+        setNewCoverFile(null);
+        setCoverFileName('No new cover image selected');
+      }
     }
   };
   
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+    
+    if (name === 'title') {
+      setTitleChars(value.length);
+      if (value.length > 100) {
+        setError('Title must be under 100 characters');
+      } else {
+        setError('');
+      }
+    }
+
+    if (name === 'author') {
+      setAuthorChars(value.length);
+      if (value.length > 100) {
+        setError('Author name must be under 100 characters');
+      } else {
+        setError('');
+      }
+    }
+
+    if (name === 'description') {
+      setDescChars(value.length);
+      if (value.length > 1000) {
+        setError('Description must be under 1000 characters');
+      } else {
+        setError('');
+      }
+    }
+    
     setEditedBook(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
@@ -143,22 +332,31 @@ const EditBookModal = ({ isOpen, book, onSave, onCancel, isSaving }) => {
   
   const handleTagInputChange = (e) => {
     setTagInput(e.target.value);
+    setShowTagSuggestions(true);
   };
   
   const handleTagInputKeyDown = (e) => {
     if (e.key === 'Enter' && tagInput.trim()) {
       e.preventDefault();
-      const newTag = tagInput.trim();
-      
-      if (!editedBook.tags.includes(newTag)) {
-        setEditedBook(prev => ({
-          ...prev,
-          tags: [...prev.tags, newTag]
-        }));
-      }
-      
+      addTag(tagInput.trim());
+    }
+  };
+  
+  const addTag = (tag) => {
+    const newTag = tag.trim();
+    
+    if (newTag && !editedBook.tags.includes(newTag)) {
+      setEditedBook(prev => ({
+        ...prev,
+        tags: [...prev.tags, newTag]
+      }));
       setTagInput('');
     }
+  };
+  
+  const handleTagSelect = (tag) => {
+    addTag(tag);
+    setShowTagSuggestions(false);
   };
   
   const removeTag = (tagToRemove) => {
@@ -168,12 +366,101 @@ const EditBookModal = ({ isOpen, book, onSave, onCancel, isSaving }) => {
     }));
   };
   
+  const handleCategoryInputChange = (e) => {
+    setCategoryInput(e.target.value);
+    setEditedBook(prev => ({
+      ...prev,
+      category: e.target.value
+    }));
+    setShowCategorySuggestions(true);
+  };
+  
+  const handleCategorySelect = (selectedCategory) => {
+    setCategoryInput(selectedCategory);
+    setEditedBook(prev => ({
+      ...prev,
+      category: selectedCategory
+    }));
+    setShowCategorySuggestions(false);
+  };
+  
+  const handleCategoryInputKeyDown = (e) => {
+    if (e.key === 'Enter' && e.target.value.trim()) {
+      e.preventDefault();
+      setShowCategorySuggestions(false);
+    }
+  };
+  
+  const getCharCountClassName = (current, max) => {
+    if (current > max) return styles.charCountExceeded;
+    if (current > max * 0.8) return styles.charCountWarning;
+    return styles.charCount;
+  };
+  
+  const validateForm = () => {
+    if (!editedBook.title.trim()) {
+      setError('Please enter a book title');
+      return false;
+    }
+    
+    if (editedBook.title.length > 100) {
+      setError('Title must be under 100 characters');
+      return false;
+    }
+    
+    if (!editedBook.author.trim()) {
+      setError('Please enter the author name');
+      return false;
+    }
+    
+    if (editedBook.author.length > 100) {
+      setError('Author name must be under 100 characters');
+      return false;
+    }
+    
+    if (!editedBook.description.trim()) {
+      setError('Please provide a book description');
+      return false;
+    }
+    
+    if (editedBook.description.length > 1000) {
+      setError('Description must be under 1000 characters');
+      return false;
+    }
+    
+    if (!editedBook.category.trim()) {
+      setError('Please select or enter a category');
+      return false;
+    }
+    
+    if (editedBook.tags.length === 0) {
+      setError('Please add at least one tag');
+      return false;
+    }
+    
+    if (isPdfUrl && !pdfUrl.trim()) {
+      setError('Please enter a PDF URL');
+      return false;
+    }
+    
+    if (isPdfUrl && !pdfUrl.startsWith('http')) {
+      setError('Please enter a valid URL starting with http:// or https://');
+      return false;
+    }
+    
+    if (editedBook.isPremium && (!editedBook.price || editedBook.price <= 0)) {
+      setError('Please enter a valid price for premium content');
+      return false;
+    }
+    
+    return true;
+  };
+  
   const handleSubmit = (e) => {
     e.preventDefault();
     
     // Form validation
-    if (!editedBook.title || !editedBook.author || !editedBook.description || !editedBook.category) {
-      setError('Please fill all required fields');
+    if (!validateForm()) {
       return;
     }
     
@@ -194,11 +481,19 @@ const EditBookModal = ({ isOpen, book, onSave, onCancel, isSaving }) => {
       formData.append('pdf', newPdfFile);
     }
     
+    if (isPdfUrl && pdfUrl) {
+      formData.append('isCustomUrl', 'true');
+      formData.append('pdfUrl', pdfUrl.trim());
+      formData.append('fileSizeMB', editedBook.fileSizeMB || 0);
+    }
+    
     if (newCoverFile) {
       formData.append('cover', newCoverFile);
     }
     
     // Call the save function with the form data
+    setIsUploading(true);
+    setUploadStatus('Processing your update...');
     onSave(book._id, formData);
   };
   
@@ -214,69 +509,272 @@ const EditBookModal = ({ isOpen, book, onSave, onCancel, isSaving }) => {
         
         {error && <div className={styles.error}>{error}</div>}
         
+        {isUploading && (
+          <div className={styles.uploadProgressContainer}>
+            <p className={styles.uploadStatus}>{uploadStatus}</p>
+            <div className={styles.progressBarWrapper}>
+              <div 
+                className={styles.progressBar} 
+                style={{ width: `${uploadProgress}%` }}
+              ></div>
+            </div>
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className={styles.editBookForm}>
-          <div className={styles.formGrid}>
+          <div className={styles.formSection}>
+            <h3 className={styles.sectionTitle}>Basic Information</h3>
+            
             <div className={styles.formGroup}>
-              <label htmlFor="title">Title *</label>
+              <label htmlFor="title">
+                Title <span className={styles.requiredField}>*</span>
+                <span className={getCharCountClassName(titleChars, 100)}>{titleChars}/100</span>
+              </label>
               <input
                 type="text"
                 id="title"
                 name="title"
                 value={editedBook.title}
                 onChange={handleInputChange}
-                required
                 maxLength={100}
+                className={titleChars > 100 ? styles.inputError : ''}
               />
             </div>
             
             <div className={styles.formGroup}>
-              <label htmlFor="author">Author *</label>
+              <label htmlFor="author">
+                Author <span className={styles.requiredField}>*</span>
+                <span className={getCharCountClassName(authorChars, 100)}>{authorChars}/100</span>
+              </label>
               <input
                 type="text"
                 id="author"
                 name="author"
                 value={editedBook.author}
                 onChange={handleInputChange}
-                required
+                maxLength={100}
+                className={authorChars > 100 ? styles.inputError : ''}
               />
             </div>
             
             <div className={styles.formGroup}>
-              <label htmlFor="description">Description *</label>
+              <label htmlFor="description">
+                Description <span className={styles.requiredField}>*</span>
+                <span className={getCharCountClassName(descChars, 1000)}>{descChars}/1000</span>
+              </label>
               <textarea
                 id="description"
                 name="description"
                 value={editedBook.description}
                 onChange={handleInputChange}
-                rows={3}
-                required
-                maxLength={200}
+                rows={5}
+                maxLength={1000}
+                className={descChars > 1000 ? styles.inputError : ''}
               />
-              <small>{editedBook.description.length}/200 characters</small>
             </div>
             
-            <div className={styles.formGroup}>
-              <label htmlFor="category">Category *</label>
+            <div className={styles.formGroup} ref={categoryContainerRef}>
+              <label htmlFor="category">
+                Category <span className={styles.requiredField}>*</span>
+              </label>
               <input
                 type="text"
                 id="category"
                 name="category"
-                value={editedBook.category}
-                onChange={handleInputChange}
-                required
+                value={categoryInput}
+                onChange={handleCategoryInputChange}
+                onFocus={() => setShowCategorySuggestions(true)}
+                onKeyDown={handleCategoryInputKeyDown}
+                placeholder="Select or type a category"
               />
+              {showCategorySuggestions && (
+                <div className={styles.suggestionsList}>
+                  {filteredCategories.map((cat, index) => (
+                    <div 
+                      key={index} 
+                      className={styles.suggestionItem}
+                      onClick={() => handleCategorySelect(cat)}
+                    >
+                      {cat}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className={styles.formSection}>
+            <h3 className={styles.sectionTitle}>Tags</h3>
+            
+            <div className={styles.formGroup} ref={tagContainerRef}>
+              <label htmlFor="tags">
+                Tags <span className={styles.requiredField}>*</span>
+                <span className={styles.helpText}>(At least one tag required)</span>
+              </label>
+              <div className={styles.tagInputContainer}>
+                <input
+                  type="text"
+                  id="tagInput"
+                  value={tagInput}
+                  onChange={handleTagInputChange}
+                  onFocus={() => setShowTagSuggestions(true)}
+                  onKeyDown={handleTagInputKeyDown}
+                  placeholder="Type and press Enter to add a tag"
+                />
+                <button 
+                  type="button" 
+                  onClick={() => addTag(tagInput)}
+                  className={styles.addTagButton}
+                  disabled={!tagInput.trim()}
+                >
+                  <FaPlus />
+                </button>
+              </div>
+              
+              {showTagSuggestions && (
+                <div className={styles.suggestionsList}>
+                  {filteredTags.map((tag, index) => (
+                    <div 
+                      key={index} 
+                      className={styles.suggestionItem}
+                      onClick={() => handleTagSelect(tag)}
+                    >
+                      {tag}
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              <div className={styles.selectedTagsContainer}>
+                {editedBook.tags.map((tag, index) => (
+                  <div key={index} className={styles.tagPill}>
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => removeTag(tag)}
+                      className={styles.removeTagButton}
+                    >
+                      <FaTimes />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          
+          <div className={styles.formSection}>
+            <h3 className={styles.sectionTitle}>Files</h3>
+            
+            <div className={styles.fileSwitchContainer}>
+              <button
+                type="button"
+                className={`${styles.fileSwitch} ${!isPdfUrl ? styles.activePdfSwitch : ''}`}
+                onClick={() => togglePdfInputMethod(false)}
+              >
+                Upload PDF
+              </button>
+              <button
+                type="button"
+                className={`${styles.fileSwitch} ${isPdfUrl ? styles.activePdfSwitch : ''}`}
+                onClick={() => togglePdfInputMethod(true)}
+              >
+                PDF URL
+              </button>
             </div>
             
+            {!isPdfUrl ? (
+              <div className={styles.formGroup}>
+                <label htmlFor="pdfFile">
+                  PDF File <span className={styles.helpText}>(Optional - Max 20MB)</span>
+                </label>
+                <div className={styles.fileInputContainer}>
+                  <input
+                    type="file"
+                    id="pdfFile"
+                    accept=".pdf"
+                    onChange={handlePdfChange}
+                    className={styles.fileInput}
+                  />
+                  <label htmlFor="pdfFile" className={styles.fileInputLabel}>
+                    <FaFileUpload className={styles.fileIcon} />
+                    Choose PDF
+                  </label>
+                  <div className={styles.fileName}>{pdfFileName}</div>
+                </div>
+                <div className={styles.helpText}>Current PDF: {book.pdfUrl ? 'Available' : 'Not available'}</div>
+              </div>
+            ) : (
+              <div className={styles.formGroup}>
+                <label htmlFor="pdfUrl">
+                  PDF URL <span className={styles.helpText}>(Enter URL to an existing PDF)</span>
+                </label>
+                <input
+                  type="url"
+                  id="pdfUrl"
+                  name="pdfUrl"
+                  value={pdfUrl}
+                  onChange={handlePdfUrlChange}
+                  placeholder="https://example.com/your-book.pdf"
+                />
+                
+                {/* File size input for URL PDF uploads */}
+                {isPdfUrl && (
+                  <div className={styles.formGroup} style={{ marginTop: '10px' }}>
+                    <label htmlFor="fileSizeMB">
+                      File Size (MB) <span className={styles.helpText}>(Required for URL PDFs)</span>
+                    </label>
+                    <input
+                      type="number"
+                      id="fileSizeMB"
+                      name="fileSizeMB"
+                      value={editedBook.fileSizeMB || ''}
+                      onChange={(e) => setEditedBook({...editedBook, fileSizeMB: parseFloat(e.target.value) || 0})}
+                      placeholder="Enter file size in MB"
+                      min="0.1"
+                      step="0.1"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+            
             <div className={styles.formGroup}>
-              <label htmlFor="pageSize">Page Count *</label>
+              <label htmlFor="coverFile">
+                Cover Image <span className={styles.helpText}>(Optional - Must be 500x700px)</span>
+              </label>
+              <div className={styles.fileInputContainer}>
+                <input
+                  type="file"
+                  id="coverFile"
+                  accept="image/*"
+                  onChange={handleCoverChange}
+                  className={styles.fileInput}
+                />
+                <label htmlFor="coverFile" className={styles.fileInputLabel}>
+                  <FaImage className={styles.fileIcon} />
+                  Choose Cover
+                </label>
+                <div className={styles.fileName}>{coverFileName}</div>
+              </div>
+              <div className={styles.helpText}>Current Cover: {book.coverImage ? 'Available' : 'Not available'}</div>
+            </div>
+          </div>
+          
+          <div className={styles.formSection}>
+            <h3 className={styles.sectionTitle}>Additional Details</h3>
+            
+            <div className={styles.formGroup}>
+              <label htmlFor="pageSize">
+                Page Count <span className={styles.helpText}>(Optional)</span>
+              </label>
               <input
                 type="number"
                 id="pageSize"
                 name="pageSize"
                 value={editedBook.pageSize}
                 onChange={handleInputChange}
-                min={1}
-                required
+                min="0"
+                placeholder="Number of pages"
               />
             </div>
             
@@ -289,87 +787,31 @@ const EditBookModal = ({ isOpen, book, onSave, onCancel, isSaving }) => {
                   checked={editedBook.isPremium}
                   onChange={handleInputChange}
                 />
-                <label htmlFor="isPremium">Premium Book</label>
+                <label htmlFor="isPremium" className={styles.checkboxLabel}>
+                  Premium Content
+                </label>
               </div>
             </div>
             
             {editedBook.isPremium && (
               <div className={styles.formGroup}>
-                <label htmlFor="price">Price (coins) *</label>
+                <label htmlFor="price">
+                  Price (Coins) <span className={styles.requiredField}>*</span>
+                </label>
                 <input
                   type="number"
                   id="price"
                   name="price"
                   value={editedBook.price}
                   onChange={handleInputChange}
-                  min={0}
-                  required={editedBook.isPremium}
+                  min="1"
+                  placeholder="Enter price in coins"
                 />
               </div>
             )}
           </div>
           
-          <div className={styles.formGroup}>
-            <label>Tags</label>
-            <div className={styles.tagInput}>
-              <input
-                type="text"
-                value={tagInput}
-                onChange={handleTagInputChange}
-                onKeyDown={handleTagInputKeyDown}
-                placeholder="Add a tag and press Enter"
-              />
-            </div>
-            <div className={styles.selectedTags}>
-              {editedBook.tags.map((tag, index) => (
-                <span key={index} className={styles.tag}>
-                  {tag}
-                  <button type="button" onClick={() => removeTag(tag)}>×</button>
-                </span>
-              ))}
-            </div>
-            <small>Press Enter to add a tag</small>
-          </div>
-          
-          <div className={styles.fileUploads}>
-            <div className={styles.fileGroup}>
-              <label>Update PDF File</label>
-              <div className={styles.fileInputContainer}>
-                <input
-                  type="file"
-                  accept="application/pdf"
-                  onChange={handlePdfChange}
-                  id="pdf-upload"
-                  className={styles.fileInput}
-                />
-                <label htmlFor="pdf-upload" className={styles.fileInputLabel}>
-                  <FaCloudUploadAlt /> Choose New PDF
-                </label>
-                <span className={styles.fileName}>{pdfFileName}</span>
-              </div>
-              <small>Leave empty to keep the current PDF</small>
-            </div>
-            
-            <div className={styles.fileGroup}>
-              <label>Update Cover Image</label>
-              <div className={styles.fileInputContainer}>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleCoverChange}
-                  id="cover-upload"
-                  className={styles.fileInput}
-                />
-                <label htmlFor="cover-upload" className={styles.fileInputLabel}>
-                  <FaCloudUploadAlt /> Choose New Cover
-                </label>
-                <span className={styles.fileName}>{coverFileName}</span>
-              </div>
-              <small>Leave empty to keep the current cover</small>
-            </div>
-          </div>
-          
-          <div className={styles.modalFooter}>
+          <div className={styles.formActions}>
             <button
               type="button"
               onClick={onCancel}
@@ -383,7 +825,7 @@ const EditBookModal = ({ isOpen, book, onSave, onCancel, isSaving }) => {
               className={`${styles.saveButton} ${isSaving ? styles.disabledButton : ''}`}
               disabled={isSaving}
             >
-              {isSaving ? 'Saving...' : 'Save Changes'}
+              {isSaving ? 'Saving Changes...' : 'Save Changes'}
             </button>
           </div>
         </form>
@@ -409,8 +851,10 @@ export default function AdminDashboard() {
   const [editBookModalOpen, setEditBookModalOpen] = useState(false);
   const [selectedBook, setSelectedBook] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [notification, setNotification] = useState({ type: '', message: '' });
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, getToken, getApiKey } = useAuth();
   
   // Check if user is admin and redirect if not
   useEffect(() => {
@@ -550,27 +994,68 @@ export default function AdminDashboard() {
   
   // Handle save book changes
   const handleSaveBookChanges = async (bookId, formData) => {
+    setIsSaving(true);
     try {
-      setIsSaving(true);
-      setError(null);
+      const token = getToken();
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      // Update the book
+      const updatedBook = await updateBook(bookId, formData, token);
       
-      // Call the updateBook API function
-      const result = await updateBook(bookId, formData);
+      // Close the edit modal and refresh books
+      closeEditModal();
+      fetchBooks();
       
-      // Update the book in the state
-      setBooks(books.map(book => 
-        book._id === bookId ? result.book : book
-      ));
+      // Show success message
+      setNotification({
+        type: 'success',
+        message: `Book "${updatedBook.title}" has been successfully updated.`
+      });
       
-      // Close the modal
-      setEditBookModalOpen(false);
-      setSelectedBook(null);
+      setTimeout(() => {
+        setNotification({ type: '', message: '' });
+      }, 5000);
     } catch (err) {
       console.error('Error updating book:', err);
-      setError(`Failed to update book: ${err.message}`);
+      
+      setEditError(err.message || 'An error occurred while updating the book');
+      
+      // Show error notification
+      setNotification({
+        type: 'error',
+        message: err.message || 'Failed to update book. Please try again.'
+      });
+      
+      setTimeout(() => {
+        setNotification({ type: '', message: '' });
+      }, 5000);
     } finally {
       setIsSaving(false);
     }
+  };
+  
+  // Function to fetch books (needed to refresh after edits)
+  const fetchBooks = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const bookData = await getAllBooks();
+      setBooks(bookData);
+    } catch (err) {
+      console.error('Error fetching books:', err);
+      setError(`Failed to load books. ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Close edit modal
+  const closeEditModal = () => {
+    setEditBookModalOpen(false);
+    setSelectedBook(null);
+    setEditError('');
   };
   
   // Conditional rendering for auth check
@@ -775,6 +1260,11 @@ export default function AdminDashboard() {
                       <span className={styles.stat}>
                         <FaStar /> {book.averageRating ? book.averageRating.toFixed(1) : '0.0'}
                       </span>
+                      {book.fileSizeMB > 0 && (
+                        <span className={styles.stat}>
+                          <FaFile /> {book.fileSizeMB}MB
+                        </span>
+                      )}
                     </div>
                     <div className={styles.bookMeta}>
                       <span className={styles.bookDate}>

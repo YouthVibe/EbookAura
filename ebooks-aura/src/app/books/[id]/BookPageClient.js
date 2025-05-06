@@ -1219,10 +1219,10 @@ export default function BookPageClient({ id }) {
           <h3>API Connection Debug Info</h3>
           <p><strong>Book ID:</strong> {id}</p>
           <p><strong>API URL:</strong> {API_ENDPOINTS.BOOKS.DETAILS(id)}</p>
-          <p><strong>Direct URL:</strong> https://ebookaura.onrender.com/api/books/{id}</p>
+          <p><strong>Direct URL:</strong> {`${process.env.NEXT_PUBLIC_API_URL || '/api'}/books/${id}`}</p>
           <p>
             <button
-              onClick={() => window.open(`https://ebookaura.onrender.com/api/books/${id}`, '_blank')}
+              onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/books/${id}`, '_blank')}
               style={{
                 padding: '5px 10px',
                 background: '#4285f4',

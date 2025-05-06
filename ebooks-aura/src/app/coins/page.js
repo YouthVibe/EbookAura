@@ -83,7 +83,7 @@ export default function CoinsPage() {
             canClaimReward: data.canClaimReward,
             progress: Math.floor((data.sessionTimeToday % 60) / 60 * 100),
             minutesAccumulated: data.minutesAccumulated || 0,
-            coinsAvailable: data.minutesAccumulated || 0
+            coinsAvailable: (data.minutesAccumulated || 0) * 5
           }));
         })
         .catch(err => console.error('Error updating session time:', err));
@@ -302,7 +302,7 @@ export default function CoinsPage() {
             <h2 className={styles.rewardTitle}>Time Rewards</h2>
           </div>
           <p className={styles.rewardDescription}>
-            Get 1 coin for each minute you spend on our site. Claim anytime!
+            Get 5 coin for each minute you spend on our site. Claim anytime!
           </p>
           {activityClaimError && <p className={styles.errorMessage}>{activityClaimError}</p>}
           

@@ -62,6 +62,39 @@ export async function getApiKey(id) {
 }
 
 /**
+ * Get the latest usage data for a specific API key
+ * @param {string} id - API key ID
+ * @returns {Promise<Object>} - API key usage data
+ */
+export async function getApiKeyUsage(id) {
+  try {
+    const response = await getAPI(`/api-keys/${id}/usage`);
+    return response.usage;
+  } catch (error) {
+    console.error(`Error fetching API key usage ${id}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Get detailed usage history for a specific API key
+ * @param {string} id - API key ID
+ * @returns {Promise<Object>} - API key usage history data
+ */
+export async function getApiKeyUsageHistory(id) {
+  try {
+    const response = await getAPI(`/api-keys/${id}/usage/history`);
+    
+    // If the response contains a history property, return it
+    // Otherwise, return the entire response (backward compatibility)
+    return response.history || response;
+  } catch (error) {
+    console.error(`Error fetching API key usage history ${id}:`, error);
+    throw error;
+  }
+}
+
+/**
  * Update an API key
  * @param {string} id - API key ID
  * @param {string} name - New name for the API key
@@ -131,6 +164,8 @@ export default {
   getUserApiKeys,
   createApiKey,
   getApiKey,
+  getApiKeyUsage,
+  getApiKeyUsageHistory,
   updateApiKey,
   revokeApiKey,
   activateApiKey,

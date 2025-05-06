@@ -15,7 +15,7 @@ export const mainPageMetadata = {
   openGraph: {
     title: 'EbookAura - Your Ultimate PDF Books Library',
     description: 'Access thousands of free PDF books at EbookAura. Browse our extensive collection, read online, or download for offline reading. No registration needed for many titles.',
-    url: 'https://ebookaura.onrender.com/',
+    url: process.env.NEXT_PUBLIC_APP_URL || 'https://ebookaura.onrender.com/',
     siteName: 'EbookAura',
     images: [
       {
@@ -54,9 +54,9 @@ export const mainPageMetadata = {
     bing: 'REPLACE_WITH_BING_CODE', // Optional: for Bing search
   },
   alternates: {
-    canonical: 'https://ebookaura.onrender.com/',
+    canonical: process.env.NEXT_PUBLIC_APP_URL || 'https://ebookaura.onrender.com/',
     languages: {
-      'en-US': 'https://ebookaura.onrender.com/',
+      'en-US': process.env.NEXT_PUBLIC_APP_URL || 'https://ebookaura.onrender.com/',
     },
   },
   authors: [

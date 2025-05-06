@@ -6,8 +6,10 @@ echo.
 
 REM Update environment variables
 echo Setting production environment variables...
-echo NEXT_PUBLIC_API_URL=https://ebookaura.onrender.com/api> .env
+echo # Production build configuration> .env
+echo NEXT_PUBLIC_API_URL=/api>> .env
 echo STATIC_EXPORT=true>> .env
+echo NEXT_PUBLIC_APP_URL=https://ebookaura.onrender.com>> .env
 
 REM Update API URLs
 echo Running API URL configuration check...

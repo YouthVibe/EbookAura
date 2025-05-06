@@ -14,7 +14,7 @@ export const metadata = {
   openGraph: {
     title: 'Search Our Free PDF Book Collection - EbookAura',
     description: 'Discover your next great read from our extensive collection of free PDF books. Search by title, author, or explore categories at EbookAura.',
-    url: 'https://ebookaura.onrender.com/search',
+    url: process.env.NEXT_PUBLIC_APP_URL ? `${process.env.NEXT_PUBLIC_APP_URL}/search` : 'https://ebookaura.onrender.com/search',
     siteName: 'EbookAura',
     images: [
       {
@@ -48,7 +48,7 @@ export const metadata = {
     },
   },
   alternates: {
-    canonical: 'https://ebookaura.onrender.com/search',
+    canonical: process.env.NEXT_PUBLIC_APP_URL ? `${process.env.NEXT_PUBLIC_APP_URL}/search` : 'https://ebookaura.onrender.com/search',
   },
   category: 'Books & Literature',
   creator: 'EbookAura',

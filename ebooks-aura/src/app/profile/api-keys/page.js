@@ -5,16 +5,17 @@
  */
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Box, Container, Typography, Button, Paper, Stack, 
   Divider, Alert, TextField, Dialog, DialogTitle, 
   DialogContent, DialogActions, FormControlLabel, 
   Checkbox, Chip, IconButton, Card, CardContent, 
-  CardActions, Tooltip, CircularProgress, Switch, Link as MuiLink
+  CardActions, Tooltip, CircularProgress, Switch, Link as MuiLink,
+  LinearProgress, Collapse, Accordion, AccordionSummary, AccordionDetails
 } from '@mui/material';
-import { KeyOutlined, Add, Delete, Edit, FileCopy, Key, KeyOff, Loop, Check, Article } from '@mui/icons-material';
-import { getUserApiKeys, createApiKey, updateApiKey, revokeApiKey, activateApiKey, deleteApiKey } from '@/app/api/apiKeyService';
+import { KeyOutlined, Add, Delete, Edit, FileCopy, Key, KeyOff, Loop, Check, Article, Refresh, BarChart, ExpandMore, ExpandLess } from '@mui/icons-material';
+import { getUserApiKeys, createApiKey, updateApiKey, revokeApiKey, activateApiKey, deleteApiKey, getApiKey, getApiKeyUsageHistory } from '@/app/api/apiKeyService';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
@@ -46,12 +47,21 @@ export default function ApiKeysPage() {
   const [newKey, setNewKey] = useState(null);
   const [keyCopied, setKeyCopied] = useState(false);
 
+  // State for analytics
+  const [expandedAnalytics, setExpandedAnalytics] = useState({});
+  const [analyticsData, setAnalyticsData] = useState({});
+  const [loadingAnalytics, setLoadingAnalytics] = useState({});
+
   // State for dialogs
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [keyToEdit, setKeyToEdit] = useState(null);
   const [keyToDelete, setKeyToDelete] = useState(null);
+  
+  // State for refreshing usage data
+  const [refreshingUsage, setRefreshingUsage] = useState(false);
+  const refreshInterval = useRef(null);
 
   // Form states
   const [keyName, setKeyName] = useState('');
@@ -67,10 +77,66 @@ export default function ApiKeysPage() {
   useEffect(() => {
     if (isAuthenticated) {
       loadApiKeys();
+      
+      // Start the refresh interval
+      startUsageRefresh();
+      
+      // Clean up interval on unmount
+      return () => {
+        if (refreshInterval.current) {
+          clearInterval(refreshInterval.current);
+        }
+      };
     } else if (!isLoading && !isAuthenticated) {
       router.push('/login?redirect=/profile/api-keys');
     }
   }, [isAuthenticated, isLoading]);
+
+  // Start refreshing usage data periodically
+  const startUsageRefresh = () => {
+    // Refresh usage data every 30 seconds
+    refreshInterval.current = setInterval(() => {
+      refreshApiKeyUsage();
+    }, 30000); // 30 seconds
+  };
+
+  // Refresh API key usage data without loading UI
+  const refreshApiKeyUsage = useCallback(async () => {
+    if (apiKeys.length === 0 || !isAuthenticated) return;
+    
+    try {
+      setRefreshingUsage(true);
+      const updatedKeys = await getUserApiKeys();
+      setApiKeys(updatedKeys);
+    } catch (err) {
+      console.error('Error refreshing API key usage:', err);
+      // Don't show error to user for background refresh
+    } finally {
+      setRefreshingUsage(false);
+    }
+  }, [apiKeys, isAuthenticated]);
+
+  // Manually refresh usage data with loading UI
+  const handleRefreshUsage = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      await refreshApiKeyUsage();
+      setSuccess('API key usage data refreshed successfully!');
+      // Reset success message after 3 seconds
+      setTimeout(() => {
+        if (setSuccess) { // Check if component is still mounted
+          setSuccess(null);
+        }
+      }, 3000);
+    } catch (err) {
+      setError('Failed to refresh API key usage data. Please try again.');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Load API keys from the server
   const loadApiKeys = async () => {
@@ -254,6 +320,63 @@ export default function ApiKeysPage() {
     router.push('/profile');
   };
 
+  // Toggle analytics section expansion
+  const toggleAnalytics = async (keyId) => {
+    const newExpandedState = !expandedAnalytics[keyId];
+    setExpandedAnalytics(prev => ({
+      ...prev,
+      [keyId]: newExpandedState
+    }));
+    
+    // Fetch analytics data if expanding and we don't have data yet
+    if (newExpandedState && !analyticsData[keyId]) {
+      await loadAnalyticsData(keyId);
+    }
+  };
+
+  // Load analytics data for a specific API key
+  const loadAnalyticsData = async (keyId) => {
+    setLoadingAnalytics(prev => ({ ...prev, [keyId]: true }));
+    
+    try {
+      const history = await getApiKeyUsageHistory(keyId);
+      
+      // Check if we have valid data
+      if (!history || !history.lastWeek) {
+        console.error('Invalid analytics data format:', history);
+        throw new Error('Invalid data format received from server');
+      }
+      
+      setAnalyticsData(prev => ({ ...prev, [keyId]: history }));
+      setError(null); // Clear any existing errors
+    } catch (err) {
+      console.error(`Error loading analytics for API key ${keyId}:`, err);
+      
+      // Show error in the analytics section
+      setAnalyticsData(prev => ({ 
+        ...prev, 
+        [keyId]: { 
+          error: err.message || 'Failed to load analytics data',
+          retryable: true 
+        } 
+      }));
+      
+      // Show a general error message if this is the first attempt
+      if (!analyticsData[keyId]?.error) {
+        setError('Failed to load API key analytics. Please try again.');
+        
+        // Auto-hide the error after 5 seconds
+        setTimeout(() => {
+          if (setError) { // Check if component is still mounted
+            setError(null);
+          }
+        }, 5000);
+      }
+    } finally {
+      setLoadingAnalytics(prev => ({ ...prev, [keyId]: false }));
+    }
+  };
+
   // If not authenticated yet, show loading
   if (isLoading) {
     return (
@@ -294,65 +417,40 @@ export default function ApiKeysPage() {
         )}
         
         {newKey && (
-          <Alert 
-            severity="info" 
-            sx={{ 
-              mb: 2,
-              '& .MuiAlert-message': { width: '100%' }
-            }}
-            action={
-              <IconButton
-                aria-label="copy"
-                color="inherit"
-                size="small"
-                onClick={() => handleCopyKey(newKey.key)}
-              >
-                <FileCopy fontSize="inherit" />
-              </IconButton>
-            }
-          >
-            <Typography variant="subtitle1" gutterBottom color="primary" fontWeight="bold">
-              New API Key Created - COPY THIS KEY NOW
+          <Paper sx={{ p: 3, mb: 4, bgcolor: '#f8f9fa' }}>
+            <Typography variant="h6" gutterBottom color="primary">
+              Your New API Key
             </Typography>
-            <Paper
-              elevation={0}
-              sx={{ 
-                fontFamily: 'monospace', 
-                wordBreak: 'break-all',
-                bgcolor: 'rgba(0, 0, 0, 0.04)',
-                p: 2,
-                borderRadius: 1,
-                border: '1px dashed rgba(0, 0, 0, 0.2)',
-                my: 1
-              }}
-            >
-              <Typography variant="body2" sx={{ fontSize: '0.9rem' }}>
+            <Typography variant="body2" paragraph color="error">
+              Important: Copy this key now. It will only be shown once!
+            </Typography>
+            
+            <Box sx={{ 
+              p: 2, 
+              bgcolor: '#f0f0f0', 
+              borderRadius: 1, 
+              fontFamily: 'monospace', 
+              fontSize: '0.9rem',
+              position: 'relative',
+              mb: 2
+            }}>
+              <code style={{ overflowWrap: 'break-word', wordBreak: 'break-all' }}>
                 {newKey.key}
-              </Typography>
-            </Paper>
-            <Typography variant="body2" color="error" fontWeight="bold" sx={{ mb: 1 }}>
-              ⚠️ This key will only be shown once. Please copy it now or you'll need to create a new one.
-            </Typography>
-            <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
-              <Button 
-                variant="contained" 
+              </code>
+              <IconButton 
                 size="small" 
-                color={keyCopied ? "success" : "primary"}
+                sx={{ position: 'absolute', right: 8, top: 8 }}
                 onClick={() => handleCopyKey(newKey.key)}
-                startIcon={keyCopied ? <Check /> : <FileCopy />}
-                sx={{ mr: 1 }}
+                color={keyCopied ? "success" : "default"}
               >
-                {keyCopied ? 'Copied!' : 'Copy to Clipboard'}
-              </Button>
-              <Button 
-                variant="outlined" 
-                size="small"
-                onClick={handleClearNewKey}
-              >
-                I've Saved My Key
-              </Button>
+                {keyCopied ? <Check fontSize="small" /> : <FileCopy fontSize="small" />}
+              </IconButton>
             </Box>
-          </Alert>
+            
+            <Button variant="outlined" onClick={handleClearNewKey}>
+              I've copied my key
+            </Button>
+          </Paper>
         )}
       </Box>
       
@@ -363,15 +461,26 @@ export default function ApiKeysPage() {
         >
           Back to Profile
         </Button>
-        <Button 
-          variant="contained" 
-          color="primary" 
-          startIcon={<Add />}
-          onClick={handleCreateClick}
-          disabled={apiKeys.length >= 5}
-        >
-          Create API Key
-        </Button>
+        <Box>
+          <Button 
+            variant="outlined" 
+            onClick={handleRefreshUsage} 
+            startIcon={<Refresh />}
+            disabled={loading || refreshingUsage}
+            sx={{ mr: 2 }}
+          >
+            Refresh Usage
+          </Button>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            startIcon={<Add />}
+            onClick={handleCreateClick}
+            disabled={loading || apiKeys.length >= 5}
+          >
+            Create API Key
+          </Button>
+        </Box>
       </Box>
       
       {loading && !apiKeys.length ? (
@@ -420,6 +529,15 @@ export default function ApiKeysPage() {
                     {apiKey.name}
                   </Typography>
                   <Stack direction="row" spacing={1}>
+                    <Tooltip title={expandedAnalytics[apiKey.id] ? "Hide Analytics" : "Show Analytics"}>
+                      <IconButton 
+                        size="small"
+                        onClick={() => toggleAnalytics(apiKey.id)}
+                        color={expandedAnalytics[apiKey.id] ? "primary" : "default"}
+                      >
+                        {expandedAnalytics[apiKey.id] ? <ExpandLess /> : <BarChart />}
+                      </IconButton>
+                    </Tooltip>
                     <Tooltip title={apiKey.isActive ? "Revoke Key" : "Activate Key"}>
                       <IconButton 
                         size="small"
@@ -473,18 +591,221 @@ export default function ApiKeysPage() {
                 </Box>
                 
                 {apiKey.usage && (
-                  <Box sx={{ mt: 2 }}>
-                    <Typography variant="subtitle2" gutterBottom>
-                      Usage Today:
-                    </Typography>
-                    <Typography variant="body2">
-                      Books searched: {apiKey.usage.booksSearched}/{apiKey.limits.booksPerDay}
-                    </Typography>
-                    <Typography variant="body2">
-                      Reviews posted: {apiKey.usage.reviewsPosted}/{apiKey.limits.reviewsPerDay}
-                    </Typography>
+                  <Box sx={{ mt: 2, p: 1.5, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="subtitle2" gutterBottom>
+                        API Usage Today:
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {apiKey.usage.lastReset ? (
+                          <>Reset {formatDistanceToNow(new Date(apiKey.usage.lastReset))} ago</>
+                        ) : (
+                          'Resets at midnight UTC'
+                        )}
+                      </Typography>
+                    </Box>
+                    
+                    {/* Books searched usage */}
+                    <Box sx={{ mb: 1.5 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                        <Typography variant="body2">
+                          Books searched:
+                        </Typography>
+                        <Typography variant="body2" fontWeight={apiKey.usage.booksSearched > 0 ? 'bold' : 'normal'}>
+                          {apiKey.usage.booksSearched}/{apiKey.limits.booksPerDay}
+                        </Typography>
+                      </Box>
+                      <LinearProgress 
+                        variant="determinate" 
+                        value={(apiKey.usage.booksSearched / apiKey.limits.booksPerDay) * 100}
+                        color={apiKey.usage.booksSearched > apiKey.limits.booksPerDay * 0.8 ? "warning" : "primary"}
+                        sx={{ height: 8, borderRadius: 1 }}
+                      />
+                    </Box>
+                    
+                    {/* Reviews posted usage */}
+                    <Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                        <Typography variant="body2">
+                          Reviews posted:
+                        </Typography>
+                        <Typography variant="body2" fontWeight={apiKey.usage.reviewsPosted > 0 ? 'bold' : 'normal'}>
+                          {apiKey.usage.reviewsPosted}/{apiKey.limits.reviewsPerDay}
+                        </Typography>
+                      </Box>
+                      <LinearProgress 
+                        variant="determinate" 
+                        value={(apiKey.usage.reviewsPosted / apiKey.limits.reviewsPerDay) * 100}
+                        color={apiKey.usage.reviewsPosted > apiKey.limits.reviewsPerDay * 0.8 ? "warning" : "primary"}
+                        sx={{ height: 8, borderRadius: 1 }}
+                      />
+                    </Box>
+                    
+                    <Box sx={{ mt: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="caption" color="text.secondary">
+                        Last used: {apiKey.lastUsed ? formatDistanceToNow(new Date(apiKey.lastUsed)) + ' ago' : 'Never'}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Next reset: {(() => {
+                          const now = new Date();
+                          const tomorrow = new Date(now);
+                          tomorrow.setDate(tomorrow.getDate() + 1);
+                          tomorrow.setHours(0, 0, 0, 0);
+                          return formatDistanceToNow(tomorrow);
+                        })()}
+                      </Typography>
+                    </Box>
                   </Box>
                 )}
+                
+                {/* Analytics Section */}
+                <Collapse in={expandedAnalytics[apiKey.id]} timeout="auto" unmountOnExit>
+                  <Box sx={{ mt: 3, p: 2, bgcolor: '#f8f9fa', borderRadius: 1 }}>
+                    <Typography variant="subtitle1" gutterBottom>
+                      API Key Analytics
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
+                    
+                    {loadingAnalytics[apiKey.id] ? (
+                      <Box sx={{ textAlign: 'center', py: 3 }}>
+                        <CircularProgress size={24} />
+                        <Typography variant="body2" sx={{ mt: 1 }}>Loading analytics data...</Typography>
+                      </Box>
+                    ) : analyticsData[apiKey.id]?.error ? (
+                      <Box sx={{ textAlign: 'center', py: 2 }}>
+                        <Alert severity="error" sx={{ mb: 2 }}>
+                          {analyticsData[apiKey.id].error}
+                        </Alert>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => loadAnalyticsData(apiKey.id)}
+                          startIcon={<Refresh />}
+                        >
+                          Retry Loading Data
+                        </Button>
+                      </Box>
+                    ) : analyticsData[apiKey.id] ? (
+                      <>
+                        {/* Daily Averages */}
+                        <Box sx={{ mb: 3 }}>
+                          <Typography variant="subtitle2" gutterBottom>Daily Averages</Typography>
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                            <Box sx={{ flex: '1 1 45%', minWidth: '150px' }}>
+                              <Typography variant="body2">Books searched:</Typography>
+                              <Typography variant="h5" color="primary" fontWeight="bold">
+                                {analyticsData[apiKey.id].dailyAverages?.booksSearched || 0}
+                                <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                                  per day
+                                </Typography>
+                              </Typography>
+                            </Box>
+                            <Box sx={{ flex: '1 1 45%', minWidth: '150px' }}>
+                              <Typography variant="body2">Reviews posted:</Typography>
+                              <Typography variant="h5" color="primary" fontWeight="bold">
+                                {analyticsData[apiKey.id].dailyAverages?.reviewsPosted || 0}
+                                <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                                  per day
+                                </Typography>
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </Box>
+                        
+                        {/* Usage Chart */}
+                        <Typography variant="subtitle2" gutterBottom>Last 7 Days</Typography>
+                        <Box sx={{ overflowX: 'auto' }}>
+                          <Box sx={{ display: 'flex', minWidth: '550px', mt: 2, height: 100 }}>
+                            {analyticsData[apiKey.id].lastWeek.map((day) => (
+                              <Box key={day.date} sx={{ flex: 1, px: 0.5, textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+                                <Typography variant="caption" sx={{ display: 'block', mb: 0.5 }}>
+                                  {new Date(day.date).toLocaleDateString(undefined, { weekday: 'short' })}
+                                </Typography>
+                                <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+                                  <Box sx={{ 
+                                    height: `${Math.min((day.booksSearched / apiKey.limits.booksPerDay) * 100, 100)}%`, 
+                                    minHeight: day.booksSearched > 0 ? 4 : 0,
+                                    bgcolor: 'primary.main',
+                                    borderTopLeftRadius: 4,
+                                    borderTopRightRadius: 4,
+                                    mb: 0.5,
+                                    position: 'relative'
+                                  }}>
+                                    <Typography variant="caption" sx={{ 
+                                      position: 'absolute', 
+                                      top: -20, 
+                                      left: '50%', 
+                                      transform: 'translateX(-50%)',
+                                      fontSize: '0.7rem',
+                                      fontWeight: day.booksSearched > 0 ? 'bold' : 'normal'
+                                    }}>
+                                      {day.booksSearched}
+                                    </Typography>
+                                  </Box>
+                                  <Box sx={{ 
+                                    height: `${Math.min((day.reviewsPosted / apiKey.limits.reviewsPerDay) * 100, 100)}%`,
+                                    minHeight: day.reviewsPosted > 0 ? 4 : 0,
+                                    bgcolor: 'secondary.main',
+                                    borderTopLeftRadius: 4,
+                                    borderTopRightRadius: 4,
+                                    position: 'relative'
+                                  }}>
+                                    <Typography variant="caption" sx={{ 
+                                      position: 'absolute', 
+                                      top: -20, 
+                                      left: '50%', 
+                                      transform: 'translateX(-50%)',
+                                      fontSize: '0.7rem',
+                                      fontWeight: day.reviewsPosted > 0 ? 'bold' : 'normal'
+                                    }}>
+                                      {day.reviewsPosted}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              </Box>
+                            ))}
+                          </Box>
+                          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, gap: 3 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: 'primary.main', mr: 1 }} />
+                              <Typography variant="caption">Books Searched</Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: 'secondary.main', mr: 1 }} />
+                              <Typography variant="caption">Reviews Posted</Typography>
+                            </Box>
+                          </Box>
+                        </Box>
+                      </>
+                    ) : (
+                      <Box sx={{ textAlign: 'center', py: 2 }}>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                          No usage history available yet. Start using this API key to generate analytics data.
+                        </Typography>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => loadAnalyticsData(apiKey.id)}
+                          startIcon={<Refresh />}
+                        >
+                          Check Again
+                        </Button>
+                      </Box>
+                    )}
+                    
+                    <Box sx={{ mt: 2, textAlign: 'center' }}>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => loadAnalyticsData(apiKey.id)}
+                        startIcon={<Refresh />}
+                        disabled={loadingAnalytics[apiKey.id]}
+                      >
+                        Refresh Analytics
+                      </Button>
+                    </Box>
+                  </Box>
+                </Collapse>
               </CardContent>
             </Card>
           ))}

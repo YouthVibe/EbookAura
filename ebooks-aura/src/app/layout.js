@@ -37,7 +37,7 @@ export const metadata = {
   openGraph: {
     title: "EbookAura - Free PDF Books Library",
     description: "Discover, read and download free PDF books. Access thousands of ebooks in PDF format for free reading online or download.",
-    url: 'https://ebookaura.onrender.com',
+    url: process.env.NEXT_PUBLIC_APP_URL || 'https://ebookaura.onrender.com',
     siteName: 'EbookAura',
     locale: 'en_US',
     type: 'website',

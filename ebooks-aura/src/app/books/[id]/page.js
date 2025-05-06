@@ -37,7 +37,7 @@ export async function generateMetadata(props) {
     }
 
     // Get the API URL with localhost fallback
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ebookaura.onrender.com';
     
     // Fetch book details for metadata
@@ -129,7 +129,7 @@ async function getBookStructuredData(params) {
     }
 
     // Get the API URL with localhost fallback
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ebookaura.onrender.com';
     
     // Fetch book details
@@ -254,7 +254,7 @@ export async function generateStaticParams() {
     }
     
     // Try to fetch additional books from the API if available
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://ebookaura.onrender.com/api';
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
     console.log(`Fetching books from API: ${API_URL}/books?limit=200`);
     
     let apiBooks = [];

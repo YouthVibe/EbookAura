@@ -11,7 +11,7 @@ import { getAPI, postAPI, putAPI, deleteAPI } from '../api/apiUtils';
  */
 
 // API base URL with environment fallback to production
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 // API endpoints
 export const API_ENDPOINTS = {

@@ -9,7 +9,7 @@
  */
 
 // API base URL with environment fallback to production
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://ebookaura.onrender.com/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 /**
  * In-memory cache for tracking API call timestamps
@@ -88,7 +88,8 @@ export async function fetchAPI(endpoint, options = {}) {
       options.headers = {};
     }
     
-    // Add content-type header for requests with body
+    // Add content-type header for requests with body, unless it's FormData
+    // For FormData, let the browser set the Content-Type with the correct boundary
     if (options.body && !options.headers['Content-Type'] && !(options.body instanceof FormData)) {
       options.headers['Content-Type'] = 'application/json';
     }
@@ -244,16 +245,17 @@ export async function getAPI(endpoint, options = {}) {
 /**
  * Post data to an API endpoint
  * @param {string} endpoint - API endpoint path (without base URL)
- * @param {object} data - Data to send in request body
+ * @param {object|FormData} data - Data to send in request body
  * @param {object} options - Additional fetch options
  * @returns {Promise<any>} - Parsed JSON response
  */
 export async function postAPI(endpoint, data, options = {}) {
+  // Handle FormData objects differently - don't JSON.stringify them
   const body = data instanceof FormData ? data : JSON.stringify(data);
   
   return fetchAPI(endpoint, {
     method: 'POST',
-    body,
+    body: body,
     ...options
   });
 }
@@ -261,14 +263,17 @@ export async function postAPI(endpoint, data, options = {}) {
 /**
  * Put data to an API endpoint
  * @param {string} endpoint - API endpoint path (without base URL)
- * @param {object} data - Data to send in request body
+ * @param {object|FormData} data - Data to send in request body
  * @param {object} options - Additional fetch options
  * @returns {Promise<any>} - Parsed JSON response
  */
 export async function putAPI(endpoint, data, options = {}) {
+  // Handle FormData objects differently - don't JSON.stringify them
+  const body = data instanceof FormData ? data : JSON.stringify(data);
+  
   return fetchAPI(endpoint, {
     method: 'PUT',
-    body: JSON.stringify(data),
+    body: body,
     ...options
   });
 }
