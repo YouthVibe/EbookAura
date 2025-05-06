@@ -44,6 +44,33 @@ const shouldMakeApiCall = (apiName, minIntervalMs = 300000) => { // Default: 5 m
   return true;
 };
 
+// Function to directly parse MongoDB extended JSON format
+const parseMongoDbBook = (bookData) => {
+  if (!bookData) return null;
+  
+  try {
+    // If bookData is already a string, parse it
+    const bookObj = typeof bookData === 'string' ? JSON.parse(bookData) : bookData;
+    
+    // Use the utility function to normalize MongoDB document
+    const normalizedBook = normalizeMongoDocument(bookObj);
+    
+    console.log('Normalized book data:', {
+      title: normalizedBook.title,
+      author: normalizedBook.author,
+      id: normalizedBook._id,
+      isPremium: normalizedBook.isPremium,
+      price: normalizedBook.price
+    });
+    
+    return normalizedBook;
+  } catch (error) {
+    console.error('Error parsing MongoDB book data:', error);
+    console.error('Original data:', bookData);
+    return null;
+  }
+};
+
 export default function BookPageClient({ id }) {
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -56,6 +83,7 @@ export default function BookPageClient({ id }) {
   const [isSubscriptionChecking, setIsSubscriptionChecking] = useState(false);
   const [subscriptionCheckerActive, setSubscriptionCheckerActive] = useState(false);
   const [premiumError, setPremiumError] = useState(null);
+  const [rawData, setRawData] = useState(null); // Store raw data for debugging
   const router = useRouter();
   const { user, isLoggedIn, getToken, getApiKey, updateUserCoins } = useAuth();
   
@@ -64,6 +92,156 @@ export default function BookPageClient({ id }) {
   const isFetchingRef = useRef(false);
   const lastRefreshTimeRef = useRef(0); // Track last refresh time
   const subscriptionCheckTimerRef = useRef(null);
+  
+  // Direct book data handling functionality
+  // This handles cases where id might be a MongoDB document string
+  useEffect(() => {
+    if (id && typeof id === 'string' && id.includes('$oid')) {
+      console.log('Detected MongoDB extended JSON format in ID, attempting to parse');
+      try {
+        // Try to parse as a complete MongoDB document
+        const parsedBook = parseMongoDbBook(id);
+        if (parsedBook && parsedBook._id) {
+          console.log('Successfully parsed book data from ID parameter:', parsedBook.title);
+          setBook(parsedBook);
+          setLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.error('Error parsing book data from ID:', err);
+      }
+    }
+  }, [id]);
+  
+  // Enhanced fetchBook function with proper error handling
+  const fetchBook = useCallback(async () => {
+    if (!id) {
+      console.error('Cannot fetch book: ID is missing');
+      setError('Cannot fetch book details: ID is missing');
+      setLoading(false);
+      return;
+    }
+    
+    // Skip fetching if we already parsed the book from the ID parameter
+    if (book && !loading) {
+      console.log('Book already loaded from parameter data, skipping fetch');
+      return;
+    }
+    
+    // Avoid concurrent requests
+    if (isFetchingRef.current) {
+      console.log('Already fetching book data, skipping duplicate request');
+      return;
+    }
+    
+    try {
+      console.log(`Fetching book with ID: ${id}`);
+      setLoading(true);
+      isFetchingRef.current = true;
+      
+      // Check if the ID is actually a full MongoDB document in string format
+      if (typeof id === 'string' && (id.includes('$oid') || id.includes('$numberInt') || id.includes('$date'))) {
+        console.log('Potential MongoDB document detected in ID parameter');
+        try {
+          // Try to parse as a complete MongoDB document
+          const parsedData = JSON.parse(id);
+          if (parsedData && parsedData._id) {
+            const normalizedBook = normalizeMongoDocument(parsedData);
+            console.log('Successfully parsed book data:');
+            console.log('- Title:', normalizedBook.title);
+            console.log('- Author:', normalizedBook.author);
+            console.log('- ID:', normalizedBook._id);
+            
+            setBook(normalizedBook);
+            setLoading(false);
+            isFetchingRef.current = false;
+            return;
+          }
+        } catch (err) {
+          console.log('Not a valid JSON document, proceeding with normal fetch');
+        }
+      }
+      
+      // Standard API fetch for regular book IDs
+      const cleanId = id.replace(/['"{}]/g, ''); // Clean the ID in case it has quotes or brackets
+      const endpoint = API_ENDPOINTS.BOOKS.DETAILS(cleanId);
+      console.log(`Fetching from API endpoint: ${endpoint}`);
+      
+      // Add proper auth header if user is logged in
+      const headers = {};
+      if (isLoggedIn) {
+        const token = await getToken();
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        const apiKey = await getApiKey();
+        if (apiKey) {
+          headers['X-API-Key'] = apiKey;
+        }
+      }
+      
+      const response = await fetch(endpoint, { headers });
+      
+      if (!response.ok) {
+        // Log detailed error information
+        const errorMessage = `API Error ${response.status} (${response.statusText})`;
+        console.error(errorMessage);
+        
+        // Try to get error message from response
+        let errorDetail = '';
+        try {
+          const errorData = await response.json();
+          errorDetail = errorData.message || '';
+        } catch (e) {
+          // If response is not JSON, try to get text
+          errorDetail = await response.text();
+        }
+        
+        if (response.status === 404) {
+          setError(`Book not found (ID: ${cleanId})`);
+        } else {
+          setError(`Error loading book: ${errorMessage}. ${errorDetail}`);
+        }
+        setLoading(false);
+        isFetchingRef.current = false;
+        return;
+      }
+      
+      // Parse and store the response
+      const responseData = await response.json();
+      setRawData(JSON.stringify(responseData, null, 2)); // Save raw data for debugging
+      
+      console.log('API Response:', responseData);
+      
+      // Normalize the book data
+      const normalizedBook = normalizeMongoDocument(responseData);
+      
+      console.log('Normalized book data:', {
+        title: normalizedBook.title,
+        author: normalizedBook.author,
+        isPremium: normalizedBook.isPremium,
+        price: normalizedBook.price
+      });
+      
+      // Update state with the book data
+      setBook(normalizedBook);
+      
+      // Clear any previous errors
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching book:', err);
+      setError(`Failed to load book details: ${err.message}`);
+    } finally {
+      setLoading(false);
+      isFetchingRef.current = false;
+    }
+  }, [id, isLoggedIn, getToken, getApiKey, book, loading]);
+  
+  // Main effect to fetch book data
+  useEffect(() => {
+    fetchBook();
+  }, [fetchBook]);
   
   // Check URL for debug parameter
   useEffect(() => {
@@ -511,119 +689,6 @@ export default function BookPageClient({ id }) {
     }
   }, [isLoggedIn, checkSubscriptionStatus]);
   
-  // Function to fetch book details
-  const fetchBookDetails = useCallback(async (bookId) => {
-    if (!bookId) {
-      return;
-    }
-
-    console.log(`Fetching book details for book ID ${bookId}`);
-    
-    // Check if enough time has passed since last API call (30 seconds minimum for book details)
-    if (!shouldMakeApiCall('fetchBook_' + bookId, 30000)) {
-      // Even if we don't fetch, we should check purchase/subscription status
-      // Run these after a short delay to avoid component re-render issues
-      setTimeout(() => {
-        checkPurchaseStatus();
-        checkSubscriptionStatus();
-      }, 100);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const token = isLoggedIn ? await getToken() : null;
-      
-      const headers = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
-      const response = await fetch(`${apiUrl}/books/${bookId}`, {
-        headers
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch book: ${response.status} ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      console.log('Book data received:', data);
-      
-      // Normalize the data to ensure consistent structure
-      const normalizedData = normalizeMongoDocument(data);
-      
-      // Extract hasSubscription from the API response (set by our backend middleware)
-      const subscriptionActive = normalizedData.hasSubscription === true;
-      setHasSubscription(subscriptionActive);
-      
-      console.log(`Setting hasSubscription from API response: ${subscriptionActive}`);
-      
-      setBook(normalizedData);
-      
-      // Check if the book is premium and if the user already has access
-      const isPremium = normalizedData.isPremium || (normalizedData.price && normalizedData.price > 0);
-      const userHasAccess = normalizedData.userHasAccess;
-      
-      // Coordinate purchase and subscription checks
-      if (isLoggedIn && isPremium) {
-        console.log('Book is premium and user is logged in, checking access rights');
-        
-        let accessVerified = false;
-        
-        // First check if the book response already indicates access
-        if (normalizedData.userHasAccess === true) {
-          console.log('API response indicates user already has access');
-          accessVerified = true;
-        }
-        
-        if (!accessVerified) {
-          // If the API response indicates the user has a subscription, they have access
-          if (subscriptionActive) {
-            console.log('API response confirms active subscription, granting access');
-            accessVerified = true;
-            
-            // Update book access state
-            setBook(prevBook => ({
-              ...prevBook,
-              userHasAccess: true
-            }));
-          } else {
-            // Check purchase status if subscription doesn't grant access
-          try {
-            await checkPurchaseStatus();
-            
-              // If purchase check granted access, we're done
-              if (hasUserPurchased) {
-              console.log('Purchase check confirmed access');
-              accessVerified = true;
-            }
-          } catch (purchaseError) {
-            console.error('Error in purchase check:', purchaseError);
-          }
-          }
-        }
-        
-        // Final update of book access state based on all checks
-        if (accessVerified) {
-          console.log('Access verified through any method, updating book state');
-          setBook(prevBook => ({
-            ...prevBook,
-            userHasAccess: true
-          }));
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching book details:', error);
-      setError('Failed to load book details. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  }, [isLoggedIn, getToken, checkPurchaseStatus, hasUserPurchased]);
-
   const fetchPdfForViewing = async () => {
     if (!book || !id) {
       console.error('Cannot view PDF: Book data or ID is missing');
@@ -1094,7 +1159,7 @@ export default function BookPageClient({ id }) {
 
     if (shouldFetch) {
       // Use a setTimeout to ensure this executes after any auth token checks complete
-      setTimeout(() => fetchBookDetails(id), 50);
+      setTimeout(() => fetchBook(), 50);
     }
   }, [id, isLoggedIn, user, refreshUserCoins]);
 
@@ -1182,96 +1247,184 @@ export default function BookPageClient({ id }) {
 
   if (error) {
     return (
-      <div className={styles.error}>
-        <h2>Error</h2>
+      <div className={styles.errorContainer}>
+        <h2>Error Loading Book</h2>
         <p>{error}</p>
-        <div style={{ marginTop: "20px" }}>
-          <Link href="/search" className={styles.backButton}>
-            <FaArrowLeft /> Back to Search
-          </Link>
+        <div className={styles.buttonRow}>
+          <button onClick={() => router.back()} className={styles.backButton}>
+            <FaArrowLeft className={styles.buttonIcon} /> Go Back
+          </button>
           <button 
-            onClick={() => setDebugMode(true)}
-            style={{
-              display: 'none', // Hide the debug button but keep it available
-              marginLeft: '10px',
-              padding: '8px 15px',
-              background: '#ff5b5b',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
+            onClick={() => {
+              setError(null);
+              setLoading(true);
+              fetchBook();
+            }} 
+            className={styles.retryButton}
           >
-            Debug Premium Status
+            Try Again
           </button>
         </div>
         
-        {/* Show API URL debug info */}
-        <div style={{ 
-          display: 'none', // Hide the debug info section
-          marginTop: '20px', 
-          padding: '10px', 
-          background: '#f8f8f8', 
-          border: '1px solid #ddd',
-          borderRadius: '4px',
-          fontSize: '0.8rem'
-        }}>
-          <h3>API Connection Debug Info</h3>
-          <p><strong>Book ID:</strong> {id}</p>
-          <p><strong>API URL:</strong> {API_ENDPOINTS.BOOKS.DETAILS(id)}</p>
-          <p><strong>Direct URL:</strong> {`${process.env.NEXT_PUBLIC_API_URL || '/api'}/books/${id}`}</p>
-          <p>
-            <button
-              onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/books/${id}`, '_blank')}
-              style={{
-                padding: '5px 10px',
-                background: '#4285f4',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                marginRight: '10px'
-              }}
-            >
-              Try Direct API
-            </button>
-            <button
-              onClick={() => {
-                // Force refresh the page with cache busting
-                const cacheBuster = Date.now();
-                window.location.href = `${window.location.pathname}?refresh=${cacheBuster}`;
-              }}
-              style={{
-                padding: '5px 10px',
-                background: '#34a853',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              Force Refresh
-            </button>
-          </p>
-        </div>
+        {/* Debug info panel */}
+        {(process.env.NODE_ENV === 'development' || debugMode) && (
+          <div className={styles.debugPanel}>
+            <h3>Debug Information</h3>
+            <p><strong>Book ID:</strong> {id}</p>
+            <p><strong>API URL:</strong> {process.env.NEXT_PUBLIC_API_URL || '/api'}</p>
+            <p><strong>Static Export:</strong> {process.env.STATIC_EXPORT || 'not set'}</p>
+            {rawData && (
+              <details>
+                <summary>Raw API Response</summary>
+                <pre style={{ 
+                  maxHeight: '200px', 
+                  overflow: 'auto', 
+                  background: '#f8f9fa', 
+                  padding: '10px', 
+                  borderRadius: '4px',
+                  fontSize: '12px' 
+                }}>
+                  {rawData}
+                </pre>
+              </details>
+            )}
+          </div>
+        )}
       </div>
     );
   }
 
+  // Handle case where book is null or undefined but no error was set
   if (!book) {
     return (
-      <div className={styles.error}>
+      <div className={styles.errorContainer}>
         <h2>Book Not Found</h2>
-        <p>We couldn't find the book you're looking for.</p>
-        <Link href="/search" className={styles.backButton}>
-          <FaArrowLeft /> Back to Search
-        </Link>
+        <p>The requested book information could not be loaded.</p>
+        <div className={styles.buttonRow}>
+          <button onClick={() => router.back()} className={styles.backButton}>
+            <FaArrowLeft className={styles.buttonIcon} /> Go Back
+          </button>
+          <button 
+            onClick={() => {
+              setLoading(true);
+              fetchBook();
+            }} 
+            className={styles.retryButton}
+          >
+            Try Again
+          </button>
+        </div>
+        
+        {/* MongoDB document debugging */}
+        {id && typeof id === 'string' && (id.includes('$oid') || id.includes('_id')) && (
+          <div className={styles.debugPanel}>
+            <h3>Direct Document Data</h3>
+            <p>It appears you're trying to view a book by passing the entire MongoDB document.</p>
+            <p>Try visiting a URL with just the book ID instead.</p>
+            
+            <div style={{ marginTop: '20px' }}>
+              <h4>Try to parse and display book:</h4>
+              <button 
+                onClick={() => {
+                  try {
+                    // Try to parse the document
+                    const parsedBook = parseMongoDbBook(id);
+                    if (parsedBook) {
+                      setBook(parsedBook);
+                      setError(null);
+                    } else {
+                      setError('Failed to parse book data from the provided document');
+                    }
+                  } catch (err) {
+                    setError(`Error parsing document: ${err.message}`);
+                  }
+                }}
+                className={styles.actionButton}
+              >
+                Parse Document Data
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
-
+  
+  // Add debug button at the bottom of the page
+  const renderDebugButton = () => {
+    if (process.env.NODE_ENV !== 'production' || debugMode) {
+      return (
+        <div style={{ 
+          position: 'fixed', 
+          bottom: '10px', 
+          right: '10px', 
+          zIndex: 1000,
+          backgroundColor: '#f8f9fa',
+          padding: '5px 10px',
+          borderRadius: '4px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          fontSize: '12px'
+        }}>
+          <details>
+            <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>Book Data Debug</summary>
+            <div style={{ maxWidth: '400px', maxHeight: '500px', overflowX: 'auto', overflowY: 'auto' }}>
+              <p><strong>Title:</strong> {book?.title || 'N/A'}</p>
+              <p><strong>Author:</strong> {book?.author || 'N/A'}</p>
+              <p><strong>ID:</strong> {book?._id || 'N/A'}</p>
+              <p><strong>Is Premium:</strong> {String(isPremiumBook)}</p>
+              <p><strong>Price:</strong> {book?.price || 0} coins</p>
+              <p><strong>Cover Image:</strong> {book?.coverImage ? 'Yes' : 'No'}</p>
+              <p><strong>PDF URL:</strong> {book?.pdfUrl ? 'Yes' : 'No'}</p>
+              <p><strong>Has Access:</strong> {String(hasUserPurchased)}</p>
+              <p><strong>Has Subscription:</strong> {String(hasSubscription)}</p>
+              
+              <div style={{ marginTop: '10px' }}>
+                <button 
+                  onClick={() => {
+                    console.log('Full book data:', book);
+                    alert('Book data logged to console');
+                  }}
+                  style={{
+                    padding: '5px 10px',
+                    background: '#007bff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    marginRight: '5px'
+                  }}
+                >
+                  Log Book Data
+                </button>
+                <button 
+                  onClick={() => {
+                    setLoading(true);
+                    fetchBook();
+                  }}
+                  style={{
+                    padding: '5px 10px',
+                    background: '#28a745',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '12px'
+                  }}
+                >
+                  Refresh Data
+                </button>
+              </div>
+            </div>
+          </details>
+        </div>
+      );
+    }
+    return null;
+  };
+  
   return (
-    <div className={styles.container}>
+    <div className={styles.bookContainer}>
       <div className={styles.header}>
         <Link href="/search" className={styles.backButton}>
           <FaArrowLeft /> Back to Search
@@ -1422,7 +1575,7 @@ export default function BookPageClient({ id }) {
                       <button
                         onClick={() => {
                           // Force refresh API data with cache busting
-                          fetchBookDetails(id);
+                          fetchBook();
                         }}
                         style={{
                           background: '#28a745',
@@ -1632,6 +1785,9 @@ export default function BookPageClient({ id }) {
           </div>
         </div>
       )}
+
+      {/* Add debug button */}
+      {renderDebugButton()}
     </div>
   );
 } 

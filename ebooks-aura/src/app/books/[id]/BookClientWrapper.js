@@ -33,6 +33,8 @@ export default function BookClientWrapper({ params: serverParams }) {
   const [bookId, setBookId] = useState(serverParams?.id || '');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [apiUrl, setApiUrl] = useState('');
+  const [debugInfo, setDebugInfo] = useState({});
   
   // Client-side navigation params
   const clientParams = useParams();
@@ -51,6 +53,21 @@ export default function BookClientWrapper({ params: serverParams }) {
       userId: user?.id,
       coins: user?.coins
     });
+    
+    // Get and store API URL for debugging
+    setApiUrl(process.env.NEXT_PUBLIC_API_URL || '/api');
+    console.log('API URL from env:', process.env.NEXT_PUBLIC_API_URL);
+    
+    // Check if static export mode is enabled
+    console.log('Static export:', process.env.STATIC_EXPORT);
+    
+    // Add to debug info
+    setDebugInfo(prev => ({
+      ...prev,
+      apiUrl: process.env.NEXT_PUBLIC_API_URL || '/api',
+      staticExport: process.env.STATIC_EXPORT,
+      isServerSide: typeof window === 'undefined',
+    }));
   }, [user, isLoggedIn]);
 
   useEffect(() => {
@@ -69,6 +86,7 @@ export default function BookClientWrapper({ params: serverParams }) {
         console.log('Using server-provided ID:', serverParams.id);
         setBookId(serverParams.id);
         setIsLoading(false);
+        setDebugInfo(prev => ({ ...prev, idSource: 'server', id: serverParams.id }));
         return;
       }
       
@@ -85,6 +103,7 @@ export default function BookClientWrapper({ params: serverParams }) {
         console.log('Using client params ID:', clientParams.id);
         setBookId(clientParams.id);
         setIsLoading(false);
+        setDebugInfo(prev => ({ ...prev, idSource: 'client', id: clientParams.id }));
         return;
       }
       
@@ -118,12 +137,14 @@ export default function BookClientWrapper({ params: serverParams }) {
         if (finalId && finalId !== '' && finalId !== 'not-found' && finalId !== 'undefined') {
           console.log('Using ID extracted from path:', finalId);
           setBookId(finalId);
+          setDebugInfo(prev => ({ ...prev, idSource: 'path', id: finalId }));
         } else {
           throw new Error('Could not extract valid book ID from path');
         }
       } catch (err) {
         console.error('Error determining book ID:', err);
         setError('Could not determine which book to display');
+        setDebugInfo(prev => ({ ...prev, error: err.message }));
       } finally {
         setIsLoading(false);
       }
@@ -131,6 +152,51 @@ export default function BookClientWrapper({ params: serverParams }) {
 
     determineBookId();
   }, [serverParams, clientParams, pathname, router]);
+
+  // Effect to test API connectivity
+  useEffect(() => {
+    if (bookId) {
+      const testApiEndpoint = async () => {
+        try {
+          const endpoint = `/books/${bookId}`;
+          const apiUrlToUse = process.env.NEXT_PUBLIC_API_URL || '/api';
+          const fullUrl = apiUrlToUse + endpoint;
+          
+          console.log(`Testing API connectivity to: ${fullUrl}`);
+          
+          // Make a simple fetch request to test connectivity
+          const response = await fetch(fullUrl);
+          const status = response.status;
+          
+          console.log(`API connectivity test result: ${status} (${response.statusText})`);
+          
+          setDebugInfo(prev => ({ 
+            ...prev, 
+            apiTest: { 
+              endpoint: fullUrl,
+              status,
+              timestamp: new Date().toISOString()
+            } 
+          }));
+          
+          if (!response.ok) {
+            setDebugInfo(prev => ({ 
+              ...prev, 
+              apiError: `API returned status ${status} - ${response.statusText}`
+            }));
+          }
+        } catch (error) {
+          console.error('API connectivity test failed:', error);
+          setDebugInfo(prev => ({ 
+            ...prev, 
+            apiError: error.message
+          }));
+        }
+      };
+      
+      testApiEndpoint();
+    }
+  }, [bookId]);
 
   if (isLoading) {
     return <div className="loading-container">
@@ -157,13 +223,18 @@ export default function BookClientWrapper({ params: serverParams }) {
         backgroundColor: "#e9ecef",
         borderRadius: "4px",
         fontSize: "14px",
-        display: "none" // Hide debug information
+        display: "block" // Show debug information
       }}>
         <h3>Debug Information</h3>
         <p><strong>Current Path:</strong> {pathname}</p>
         <p><strong>Server Params ID:</strong> {serverParams?.id || 'none'}</p>
         <p><strong>Client Params ID:</strong> {clientParams?.id || 'none'}</p>
         <p><strong>Extracted Book ID:</strong> {bookId || 'none'}</p>
+        <p><strong>API URL:</strong> {apiUrl}</p>
+        <p><strong>Environment:</strong> {process.env.NODE_ENV}</p>
+        <p><strong>Static Export:</strong> {process.env.STATIC_EXPORT || 'not set'}</p>
+        <p><strong>API Test:</strong> {JSON.stringify(debugInfo.apiTest || {})}</p>
+        <p><strong>API Error:</strong> {debugInfo.apiError || 'none'}</p>
       </div>
       
       <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
@@ -229,13 +300,14 @@ export default function BookClientWrapper({ params: serverParams }) {
         backgroundColor: "#e9ecef",
         borderRadius: "4px",
         fontSize: "14px",
-        display: "none" // Hide debug information
+        display: "block" // Show debug information
       }}>
         <h3>Debug Information</h3>
         <p><strong>Current Path:</strong> {pathname}</p>
         <p><strong>Server Params ID:</strong> {serverParams?.id || 'none'}</p>
         <p><strong>Client Params ID:</strong> {clientParams?.id || 'none'}</p>
         <p><strong>Extracted Book ID:</strong> {bookId || 'none'}</p>
+        <p><strong>API URL:</strong> {apiUrl}</p>
       </div>
       
       <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
@@ -265,28 +337,41 @@ export default function BookClientWrapper({ params: serverParams }) {
         >
           Browse Books
         </button>
-        <button 
-          onClick={() => {
-            const newId = prompt("Enter a valid book ID to try:");
-            if (newId) {
-              router.push(`/books/${newId}`);
-            }
-          }} 
-          style={{
-            padding: "8px 16px",
-            backgroundColor: "#28a745",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer"
-          }}
-        >
-          Try Another ID
-        </button>
       </div>
     </div>;
   }
 
-  // Render the BookPageClient component with the book ID
-  return <BookPageClient id={bookId} />;
+  // Render normal book page with additional debug info
+  return (
+    <>
+      <BookPageClient id={bookId} />
+      
+      {/* Debug button - only in development */}
+      {process.env.NODE_ENV !== 'production' && (
+        <div style={{ 
+          position: 'fixed', 
+          bottom: '10px', 
+          right: '10px', 
+          zIndex: 1000,
+          backgroundColor: '#f8f9fa',
+          padding: '5px 10px',
+          borderRadius: '4px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          fontSize: '12px'
+        }}>
+          <details>
+            <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>Debug Info</summary>
+            <div style={{ maxWidth: '400px', overflowX: 'auto' }}>
+              <p><strong>Book ID:</strong> {bookId}</p>
+              <p><strong>API URL:</strong> {apiUrl}</p>
+              <p><strong>API Test:</strong> {JSON.stringify(debugInfo.apiTest || {})}</p>
+              <p><strong>API Error:</strong> {debugInfo.apiError || 'none'}</p>
+              <p><strong>ID Source:</strong> {debugInfo.idSource}</p>
+              <p><strong>Static Export:</strong> {process.env.STATIC_EXPORT || 'not set'}</p>
+            </div>
+          </details>
+        </div>
+      )}
+    </>
+  );
 } 

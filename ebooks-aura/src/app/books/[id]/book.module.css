@@ -5,6 +5,77 @@
   color: var(--text-color);
 }
 
+.bookContainer {
+  padding: 2rem 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  color: var(--text-color);
+}
+
+.errorContainer {
+  padding: 2rem;
+  max-width: 800px;
+  margin: 2rem auto;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.debugPanel {
+  margin: 1.5rem auto;
+  padding: 1rem;
+  background-color: #e9ecef;
+  border-radius: 6px;
+  text-align: left;
+  color: #212529;
+  max-width: 90%;
+  font-size: 0.9rem;
+}
+
+.buttonRow {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.retryButton {
+  padding: 8px 16px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+
+.retryButton:hover {
+  background-color: #218838;
+}
+
+.actionButton {
+  padding: 8px 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.actionButton:hover {
+  background-color: #0069d9;
+}
+
+.buttonIcon {
+  margin-right: 5px;
+}
+
 .header {
   display: flex;
   align-items: center;
