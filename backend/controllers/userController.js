@@ -180,7 +180,7 @@ const verifyEmail = async (req, res) => {
       name: tempUser.name,
       fullName: tempUser.fullName,
       email: tempUser.email,
-      isEmailVerified: true
+      isEmailVerified: true,
     });
     
     // Set the password directly to avoid double hashing

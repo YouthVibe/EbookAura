@@ -100,10 +100,10 @@ export default function SearchPage() {
         
         // Check if data.categories exists and is an array
         if (data && data.categories && Array.isArray(data.categories)) {
-          setCategories(['All', ...data.categories]);
+          setCategories([...data.categories]);
         } else if (data && Array.isArray(data)) {
           // If data is directly an array
-          setCategories(['All', ...data]);
+          setCategories([...data]);
         } else if (data && typeof data === 'object') {
           // If categories might be in another format
           const extractedCategories = [];
@@ -120,20 +120,20 @@ export default function SearchPage() {
           }
           
           if (extractedCategories.length > 0) {
-            setCategories(['All', ...extractedCategories]);
+            setCategories([...extractedCategories]);
           } else {
             // Fallback to default categories if extraction fails
-            setCategories(['All', 'Fiction', 'Non-Fiction', 'Science', 'History', 'Biography', 'Technology']);
+            setCategories(['Fiction', 'Non-Fiction', 'Science', 'History', 'Biography', 'Technology']);
           }
         } else {
           // Fallback to default categories if data format is unexpected
-          setCategories(['All', 'Fiction', 'Non-Fiction', 'Science', 'History', 'Biography', 'Technology']);
+          setCategories(['Fiction', 'Non-Fiction', 'Science', 'History', 'Biography', 'Technology']);
         }
       } catch (err) {
         setError('Failed to load categories');
         console.error('Error fetching categories:', err);
         // Fallback to default categories on error
-        setCategories(['All', 'Fiction', 'Non-Fiction', 'Science', 'History', 'Biography', 'Technology']);
+        setCategories(['Fiction', 'Non-Fiction', 'Science', 'History', 'Biography', 'Technology']);
       }
     };
 

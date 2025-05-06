@@ -16,6 +16,8 @@ const path = require('path');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const readline = require('readline');
+const https = require('https');
+const http = require('http');
 
 // Load environment variables from both project root and current directory
 dotenv.config({ path: path.join(__dirname, '../.env') });
@@ -34,6 +36,9 @@ let MONGODB_URI = process.env.MONGODB_URI;
 if (!MONGODB_URI) {
   MONGODB_URI = process.env.DB_URI || process.env.MONGO_URI || process.env.DATABASE_URL;
 }
+
+// API URL for fetching books as a fallback
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://ebookaura.onrender.com/api';
 
 // Define the output file location with multiple fallbacks to ensure it works
 const outputPaths = [
@@ -65,7 +70,8 @@ const OUTPUT_FILE = getValidOutputPath();
 const CRITICAL_BOOK_IDS = [
   '6807be6cf05cdd8f4bdf933c',
   '6803d0c8cd7950184b1e8cf3',
-  '6807c9d24fb1873f72080fb1', // Added the missing book ID
+  '6807c9d24fb1873f72080fb1',
+  '681859bd560ce1fd792c2745', // Added the previously missing book ID
 ];
 
 // Simple Book schema definition (only need _id field for our purposes)
@@ -76,7 +82,13 @@ const BookSchema = new mongoose.Schema({
   // Other fields are not needed for this script
 }, { collection: 'books' });
 
-const Book = mongoose.model('Book', BookSchema);
+// Ensure we don't get a model re-compilation error
+let Book;
+try {
+  Book = mongoose.model('Book');
+} catch (e) {
+  Book = mongoose.model('Book', BookSchema);
+}
 
 // Function to get MongoDB connection string, prompting if necessary
 async function getMongoDBConnectionString() {
@@ -115,10 +127,14 @@ async function fetchAllBookIdsFromDatabase(uri) {
     await mongoose.connect(uri, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 30000, // Increase timeout to 30 seconds
+      socketTimeoutMS: 45000, // Increase socket timeout
     });
     
     console.log('Connected to MongoDB, fetching book IDs...');
-    const books = await Book.find({}, '_id').lean();
+    
+    // Use a raw MongoDB query to ensure we get all documents
+    const books = await mongoose.connection.db.collection('books').find({}, { projection: { _id: 1 } }).toArray();
     
     // Close the database connection
     await mongoose.connection.close();
@@ -134,6 +150,58 @@ async function fetchAllBookIdsFromDatabase(uri) {
     }
     throw error;
   }
+}
+
+// Function to fetch books from the API as a fallback
+async function fetchBookIdsFromAPI() {
+  return new Promise((resolve, reject) => {
+    console.log(`Fetching books from API: ${API_URL}/books?limit=500`);
+    
+    // Determine if we need http or https
+    const httpModule = API_URL.startsWith('https') ? https : http;
+    
+    const req = httpModule.get(`${API_URL}/books?limit=500`, (res) => {
+      let data = '';
+      
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+      
+      res.on('end', () => {
+        try {
+          if (res.statusCode !== 200) {
+            reject(new Error(`API returned status code ${res.statusCode}`));
+            return;
+          }
+          
+          const parsedData = JSON.parse(data);
+          let bookIds = [];
+          
+          // Handle different API response formats
+          if (Array.isArray(parsedData)) {
+            bookIds = parsedData.map(book => String(book._id || book.id));
+            console.log(`Found ${bookIds.length} books in API response (array format)`);
+          } else if (parsedData.books && Array.isArray(parsedData.books)) {
+            bookIds = parsedData.books.map(book => String(book._id || book.id));
+            console.log(`Found ${bookIds.length} books in API response (object format)`);
+          } else {
+            reject(new Error('Unexpected API response format'));
+            return;
+          }
+          
+          resolve(bookIds);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+    
+    req.on('error', (error) => {
+      reject(error);
+    });
+    
+    req.end();
+  });
 }
 
 // Function to generate the STATIC_BOOKS.js file
@@ -179,33 +247,57 @@ export default STATIC_BOOKS;`;
 
   fs.writeFileSync(OUTPUT_FILE, fileContent);
   console.log(`Generated STATIC_BOOKS.js with ${finalBookIds.length} book IDs`);
+  
+  // Log the first 5 IDs for verification
+  console.log('Sample of book IDs included:');
+  finalBookIds.slice(0, 5).forEach(id => console.log(`- ${id}`));
 }
 
 // Main function
 async function main() {
   try {
-    console.log('Fetching books directly from MongoDB database...');
+    console.log('Running enhanced book ID collector...');
     let bookIds = [];
     
+    // First attempt: Try to get IDs from MongoDB directly
     try {
       const uri = await getMongoDBConnectionString();
-      bookIds = await fetchAllBookIdsFromDatabase(uri);
+      const dbBookIds = await fetchAllBookIdsFromDatabase(uri);
       
-      if (bookIds.length === 0) {
-        console.warn('Warning: No book IDs found in database. Using critical IDs as fallback.');
-        bookIds = [...CRITICAL_BOOK_IDS];
+      if (dbBookIds.length > 0) {
+        console.log(`Found ${dbBookIds.length} books in the database`);
+        bookIds = dbBookIds;
       } else {
-        console.log(`Found ${bookIds.length} books in the database`);
+        console.warn('Warning: No book IDs found in database. Will try API as fallback.');
       }
     } catch (dbError) {
       console.warn(`Warning: Failed to fetch books from database: ${dbError.message}`);
-      console.warn('Using critical IDs as fallback');
+      console.warn('Will try API as fallback');
+    }
+    
+    // Second attempt: If database fetch failed or returned no results, try the API
+    if (bookIds.length === 0) {
+      try {
+        const apiBookIds = await fetchBookIdsFromAPI();
+        if (apiBookIds.length > 0) {
+          console.log(`Found ${apiBookIds.length} books from API`);
+          bookIds = apiBookIds;
+        }
+      } catch (apiError) {
+        console.warn(`Warning: Failed to fetch books from API: ${apiError.message}`);
+      }
+    }
+    
+    // Third fallback: If both database and API failed, use critical IDs
+    if (bookIds.length === 0) {
+      console.warn('Warning: Could not fetch books from database or API. Using critical IDs as fallback.');
       bookIds = [...CRITICAL_BOOK_IDS];
     }
     
     // Always generate the file, even if we only have critical IDs
     generateStaticBooksFile(bookIds);
-    console.log('Done!');
+    console.log(`Successfully created static book IDs file with ${bookIds.length} IDs`);
+    console.log(`File location: ${OUTPUT_FILE}`);
   } catch (error) {
     console.error('Error:', error.message);
     process.exit(1);

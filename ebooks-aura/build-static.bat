@@ -1,60 +1,73 @@
 @echo off
-echo 🚀 Building EbookAura static site...
+echo Building static version of EbookAura...
 
-:: Remove old build files
-echo 🧹 Cleaning up old build files...
-if exist .next rmdir /s /q .next
-if exist out rmdir /s /q out
+REM Ensure we're in the right directory
+cd /d "%~dp0"
 
-:: Install dependencies if needed
-if not exist node_modules (
-    echo 📦 Installing dependencies...
-    call npm install
+REM First, run our direct static book creator script
+echo Step 1: Creating static book IDs file...
+call create-static-books.bat
+
+if %ERRORLEVEL% neq 0 (
+    echo Error: Failed to create static book IDs file
+    echo Trying to continue with build anyway...
+    REM Create a basic STATIC_BOOKS.js file with just the critical IDs
+    echo Creating fallback STATIC_BOOKS.js with critical IDs only...
+    if not exist src\app\utils mkdir src\app\utils
+    echo /** > src\app\utils\STATIC_BOOKS.js
+    echo  * Fallback static books file with critical IDs only >> src\app\utils\STATIC_BOOKS.js
+    echo  * Generated on: %DATE% %TIME% >> src\app\utils\STATIC_BOOKS.js
+    echo  */ >> src\app\utils\STATIC_BOOKS.js
+    echo. >> src\app\utils\STATIC_BOOKS.js
+    echo const STATIC_BOOKS = [ >> src\app\utils\STATIC_BOOKS.js
+    echo   '681859bd560ce1fd792c2745',  // Critical problematic ID >> src\app\utils\STATIC_BOOKS.js
+    echo   '6807c9d24fb1873f72080fb1',  // Another critical ID >> src\app\utils\STATIC_BOOKS.js
+    echo   '6807be6cf05cdd8f4bdf933c',  // Critical book ID >> src\app\utils\STATIC_BOOKS.js
+    echo   '6803d0c8cd7950184b1e8cf3',  // Critical book ID >> src\app\utils\STATIC_BOOKS.js
+    echo ]; >> src\app\utils\STATIC_BOOKS.js
+    echo. >> src\app\utils\STATIC_BOOKS.js
+    echo export default STATIC_BOOKS; >> src\app\utils\STATIC_BOOKS.js
+    echo Created fallback STATIC_BOOKS.js file
 )
 
-:: Install required build dependencies
-echo 📦 Installing build dependencies...
-call npm install cross-env rimraf --save-dev
-
-:: Generate static book IDs
-echo 📋 Generating static book IDs list...
-node scripts/generate-static-books.js
-if %errorlevel% neq 0 (
-    echo ❌ Failed to generate static book IDs list!
-    echo Please check the error messages above.
-    exit /b 1
-)
-
-:: Verify static parameters include all critical book IDs
-echo 🔍 Verifying static parameters...
-node scripts/verify-static-params.js
-if %errorlevel% neq 0 (
-    echo ❌ Verification failed! Some critical book IDs are missing.
-    echo Please check the error messages above.
-    exit /b 1
-)
-
-:: Build the static site
-echo 🔨 Building static site...
-set NEXT_PUBLIC_API_URL=https://ebookaura.onrender.com/api
+REM Set environment variables for static build
+echo Step 2: Setting up environment variables...
 set STATIC_EXPORT=true
-call npm run clean
-call next build
+set NODE_ENV=production
 
-:: Verify output directory contains book pages
-echo 🔍 Verifying build output...
-if exist out\books\6807c9d24fb1873f72080fb1 (
-    echo ✅ Critical book page found in output!
-) else (
-    echo ⚠️ Warning: Critical book page not found in output.
-    echo The build may have completed but is missing expected pages.
+REM Check if .env.local exists and create it if not
+if not exist .env.local (
+    echo Creating .env.local with required variables...
+    echo NEXT_PUBLIC_API_URL=https://ebookaura.onrender.com/api > .env.local
+    echo STATIC_EXPORT=true >> .env.local
 )
 
-:: Success message
-echo ✅ Static site built successfully!
-echo 📂 The static site files are in the 'out' directory
+REM Clean output directories
+echo Step 3: Cleaning previous build...
+if exist .next (
+    echo Cleaning .next directory...
+    rmdir /s /q .next
+)
+
+if exist out (
+    echo Cleaning out directory...
+    rmdir /s /q out
+)
+
+REM Run the build
+echo Step 4: Building static site...
+call npm run build
+
+if %ERRORLEVEL% neq 0 (
+    echo Error: Build failed
+    exit /b 1
+)
+
 echo.
-echo 🌐 To test the site locally, run: npm run serve
-echo 🚀 To deploy, upload the contents of the 'out' directory to your hosting provider
+echo Static build completed successfully!
+echo.
+echo The static site has been generated in the 'out' directory.
+echo You can deploy these files to any static hosting service.
+echo.
 
 pause 

@@ -79,10 +79,10 @@ const awardActivityCoins = async (req, res) => {
     // Get current time
     const currentTime = new Date();
     
-    // Calculate coins to award: 1 coin per minute (60 seconds)
+    // Calculate coins to award: 5 coins per minute (60 seconds)
     // Minimum 1 coin, even if less than a minute
     const minutesSpent = Math.max(1, Math.floor(user.sessionTimeToday / 60));
-    const coinsToAward = minutesSpent;
+    const coinsToAward = minutesSpent * 5;
 
     // Award coins based on minutes spent
     user.coins += coinsToAward;
