@@ -8,31 +8,39 @@ const router = express.Router();
 const {
   createApiKey,
   getApiKeys,
+  getApiKeyById,
   updateApiKey,
   revokeApiKeyById,
-  revokeApiKey,
   activateApiKey,
   deleteApiKey,
   generateApiKey,
   getCurrentApiKey,
-  verifyApiKey
+  verifyApiKey,
+  getApiKeyUsage,
+  getApiKeyUsageHistory,
+  revokeApiKey
 } = require('../controllers/apiKeyController');
 const { protect, admin } = require('../middleware/auth');
-
-// Private routes (require authentication)
-router.post('/generate', protect, generateApiKey);
-router.get('/current', protect, getCurrentApiKey);
-router.delete('/revoke', protect, revokeApiKey);
 
 // Public routes
 router.post('/verify', verifyApiKey);
 
+// Private routes (require authentication)
+router.post('/', protect, createApiKey);
+router.post('/generate', protect, generateApiKey);
+router.get('/current', protect, getCurrentApiKey);
+router.post('/revoke', protect, revokeApiKey);
+
+// Private routes with ID parameter
+router.get('/:id', protect, getApiKeyById);
+router.put('/:id', protect, updateApiKey);
+router.put('/:id/revoke', protect, revokeApiKeyById);
+router.put('/:id/activate', protect, activateApiKey);
+router.delete('/:id', protect, deleteApiKey);
+router.get('/:id/usage', protect, getApiKeyUsage);
+router.get('/:id/usage/history', protect, getApiKeyUsageHistory);
+
 // Admin routes
-router.post('/', protect, admin, createApiKey);
-router.get('/', protect, admin, getApiKeys);
-router.put('/:id', protect, admin, updateApiKey);
-router.put('/:id/revoke', protect, admin, revokeApiKeyById);
-router.put('/:id/activate', protect, admin, activateApiKey);
-router.delete('/:id', protect, admin, deleteApiKey);
+router.get('/', protect, getApiKeys);
 
 module.exports = router; 

@@ -21,7 +21,7 @@ router.use(protect, admin);
 
 // User management routes
 router.get('/users', getAllUsers);
-router.put('/users/:id/toggle-ban', toggleUserBan);
+router.put('/users/:id/ban', toggleUserBan);
 router.delete('/users/:id', deleteUser);
 
 // Book management routes

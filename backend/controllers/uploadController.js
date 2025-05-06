@@ -257,7 +257,8 @@ const uploadPdf = async (req, res) => {
             coverImage: book.coverImage,
             pdfUrl: book.pdfUrl,
             isCustomUrl: book.isCustomUrl,
-            uploadedBy: book.uploadedBy
+            uploadedBy: book.uploadedBy,
+            fileSizeMB: book.fileSizeMB
           }
         });
       } catch (dbError) {
@@ -437,7 +438,9 @@ const uploadPdf = async (req, res) => {
             title: book.title,
             coverImage: book.coverImage,
             pdfUrl: book.pdfUrl,
-            uploadedBy: book.uploadedBy
+            isCustomUrl: book.isCustomUrl,
+            uploadedBy: book.uploadedBy,
+            fileSizeMB: book.fileSizeMB
           }
         });
       } catch (dbError) {

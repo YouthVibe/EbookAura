@@ -245,7 +245,10 @@ const updateBook = async (req, res) => {
       pageSize, 
       tags, 
       isPremium, 
-      price 
+      price,
+      fileSizeMB,
+      isCustomUrl,
+      customURLPDF
     } = req.body;
     
     // Prepare updated book data
@@ -257,7 +260,10 @@ const updateBook = async (req, res) => {
       category: category || book.category,
       pageSize: pageSize || book.pageSize,
       isPremium: isPremium === undefined ? book.isPremium : isPremium === 'true' || isPremium === true,
-      price: isPremium === 'true' || isPremium === true ? (price || book.price || 0) : 0
+      price: isPremium === 'true' || isPremium === true ? (price || book.price || 0) : 0,
+      fileSizeMB: fileSizeMB ? parseFloat(fileSizeMB) : book.fileSizeMB,
+      isCustomUrl: isCustomUrl === undefined ? book.isCustomUrl : isCustomUrl === 'true' || isCustomUrl === true,
+      customURLPDF: customURLPDF || book.customURLPDF
     };
     
     // Handle tags - they might come as a string, array, or JSON string

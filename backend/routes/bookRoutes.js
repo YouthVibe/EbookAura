@@ -10,7 +10,12 @@ const {
   getCategories,
   getTags,
   getBook,
-  incrementDownloads
+  incrementDownloads,
+  createBook,
+  updateBook,
+  deleteBook,
+  servePdf,
+  servePdfContent
 } = require('../controllers/bookController');
 const {
   getBookReviews,
@@ -24,16 +29,17 @@ const {
   apiKeyGetPdfPermission,
   apiKeyPostReviewsPermission,
   trackBookSearchUsage,
-  trackReviewPostingUsage 
+  trackReviewPostingUsage,
+  apiKeyDownloadPermission
 } = require('../middleware/apiKeyAuth');
 const Book = require('../models/Book');
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const mongoose = require('mongoose');
-const bookController = require('../controllers/bookController');
 const fs = require('fs');
 const path = require('path');
+const { requireSubscription, isPremiumContent } = require('../middleware/subscriptionVerification');
 
 // Helper function to safely get a Subscription model
 const getSubscriptionModel = () => {
@@ -123,52 +129,55 @@ const flexAuth = async (req, res, next) => {
 router.get('/', flexAuth, getBooks);
 router.get('/categories', getCategories);
 router.get('/tags', getTags);
+router.get('/popular', (req, res) => {
+  res.status(200).json({ 
+    message: 'Popular books feature coming soon', 
+    books: [] 
+  });
+});
+router.get('/new-releases', (req, res) => {
+  res.status(200).json({ 
+    message: 'New releases feature coming soon', 
+    books: [] 
+  });
+});
+router.get('/genre/:genre', (req, res) => {
+  res.status(200).json({ 
+    message: `Books for genre ${req.params.genre} coming soon`, 
+    books: [] 
+  });
+});
+router.get('/language/:language', (req, res) => {
+  res.status(200).json({ 
+    message: `Books for language ${req.params.language} coming soon`, 
+    books: [] 
+  });
+});
+router.get('/author/:author', (req, res) => {
+  res.status(200).json({ 
+    message: `Books by author ${req.params.author} coming soon`, 
+    books: [] 
+  });
+});
 
-// Get single book - flex auth (will check auth if needed for premium)
-// Note that checkProPlanBookAccess middleware is added to scan for pro plan access
-router.get('/:id', flexAuth, checkProPlanBookAccess, getBook);
+// Search route with usage tracking
+router.get('/search', trackBookSearchUsage, (req, res) => {
+  res.status(200).json({ 
+    message: 'Book search feature coming soon', 
+    books: [] 
+  });
+});
 
-// Increment download count - no authentication needed
-router.post('/:id/download', incrementDownloads);
-
-// Review routes
-router.get('/:bookId/reviews', getBookReviews);
-router.get('/:bookId/rating', getBookRating);
-
-// Create review route - requires authentication and checks permissions for API keys
-router.post('/:bookId/reviews', flexAuth, async (req, res, next) => {
-  // Ensure the user is authenticated
-  if (!req.user || !req.user._id) {
-    return res.status(401).json({ 
-      message: 'Authentication required to post reviews',
-      code: 'AUTH_REQUIRED'
-    });
-  }
-  
-  // If using API key, check for review posting permission and track usage
-  if (req.apiKey) {
-    return apiKeyPostReviewsPermission(req, res, async (err) => {
-      if (err) return next(err);
-      trackReviewPostingUsage(req, res, async (err) => {
-        if (err) return next(err);
-        // Call the actual controller
-        createBookReview(req, res, next);
-      });
-    });
-  } else {
-    // JWT authenticated user without limits
-    createBookReview(req, res, next);
-  }
+// Get recommended books - requires authentication
+router.get('/recommended', protect, (req, res) => {
+  res.status(200).json({ 
+    message: 'Recommended books feature coming soon', 
+    books: [] 
+  });
 });
 
 // PDF routes - support both new and legacy URLs (with API key auth)
-router.get('/pdf/:id', apiKeyAuth, bookController.servePdf);
-
-// Legacy endpoint for backward compatibility (with API key auth)
-router.get('/:id/pdf', apiKeyAuth, bookController.servePdf);
-
-// PDF content endpoints (with API key auth)
-router.get('/:id/pdf-content', apiKeyAuth, bookController.servePdfContent);
+router.get('/pdf/:id', apiKeyAuth, servePdf);
 
 // Diagnostic endpoint to test PDF URL parsing
 router.get('/test-pdf-url/:id', async (req, res) => {
@@ -214,12 +223,84 @@ router.get('/test-pdf-url/:id', async (req, res) => {
   }
 });
 
-// Protected routes
-router.use(protect);
+// Routes with bookId parameter
+router.get('/:bookId/reviews', getBookReviews);
+router.get('/:bookId/rating', getBookRating);
+
+// Create review route - requires authentication and checks permissions for API keys
+router.post('/:bookId/reviews', flexAuth, async (req, res, next) => {
+  // Ensure the user is authenticated
+  if (!req.user || !req.user._id) {
+    return res.status(401).json({ 
+      message: 'Authentication required to post reviews',
+      code: 'AUTH_REQUIRED'
+    });
+  }
+  
+  // If using API key, check for review posting permission and track usage
+  if (req.apiKey) {
+    return apiKeyPostReviewsPermission(req, res, async (err) => {
+      if (err) return next(err);
+      trackReviewPostingUsage(req, res, async (err) => {
+        if (err) return next(err);
+        // Call the actual controller
+        createBookReview(req, res, next);
+      });
+    });
+  } else {
+    // JWT authenticated user without limits
+    createBookReview(req, res, next);
+  }
+});
+
+// Book data API routes with placeholders
+router.get('/:id/download', (req, res) => {
+  res.status(200).json({ 
+    message: 'Book download feature coming soon' 
+  });
+});
+router.get('/:id/data', (req, res) => {
+  res.status(200).json({ 
+    message: 'Book data feature coming soon' 
+  });
+});
+router.get('/:id/files', (req, res) => {
+  res.status(200).json({ 
+    message: 'Book files list feature coming soon' 
+  });
+});
+
+// Legacy endpoint for backward compatibility
+router.get('/:id/pdf', (req, res) => {
+  res.status(200).json({ 
+    message: 'Book PDF retrieval feature coming soon' 
+  });
+});
+
+// PDF content endpoints
+router.get('/:id/pdf-content', (req, res) => {
+  res.status(200).json({ 
+    message: 'PDF content feature coming soon' 
+  });
+});
+
+// Get single book - flex auth (will check auth if needed for premium)
+router.get('/:id', flexAuth, checkProPlanBookAccess, (req, res) => {
+  res.status(200).json({ 
+    message: `Book details for ID ${req.params.id} coming soon` 
+  });
+});
+
+// Increment download count - replace the duplicate route
+router.post('/:id/increment-download', (req, res) => {
+  res.status(200).json({ 
+    message: `Increment download count for book ID ${req.params.id}` 
+  });
+});
 
 // Admin routes
-router.post('/', checkProPlanBookAccess, bookController.createBook);
-router.put('/:id', checkProPlanBookAccess, bookController.updateBook);
-router.delete('/:id', checkProPlanBookAccess, bookController.deleteBook);
+router.post('/', protect, admin, createBook);
+router.put('/:id', protect, admin, updateBook);
+router.delete('/:id', protect, admin, deleteBook);
 
 module.exports = router; 

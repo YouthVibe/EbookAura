@@ -5,6 +5,7 @@
  */
 const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
+const Book = require('../models/Book');
 const { syncSubscriptionStatus } = require('../controllers/subscriptionController');
 
 /**
@@ -53,6 +54,51 @@ const subscriptionRequired = asyncHandler(async (req, res, next) => {
 });
 
 /**
+ * Middleware to verify if a book is premium and if the user needs subscription
+ * Skip the check if the book is not premium
+ */
+const isPremiumContent = asyncHandler(async (req, res, next) => {
+  try {
+    // Get the book ID from the params
+    const bookId = req.params.id || req.params.bookId;
+    
+    if (!bookId) {
+      return next();
+    }
+    
+    // Check if the book exists and is premium
+    const book = await Book.findById(bookId);
+    
+    if (!book) {
+      res.status(404);
+      throw new Error('Book not found');
+    }
+    
+    // If the book is not premium, let the request pass
+    if (!book.isPremium) {
+      return next();
+    }
+    
+    // If the book is premium, verify the user has a subscription
+    // Only do this if user is authenticated
+    if (req.user) {
+      if (!req.user.planActive) {
+        res.status(403);
+        throw new Error('Subscription required to access premium content');
+      }
+    } else {
+      // For non-authenticated users, don't block but set flag for the route to handle
+      req.isPremiumContent = true;
+    }
+    
+    next();
+  } catch (error) {
+    console.error('Error in premium content verification middleware:', error);
+    next(error);
+  }
+});
+
+/**
  * Middleware to verify and sync subscription status
  * This should be used after the protect middleware to ensure req.user is available
  */
@@ -86,4 +132,4 @@ const verifySubscription = async (req, res, next) => {
   }
 };
 
-module.exports = { subscriptionRequired, verifySubscription }; 
+module.exports = { subscriptionRequired, verifySubscription, isPremiumContent, requireSubscription: subscriptionRequired }; 

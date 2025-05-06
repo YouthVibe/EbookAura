@@ -7,6 +7,7 @@ const ApiKey = require('../models/ApiKey');
 const crypto = require('crypto');
 const User = require('../models/User');
 const asyncHandler = require('express-async-handler');
+const ApiKeyUsageHistory = require('../models/ApiKeyUsageHistory');
 
 /**
  * @desc    Create a new API key
@@ -502,6 +503,116 @@ const verifyApiKey = asyncHandler(async (req, res) => {
   }
 });
 
+/**
+ * @desc    Get API key usage stats
+ * @route   GET /api/api-keys/:id/usage
+ * @access  Private
+ */
+const getApiKeyUsage = async (req, res) => {
+  try {
+    const apiKey = await ApiKey.findOne({
+      _id: req.params.id,
+      user: req.user._id
+    });
+    
+    if (!apiKey) {
+      return res.status(404).json({
+        message: 'API key not found',
+        code: 'API_KEY_NOT_FOUND'
+      });
+    }
+
+    // Reset counters if a day has passed
+    apiKey.resetUsageIfNeeded();
+    await apiKey.save();
+    
+    res.json({
+      message: 'API key usage retrieved successfully',
+      usage: {
+        booksSearched: apiKey.usage.booksSearched,
+        reviewsPosted: apiKey.usage.reviewsPosted,
+        lastReset: apiKey.usage.lastReset,
+        limits: apiKey.limits
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching API key usage:', error);
+    res.status(500).json({
+      message: 'Server error while fetching API key usage',
+      code: 'SERVER_ERROR'
+    });
+  }
+};
+
+/**
+ * @desc    Get API key usage history
+ * @route   GET /api/api-keys/:id/usage/history
+ * @access  Private
+ */
+const getApiKeyUsageHistory = async (req, res) => {
+  try {
+    const apiKey = await ApiKey.findOne({
+      _id: req.params.id,
+      user: req.user._id
+    });
+
+    if (!apiKey) {
+      return res.status(404).json({
+        message: 'API key not found',
+        code: 'API_KEY_NOT_FOUND'
+      });
+    }
+
+    // Get the past 7 days of usage history
+    const usageHistory = await ApiKeyUsageHistory.getUsageHistory(apiKey._id, 7);
+    
+    // Get aggregated stats
+    const stats = await ApiKeyUsageHistory.getAggregatedStats(apiKey._id, 30);
+    
+    // Format the data for the frontend
+    const dailyAverages = {
+      booksSearched: Math.round(stats.avgBooksSearched * 10) / 10,
+      reviewsPosted: Math.round(stats.avgReviewsPosted * 10) / 10
+    };
+    
+    const peakUsage = {
+      booksSearched: stats.maxBooksSearched,
+      reviewsPosted: stats.maxReviewsPosted
+    };
+    
+    const lastWeek = usageHistory.map(day => ({
+      date: day.date,
+      booksSearched: day.booksSearched,
+      reviewsPosted: day.reviewsPosted,
+      percentOfLimit: {
+        booksSearched: Math.round((day.booksSearched / apiKey.limits.booksPerDay) * 100),
+        reviewsPosted: Math.round((day.reviewsPosted / apiKey.limits.reviewsPerDay) * 100)
+      }
+    }));
+    
+    return res.json({
+      history: {
+        lastWeek,
+        dailyAverages,
+        peakUsage,
+        monthlyTotals: {
+          booksSearched: stats.totalBooksSearched,
+          reviewsPosted: stats.totalReviewsPosted,
+          daysWithActivity: stats.daysWithActivity
+        },
+        limits: apiKey.limits
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching API key usage history:', error);
+    res.status(500).json({
+      message: 'Server error while fetching API key usage history',
+      code: 'SERVER_ERROR',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
 module.exports = {
   createApiKey,
   getApiKeys,
@@ -513,5 +624,7 @@ module.exports = {
   generateApiKey,
   getCurrentApiKey,
   revokeApiKey,
-  verifyApiKey
+  verifyApiKey,
+  getApiKeyUsage,
+  getApiKeyUsageHistory
 }; 
