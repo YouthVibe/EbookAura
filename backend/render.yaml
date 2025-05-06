@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: ebookaura
+    env: node
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm run deploy:render
+    nodeVersion: 18.17.1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: RENDER
+        value: true 
