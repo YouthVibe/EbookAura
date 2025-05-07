@@ -285,11 +285,7 @@ router.get('/:id/pdf-content', (req, res) => {
 });
 
 // Get single book - flex auth (will check auth if needed for premium)
-router.get('/:id', flexAuth, checkProPlanBookAccess, (req, res) => {
-  res.status(200).json({ 
-    message: `Book details for ID ${req.params.id} coming soon` 
-  });
-});
+router.get('/:id', flexAuth, checkProPlanBookAccess, getBook);
 
 // Increment download count - replace the duplicate route
 router.post('/:id/increment-download', (req, res) => {
