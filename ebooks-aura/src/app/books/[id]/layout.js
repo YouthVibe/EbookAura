@@ -3,13 +3,13 @@
  * This provides the outer structure for dynamic book routes
  */
 
+import React from 'react';
+
+// Using a static approach that doesn't need headers() function
 export default function BookLayout({ children }) {
   return (
-    <section>
-      {/* This wraps the page.js component with any additional structure */}
-      <div className="book-page-wrapper">
-        {children}
-      </div>
+    <section className="book-page-wrapper">
+      {children}
     </section>
   );
 }

@@ -182,7 +182,7 @@ const getTags = asyncHandler(async (req, res) => {
 // @route   GET /api/books/:id
 // @access  Public
 const getBook = asyncHandler(async (req, res) => {
-  // IMPORTANT FIX: Explicitly include all fields, especially isPremium and price
+  // IMPORTANT FIX: Explicitly include all fields, especially isPremium, price, and fields needed for social previews
   const book = await Book.findById(req.params.id)
     .select('_id title author description category tags views downloads createdAt pdfUrl pdfId coverImage pageSize fileSizeMB averageRating isCustomUrl customURLPDF isPremium price');
     
@@ -202,9 +202,6 @@ const getBook = asyncHandler(async (req, res) => {
   
   // Convert book to JSON and ensure property types are consistent
   const bookData = book.toObject();
-  
-  // IMPORTANT: Force proper types for premium-related properties with redundant checks
-  // This ensures these fields are properly converted from MongoDB types
   
   // Log raw data for debugging
   console.log(`Raw book data for ${book.title}:`);
@@ -253,6 +250,21 @@ const getBook = asyncHandler(async (req, res) => {
     book.price = 25;
     await book.save();
     console.log(`Updated database record for book ${book._id} to set price=25`);
+  }
+  
+  // Add additional fields for social media previews
+  // Make sure fileSizeMB is always available
+  if (!bookData.fileSizeMB && book.fileSize) {
+    bookData.fileSizeMB = Math.round((book.fileSize / (1024 * 1024)) * 10) / 10;
+  } else if (!bookData.fileSizeMB) {
+    // Default file size if not available
+    bookData.fileSizeMB = 1;
+  }
+  
+  // Ensure pageSize is available
+  if (!bookData.pageSize) {
+    // Estimate page count based on file size (rough estimate)
+    bookData.pageSize = bookData.fileSizeMB ? Math.max(1, Math.round(bookData.fileSizeMB * 10)) : 10;
   }
   
   // Check user authentication for purchase status

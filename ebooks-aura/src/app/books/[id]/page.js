@@ -41,79 +41,108 @@ export async function generateMetadata(props) {
     const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ebookaura.onrender.com';
     
     // Fetch book details for metadata
-    const response = await fetch(`${apiUrl}/books/${id}`, {
-      next: { revalidate: 3600 }, // Revalidate cache every hour
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch book: ${response.status}`);
-    }
-    
-    const book = await response.json();
-
-    // Format the file size
-    const formatFileSize = (sizeInBytes) => {
-      if (!sizeInBytes) return 'Unknown size';
+    try {
+      const response = await fetch(`${apiUrl}/books/${id}`, {
+        next: { revalidate: 3600 }, // Revalidate cache every hour
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       
-      const kb = sizeInBytes / 1024;
-      if (kb < 1024) {
-        return `${Math.round(kb * 10) / 10} KB`;
+      if (!response.ok) {
+        throw new Error(`Failed to fetch book: ${response.status}`);
       }
-      const mb = kb / 1024;
-      return `${Math.round(mb * 10) / 10} MB`;
-    };
+      
+      const book = await response.json();
 
-    // Get the book cover URL (ensure it's an absolute URL)
-    const coverUrl = book.coverImage && book.coverImage.startsWith('http')
-      ? book.coverImage
-      : `${siteUrl}${book.coverImage && book.coverImage.startsWith('/') ? '' : '/'}${book.coverImage || '/images/default-cover.jpg'}`;
+      // Format the file size
+      const formatFileSize = (sizeInBytes) => {
+        if (!sizeInBytes && book.fileSizeMB) {
+          return `${book.fileSizeMB} MB`;
+        }
+        if (!sizeInBytes) return 'Unknown size';
+        
+        const kb = sizeInBytes / 1024;
+        if (kb < 1024) {
+          return `${Math.round(kb * 10) / 10} KB`;
+        }
+        const mb = kb / 1024;
+        return `${Math.round(mb * 10) / 10} MB`;
+      };
 
-    // Create description with book details
-    const description = `${book.title || 'Book'} by ${book.author || 'Unknown Author'}. ${book.description ? book.description.substring(0, 150) + '...' : ''} Format: PDF, Size: ${formatFileSize(book.fileSize)}, Rating: ${book.averageRating ? book.averageRating.toFixed(1) + '/5' : 'Not rated'}`;
+      // Get the book cover URL (ensure it's an absolute URL)
+      const coverUrl = book.coverImage && book.coverImage.startsWith('http')
+        ? book.coverImage
+        : `${siteUrl}${book.coverImage && book.coverImage.startsWith('/') ? '' : '/'}${book.coverImage || '/images/default-cover.jpg'}`;
+      
+      // Generate dynamic OG image URL
+      const ogImageUrl = `${siteUrl}/api/og?id=${id}`;
 
-    return {
-      title: `${book.title || 'Book'} by ${book.author || 'Unknown Author'} - EbookAura`,
-      description,
-      keywords: `${book.title}, ${book.author}, ${book.categories?.join(', ') || ''}, PDF, ebook, free book, read online, download pdf, ebookaura`,
-      openGraph: {
-        title: `${book.title || 'Book'} by ${book.author || 'Unknown Author'}`,
+      // Create description with book details
+      const description = `${book.title || 'Book'} by ${book.author || 'Unknown Author'}. ${book.description ? book.description.substring(0, 150) + '...' : ''} Format: PDF, Size: ${formatFileSize(book.fileSize || book.fileSizeMB * 1024 * 1024)}, Pages: ${book.pageSize || 'Unknown'}, Rating: ${book.averageRating ? book.averageRating.toFixed(1) + '/5' : 'Not rated'}`;
+
+      return {
+        title: `${book.title || 'Book'} by ${book.author || 'Unknown Author'} - EbookAura`,
         description,
-        url: `${siteUrl}/books/${id}`,
-        siteName: 'EbookAura',
-        images: [
-          {
-            url: coverUrl,
-            width: 600,
-            height: 900,
-            alt: `Cover of ${book.title || 'book'}`,
+        keywords: `${book.title}, ${book.author}, ${book.category || ''}, ${(book.tags || []).join(', ')}, PDF, ebook, free book, read online, download pdf, ebookaura`,
+        openGraph: {
+          title: `${book.title || 'Book'} by ${book.author || 'Unknown Author'}`,
+          description,
+          url: `${siteUrl}/books/${id}`,
+          siteName: 'EbookAura',
+          images: [
+            {
+              url: ogImageUrl, // Use dynamic OG image generator
+              width: 1200,
+              height: 630,
+              alt: `Cover of ${book.title || 'book'}`,
+            },
+            {
+              url: coverUrl, // Also include the actual cover as fallback
+              width: 500,
+              height: 700,
+              alt: `Cover of ${book.title || 'book'}`,
+            }
+          ],
+          locale: 'en_US',
+          type: 'book',
+          book: {
+            authors: [book.author || 'Unknown Author'],
+            isbn: book.isbn || '',
+            releaseDate: book.createdAt || '',
           },
-        ],
-        locale: 'en_US',
-        type: 'book',
-        book: {
-          authors: [book.author || 'Unknown Author'],
-          isbn: book.isbn || '',
-          releaseDate: book.publicationDate || '',
         },
-      },
-      twitter: {
-        card: 'summary_large_image',
-        title: `${book.title || 'Book'} by ${book.author || 'Unknown Author'}`,
-        description,
-        images: [coverUrl],
-      },
-      other: {
-        'book:author': book.author || 'Unknown Author',
-        'book:isbn': book.isbn || '',
-        'book:page_count': book.pageCount || '',
-        'book:release_date': book.publicationDate || '',
-        'og:price:amount': book.price || '0',
-        'og:price:currency': 'Coins',
-      },
-    };
+        twitter: {
+          card: 'summary_large_image',
+          title: `${book.title || 'Book'} by ${book.author || 'Unknown Author'}`,
+          description,
+          images: [ogImageUrl], // Use dynamic OG image for Twitter
+        },
+        alternates: {
+          canonical: `${siteUrl}/books/${id}`,
+        },
+        other: {
+          'book:author': book.author || 'Unknown Author',
+          'book:isbn': book.isbn || '',
+          'book:page_count': book.pageSize || '',
+          'book:release_date': book.createdAt || '',
+          'og:price:amount': book.price || '0',
+          'og:price:currency': 'Coins',
+          'og:image:width': '1200',
+          'og:image:height': '630',
+          'og:image:alt': `Cover of ${book.title || 'book'}`,
+          'og:site_name': 'EbookAura - Free PDF Books',
+          'og:locale': 'en_US',
+          'og:type': 'book',
+          'og:url': `${siteUrl}/books/${id}`,
+        },
+      };
+    } catch (error) {
+      console.error('Error fetching book data for metadata:', error);
+      
+      // Return default metadata on error
+      return defaultMetadata;
+    }
   } catch (error) {
     console.error('Error generating book metadata:', error);
     return defaultMetadata;
@@ -123,7 +152,10 @@ export async function generateMetadata(props) {
 // Fix the getBookStructuredData function to properly handle params
 async function getBookStructuredData(params) {
   try {
-    const id = params?.id ? String(params.id) : null;
+    // Ensure params are properly awaited before accessing
+    const resolvedParams = await Promise.resolve(params);
+    const id = resolvedParams?.id ? String(resolvedParams.id) : null;
+    
     if (!id || id === 'not-found') {
       return null;
     }
@@ -151,8 +183,23 @@ async function getBookStructuredData(params) {
       ? book.coverImage
       : `${siteUrl}${book.coverImage && book.coverImage.startsWith('/') ? '' : '/'}${book.coverImage || '/images/default-cover.jpg'}`;
 
-    // Format publication date if available
-    const publicationDate = book.publicationDate ? new Date(book.publicationDate).toISOString().split('T')[0] : undefined;
+    // Format creation date if available
+    const creationDate = book.createdAt ? new Date(book.createdAt).toISOString().split('T')[0] : undefined;
+
+    // Format file size
+    const formatFileSize = (sizeInBytes) => {
+      if (!sizeInBytes && book.fileSizeMB) {
+        return `${book.fileSizeMB} MB`;
+      }
+      if (!sizeInBytes) return 'Unknown size';
+      
+      const kb = sizeInBytes / 1024;
+      if (kb < 1024) {
+        return `${Math.round(kb * 10) / 10} KB`;
+      }
+      const mb = kb / 1024;
+      return `${Math.round(mb * 10) / 10} MB`;
+    };
 
     // Build structured data for search engines
     const structuredData = {
@@ -173,16 +220,24 @@ async function getBookStructuredData(params) {
         }
       },
       "image": coverUrl,
-      "description": book.description || `Read ${book.title} by ${book.author} online at EbookAura.`
+      "description": book.description || `Read ${book.title} by ${book.author} online at EbookAura.`,
+      "numberOfPages": book.pageSize || undefined,
+      "fileFormat": "application/pdf",
+      "contentSize": formatFileSize(book.fileSize || book.fileSizeMB * 1024 * 1024),
+      "datePublished": creationDate,
+      "inLanguage": "en"
     };
 
     // Add optional fields if available
     if (book.isbn) structuredData.isbn = book.isbn;
-    if (publicationDate) structuredData.datePublished = publicationDate;
+    if (creationDate) structuredData.datePublished = creationDate;
     if (book.publisher) structuredData.publisher = { "@type": "Organization", "name": book.publisher };
-    if (book.pageCount) structuredData.numberOfPages = book.pageCount;
+    if (book.pageSize) structuredData.numberOfPages = book.pageSize;
     if (book.language) structuredData.inLanguage = book.language;
-    if (book.categories && book.categories.length) structuredData.genre = book.categories[0];
+    if (book.category) structuredData.genre = book.category;
+    if (book.tags && book.tags.length) {
+      structuredData.keywords = book.tags.join(", ");
+    }
     if (book.averageRating) {
       structuredData.aggregateRating = {
         "@type": "AggregateRating",
@@ -193,7 +248,7 @@ async function getBookStructuredData(params) {
       };
     }
 
-    // Add offers data for free book
+    // Add offers data for the book
     structuredData.offers = {
       "@type": "Offer",
       "availability": "http://schema.org/InStock",
@@ -211,8 +266,8 @@ async function getBookStructuredData(params) {
 
 // Server Component using proper params handling for Next.js 13+
 export default async function BookPage({ params }) {
-  // Get structured data for the book
-  const structuredData = await getBookStructuredData(params);
+  // Get structured data for the book - properly await params
+  const structuredData = await getBookStructuredData(await Promise.resolve(params));
   
   return (
     <>
