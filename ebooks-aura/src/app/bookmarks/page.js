@@ -253,7 +253,10 @@ export default function BookmarksPage() {
                         <img src={book.coverImage} alt={book.title} />
                       ) : (
                         <div className={styles.placeholderCover}>
-                          <FaBook />
+                          <div className={styles.defaultCover}>
+                            <span className={styles.brandNameEbook}>Ebook</span>
+                            <span className={styles.brandNameAura}>Aura</span>
+                          </div>
                         </div>
                       )}
                     </div>

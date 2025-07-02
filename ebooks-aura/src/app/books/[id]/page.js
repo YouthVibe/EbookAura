@@ -10,14 +10,9 @@ import BookPageClient from './BookClientWrapper';
 import STATIC_BOOKS from '../../utils/STATIC_BOOKS';
 import Script from 'next/script';
 
-// Configure rendering for this page - using 'auto' instead of 'force-dynamic' for static exports
-// export const dynamic = 'force-dynamic';
-
-// For static exports, we cannot use dynamicParams
-// export const dynamicParams = true;
-
-// Set revalidation time for static pages (in seconds)
-export const revalidate = 3600;
+// Configure rendering for this page to be dynamic
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
 
 // Define default metadata for the book page (used internally only)
 const defaultMetadata = {
@@ -37,160 +32,60 @@ export async function generateMetadata(props) {
     }
 
     // Get the API URL with localhost fallback
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
-    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ebookaura.onrender.com';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     
     // Fetch book details for metadata
-    try {
-      const response = await fetch(`${apiUrl}/books/${id}`, {
-        next: { revalidate: 3600 }, // Revalidate cache every hour
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch book: ${response.status}`);
-      }
-      
-      const book = await response.json();
-
-      // Format the file size
-      const formatFileSize = (sizeInBytes) => {
-        if (!sizeInBytes && book.fileSizeMB) {
-          return `${book.fileSizeMB} MB`;
-        }
-        if (!sizeInBytes) return 'Unknown size';
-        
-        const kb = sizeInBytes / 1024;
-        if (kb < 1024) {
-          return `${Math.round(kb * 10) / 10} KB`;
-        }
-        const mb = kb / 1024;
-        return `${Math.round(mb * 10) / 10} MB`;
-      };
-
-      // Get the book cover URL (ensure it's an absolute URL)
-      const coverUrl = book.coverImage && book.coverImage.startsWith('http')
-        ? book.coverImage
-        : `${siteUrl}${book.coverImage && book.coverImage.startsWith('/') ? '' : '/'}${book.coverImage || '/images/default-cover.jpg'}`;
-      
-      // Generate dynamic OG image URL
-      const ogImageUrl = `${siteUrl}/api/og?id=${id}`;
-
-      // Create description with book details
-      const description = `${book.title || 'Book'} by ${book.author || 'Unknown Author'}. ${book.description ? book.description.substring(0, 150) + '...' : ''} Format: PDF, Size: ${formatFileSize(book.fileSize || book.fileSizeMB * 1024 * 1024)}, Pages: ${book.pageSize || 'Unknown'}, Rating: ${book.averageRating ? book.averageRating.toFixed(1) + '/5' : 'Not rated'}`;
-
-      return {
-        title: `${book.title || 'Book'} by ${book.author || 'Unknown Author'} - EbookAura`,
-        description,
-        keywords: `${book.title}, ${book.author}, ${book.category || ''}, ${(book.tags || []).join(', ')}, PDF, ebook, free book, read online, download pdf, ebookaura`,
-        openGraph: {
-          title: `${book.title || 'Book'} by ${book.author || 'Unknown Author'}`,
-          description,
-          url: `${siteUrl}/books/${id}`,
-          siteName: 'EbookAura',
-          images: [
-            {
-              url: ogImageUrl, // Use dynamic OG image generator
-              width: 1200,
-              height: 630,
-              alt: `Cover of ${book.title || 'book'}`,
-            },
-            {
-              url: coverUrl, // Also include the actual cover as fallback
-              width: 500,
-              height: 700,
-              alt: `Cover of ${book.title || 'book'}`,
-            }
-          ],
-          locale: 'en_US',
-          type: 'book',
-          book: {
-            authors: [book.author || 'Unknown Author'],
-            isbn: book.isbn || '',
-            releaseDate: book.createdAt || '',
-          },
-        },
-        twitter: {
-          card: 'summary_large_image',
-          title: `${book.title || 'Book'} by ${book.author || 'Unknown Author'}`,
-          description,
-          images: [ogImageUrl], // Use dynamic OG image for Twitter
-        },
-        alternates: {
-          canonical: `${siteUrl}/books/${id}`,
-        },
-        other: {
-          'book:author': book.author || 'Unknown Author',
-          'book:isbn': book.isbn || '',
-          'book:page_count': book.pageSize || '',
-          'book:release_date': book.createdAt || '',
-          'og:price:amount': book.price || '0',
-          'og:price:currency': 'Coins',
-          'og:image:width': '1200',
-          'og:image:height': '630',
-          'og:image:alt': `Cover of ${book.title || 'book'}`,
-          'og:site_name': 'EbookAura - Free PDF Books',
-          'og:locale': 'en_US',
-          'og:type': 'book',
-          'og:url': `${siteUrl}/books/${id}`,
-        },
-      };
-    } catch (error) {
-      console.error('Error fetching book data for metadata:', error);
-      
-      // Return default metadata on error
-      return defaultMetadata;
-    }
-  } catch (error) {
-    console.error('Error generating book metadata:', error);
-    return defaultMetadata;
-  }
-}
-
-// Fix the getBookStructuredData function to properly handle params
-async function getBookStructuredData(params) {
-  try {
-    // Ensure params are properly awaited before accessing
-    const resolvedParams = await Promise.resolve(params);
-    const id = resolvedParams?.id ? String(resolvedParams.id) : null;
-    
-    if (!id || id === 'not-found') {
-      return null;
-    }
-
-    // Get the API URL with localhost fallback
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
-    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ebookaura.onrender.com';
-    
-    // Fetch book details
     const response = await fetch(`${apiUrl}/books/${id}`, {
-      next: { revalidate: 3600 }, // Revalidate cache every hour
+      cache: 'no-store', // Don't cache for dynamic data
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       }
     });
     
     if (!response.ok) {
-      throw new Error(`Failed to fetch book: ${response.status}`);
+      console.error(`API Error: ${response.status} - ${response.statusText}`);
+      try {
+        const errorData = await response.json();
+        console.error('API Error Details:', errorData);
+      } catch (e) {
+        // Ignore JSON parse error for error response
+      }
+      return defaultMetadata;
     }
     
-    const book = await response.json();
+    let book = await response.json();
 
-    // Get the book cover URL (ensure it's an absolute URL)
-    const coverUrl = book.coverImage && book.coverImage.startsWith('http')
-      ? book.coverImage
-      : `${siteUrl}${book.coverImage && book.coverImage.startsWith('/') ? '' : '/'}${book.coverImage || '/images/default-cover.jpg'}`;
-
-    // Format creation date if available
-    const creationDate = book.createdAt ? new Date(book.createdAt).toISOString().split('T')[0] : undefined;
-
-    // Format file size
-    const formatFileSize = (sizeInBytes) => {
-      if (!sizeInBytes && book.fileSizeMB) {
-        return `${book.fileSizeMB} MB`;
+    // Normalize MongoDB Extended JSON values recursively
+    const normalizeMongoValue = (value) => {
+      if (!value) return value;
+      
+      if (typeof value === 'object') {
+        if ('$numberInt' in value) return parseInt(value['$numberInt']);
+        if ('$numberDouble' in value) return parseFloat(value['$numberDouble']);
+        if ('$numberDecimal' in value) return parseFloat(value['$numberDecimal']);
+        if ('$date' in value) return new Date(value['$date']);
+        
+        if (Array.isArray(value)) {
+          return value.map(item => normalizeMongoValue(item));
+        }
+        
+        const normalized = {};
+        for (const [key, val] of Object.entries(value)) {
+          normalized[key] = normalizeMongoValue(val);
+        }
+        return normalized;
       }
+      
+      return value;
+    };
+
+    // Normalize the entire book object recursively
+    book = normalizeMongoValue(book);
+
+    // Format the file size
+    const formatFileSize = (sizeInBytes) => {
       if (!sizeInBytes) return 'Unknown size';
       
       const kb = sizeInBytes / 1024;
@@ -200,6 +95,131 @@ async function getBookStructuredData(params) {
       const mb = kb / 1024;
       return `${Math.round(mb * 10) / 10} MB`;
     };
+
+    // Get the book cover URL (ensure it's an absolute URL)
+    const coverUrl = book.coverImage && book.coverImage.startsWith('http')
+      ? book.coverImage
+      : `${siteUrl}${book.coverImage && book.coverImage.startsWith('/') ? '' : '/'}${book.coverImage || '/images/default-cover.jpg'}`;
+
+    // Create description with book details
+    const description = `${book.title || 'Book'} by ${book.author || 'Unknown Author'}. ${book.description ? book.description.substring(0, 150) + '...' : ''} Format: PDF, Size: ${formatFileSize(book.fileSize)}, Rating: ${book.averageRating ? book.averageRating.toFixed(1) + '/5' : 'Not rated'}`;
+
+    return {
+      title: `${book.title || 'Book'} by ${book.author || 'Unknown Author'} - EbookAura`,
+      description,
+      keywords: `${book.title}, ${book.author}, ${book.categories?.join(', ') || ''}, PDF, ebook, free book, read online, download pdf, ebookaura`,
+      openGraph: {
+        title: `${book.title || 'Book'} by ${book.author || 'Unknown Author'}`,
+        description,
+        url: `${siteUrl}/books/${id}`,
+        siteName: 'EbookAura',
+        images: [
+          {
+            url: coverUrl,
+            width: 600,
+            height: 900,
+            alt: `Cover of ${book.title || 'book'}`,
+          },
+        ],
+        locale: 'en_US',
+        type: 'book',
+        book: {
+          authors: [book.author || 'Unknown Author'],
+          isbn: book.isbn || '',
+          releaseDate: book.publicationDate || '',
+        },
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: `${book.title || 'Book'} by ${book.author || 'Unknown Author'}`,
+        description,
+        images: [coverUrl],
+      },
+      other: {
+        'book:author': book.author || 'Unknown Author',
+        'book:isbn': book.isbn || '',
+        'book:page_count': book.pageCount || '',
+        'book:release_date': book.publicationDate || '',
+        'og:price:amount': book.price || '0',
+        'og:price:currency': 'Coins',
+      },
+    };
+  } catch (error) {
+    console.error('Error generating book metadata:', error);
+    return defaultMetadata;
+  }
+}
+
+// Get structured data for a book
+async function getBookStructuredData(params) {
+  try {
+    // Ensure params is resolved before accessing
+    const resolvedParams = await Promise.resolve(params);
+    const id = resolvedParams?.id ? String(resolvedParams.id) : null;
+    if (!id || id === 'not-found') {
+      return null;
+    }
+
+    // Get the API URL with localhost fallback
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    
+    // Fetch book details
+    const response = await fetch(`${apiUrl}/books/${id}`, {
+      cache: 'no-store', // Don't cache for dynamic data
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      console.error(`API Error: ${response.status} - ${response.statusText}`);
+      try {
+        const errorData = await response.json();
+        console.error('API Error Details:', errorData);
+      } catch (e) {
+        // Ignore JSON parse error for error response
+      }
+      return null;
+    }
+    
+    let book = await response.json();
+
+    // Normalize MongoDB Extended JSON values recursively
+    const normalizeMongoValue = (value) => {
+      if (!value) return value;
+      
+      if (typeof value === 'object') {
+        if ('$numberInt' in value) return parseInt(value['$numberInt']);
+        if ('$numberDouble' in value) return parseFloat(value['$numberDouble']);
+        if ('$numberDecimal' in value) return parseFloat(value['$numberDecimal']);
+        if ('$date' in value) return new Date(value['$date']);
+        
+        if (Array.isArray(value)) {
+          return value.map(item => normalizeMongoValue(item));
+        }
+        
+        const normalized = {};
+        for (const [key, val] of Object.entries(value)) {
+          normalized[key] = normalizeMongoValue(val);
+        }
+        return normalized;
+      }
+      
+      return value;
+    };
+
+    // Normalize the entire book object recursively
+    book = normalizeMongoValue(book);
+
+    // Get the book cover URL (ensure it's an absolute URL)
+    const coverUrl = book.coverImage && book.coverImage.startsWith('http')
+      ? book.coverImage
+      : `${siteUrl}${book.coverImage && book.coverImage.startsWith('/') ? '' : '/'}${book.coverImage || '/images/default-cover.jpg'}`;
+
+    // Format publication date if available
+    const publicationDate = book.publicationDate ? new Date(book.publicationDate).toISOString().split('T')[0] : undefined;
 
     // Build structured data for search engines
     const structuredData = {
@@ -220,24 +240,16 @@ async function getBookStructuredData(params) {
         }
       },
       "image": coverUrl,
-      "description": book.description || `Read ${book.title} by ${book.author} online at EbookAura.`,
-      "numberOfPages": book.pageSize || undefined,
-      "fileFormat": "application/pdf",
-      "contentSize": formatFileSize(book.fileSize || book.fileSizeMB * 1024 * 1024),
-      "datePublished": creationDate,
-      "inLanguage": "en"
+      "description": book.description || `Read ${book.title} by ${book.author} online at EbookAura.`
     };
 
     // Add optional fields if available
     if (book.isbn) structuredData.isbn = book.isbn;
-    if (creationDate) structuredData.datePublished = creationDate;
+    if (publicationDate) structuredData.datePublished = publicationDate;
     if (book.publisher) structuredData.publisher = { "@type": "Organization", "name": book.publisher };
-    if (book.pageSize) structuredData.numberOfPages = book.pageSize;
+    if (book.pageCount) structuredData.numberOfPages = book.pageCount;
     if (book.language) structuredData.inLanguage = book.language;
-    if (book.category) structuredData.genre = book.category;
-    if (book.tags && book.tags.length) {
-      structuredData.keywords = book.tags.join(", ");
-    }
+    if (book.categories && book.categories.length) structuredData.genre = book.categories[0];
     if (book.averageRating) {
       structuredData.aggregateRating = {
         "@type": "AggregateRating",
@@ -248,7 +260,7 @@ async function getBookStructuredData(params) {
       };
     }
 
-    // Add offers data for the book
+    // Add offers data for free book
     structuredData.offers = {
       "@type": "Offer",
       "availability": "http://schema.org/InStock",
@@ -264,10 +276,11 @@ async function getBookStructuredData(params) {
   }
 }
 
-// Server Component using proper params handling for Next.js 13+
+// Server Component with dynamic rendering
 export default async function BookPage({ params }) {
-  // Get structured data for the book - properly await params
-  const structuredData = await getBookStructuredData(await Promise.resolve(params));
+  // Ensure params is resolved before passing to getBookStructuredData
+  const resolvedParams = await Promise.resolve(params);
+  const structuredData = await getBookStructuredData(resolvedParams);
   
   return (
     <>
@@ -286,99 +299,4 @@ export default async function BookPage({ params }) {
   );
 }
 
-export async function generateStaticParams() {
-  try {
-    console.log("Generating static book pages...");
-    
-    // Import STATIC_BOOKS and ensure it's available
-    let STATIC_BOOKS = [];
-    try {
-      STATIC_BOOKS = (await import('@/app/utils/STATIC_BOOKS')).default;
-      console.log(`Added ${STATIC_BOOKS.length} books from STATIC_BOOKS list`);
-    } catch (error) {
-      console.warn("No STATIC_BOOKS.js file found or error importing:", error.message);
-      // Create a fallback list of critical IDs if import fails
-      STATIC_BOOKS = [
-        '681859bd560ce1fd792c2745', // Critical - previously problematic ID
-        '6807c9d24fb1873f72080fb1',
-        '6807be6cf05cdd8f4bdf933c', 
-        '6803d0c8cd7950184b1e8cf3',
-        '680735665ceba10744914991'
-      ];
-      console.log(`Using fallback list of ${STATIC_BOOKS.length} critical book IDs`);
-    }
-    
-    // Try to fetch additional books from the API if available
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
-    console.log(`Fetching books from API: ${API_URL}/books?limit=200`);
-    
-    let apiBooks = [];
-    try {
-      const response = await fetch(`${API_URL}/books?limit=200`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.books && Array.isArray(data.books)) {
-          apiBooks = data.books.map(book => book.id || book._id);
-          console.log(`Added ${apiBooks.length} books from API (object format)`);
-        }
-      } else {
-        console.warn(`API request failed with status: ${response.status}`);
-      }
-    } catch (error) {
-      console.warn("Failed to fetch books from API:", error.message);
-    }
-    
-    // Always explicitly include critical IDs that must be generated
-    const bookIdMap = new Map();
-    
-    // Add all STATIC_BOOKS first
-    STATIC_BOOKS.forEach(id => {
-      bookIdMap.set(id, { id, source: 'static-books' });
-    });
-
-    // Add API books if any were fetched
-    apiBooks.forEach(id => {
-      if (!bookIdMap.has(id)) {
-        bookIdMap.set(id, { id, source: 'api' });
-      }
-    });
-
-    // Explicitly add critical IDs that must be included regardless
-    const CRITICAL_IDS = [
-      '681859bd560ce1fd792c2745', // Previously problematic ID
-      '6807c9d24fb1873f72080fb1',
-      '6807be6cf05cdd8f4bdf933c',
-      '6803d0c8cd7950184b1e8cf3',
-      '680735665ceba10744914991'
-    ];
-    
-    CRITICAL_IDS.forEach(id => {
-      if (!bookIdMap.has(id)) {
-        bookIdMap.set(id, { id, source: 'critical-explicit' });
-        console.log(`Added critical book ID: ${id}`);
-      }
-    });
-
-    // Always include a catch-all "not-found" page
-    bookIdMap.set('not-found', { id: 'not-found', source: 'catch-all' });
-
-    // Convert map to array of params objects
-    const bookIds = Array.from(bookIdMap.values()).map(entry => ({ id: entry.id }));
-    
-    console.log(`Generated static params for ${bookIds.length} book pages`);
-    console.log(`All book IDs: ${bookIds.map(b => b.id).join(', ')}`);
-    
-    return bookIds;
-  } catch (error) {
-    console.error("Error generating static book paths:", error);
-    // Fallback to just the critical IDs if something goes wrong
-    return [
-      { id: '681859bd560ce1fd792c2745' },
-      { id: '6807c9d24fb1873f72080fb1' },
-      { id: '6807be6cf05cdd8f4bdf933c' },
-      { id: '6803d0c8cd7950184b1e8cf3' },
-      { id: '680735665ceba10744914991' },
-      { id: 'not-found' }
-    ];
-  }
-} 
+// Remove generateStaticParams since we're using dynamic rendering

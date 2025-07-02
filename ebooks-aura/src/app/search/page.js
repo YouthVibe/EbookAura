@@ -609,7 +609,10 @@ export default function SearchPage() {
                           </div>
                         ) : (
                           <div className={styles.placeholderCover}>
-                            <FaBook className={styles.bookIcon} />
+                            <div className={styles.defaultCover}>
+                              <span className={styles.brandNameEbook}>Ebook</span>
+                              <span className={styles.brandNameAura}>Aura</span>
+                            </div>
                             {isPremium && price > 0 && (
                               <div className={styles.premiumPrice}>
                                 {price} <FaCoins className={styles.miniCoin} />
@@ -702,7 +705,10 @@ export default function SearchPage() {
                           />
                         ) : (
                           <div className={styles.bookListPlaceholder}>
-                            <FaBook />
+                            <div className={styles.defaultListCover}>
+                              <span className={styles.brandNameEbook}>Ebook</span>
+                              <span className={styles.brandNameAura}>Aura</span>
+                            </div>
                           </div>
                         )}
                         

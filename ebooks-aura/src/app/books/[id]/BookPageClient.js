@@ -781,8 +781,11 @@ export default function BookPageClient({ id }) {
       // Get the PDF content as a blob
       const pdfBlob = await response.blob();
       
-      // Set the PDF blob directly to be used by the viewer
-      setPdfUrl(pdfBlob);
+      // Create a blob URL for the PDF viewer
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      
+      // Set the PDF URL and show the viewer
+      setPdfUrl(blobUrl);
       setShowPdfViewer(true);
     } catch (err) {
       console.error('Error fetching PDF for viewing:', err);
@@ -1031,10 +1034,13 @@ export default function BookPageClient({ id }) {
   };
 
   const closePdfViewer = () => {
+    // Clean up the blob URL if it exists
+    if (pdfUrl && typeof pdfUrl === 'string' && pdfUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(pdfUrl);
+    }
     setShowPdfViewer(false);
-    // Clean up any blob URLs - this is no longer needed with the updated PdfViewer component
-    // which handles its own blob URL cleanup
     setPdfUrl(null);
+    console.log('PDF viewer closed and resources cleaned up');
   };
 
   // Function to handle opening custom URLs
@@ -1169,6 +1175,7 @@ export default function BookPageClient({ id }) {
       // Only clean up if pdfUrl is a string that starts with 'blob:'
       if (pdfUrl && typeof pdfUrl === 'string' && pdfUrl.startsWith('blob:')) {
         URL.revokeObjectURL(pdfUrl);
+        console.log('Cleaned up blob URL:', pdfUrl);
       }
     };
   }, [pdfUrl]);

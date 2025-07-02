@@ -5,10 +5,10 @@
  */
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "./styles/vendor.css";
 import Navbar from "./components/Navbar";
 import { AuthProvider } from "./context/AuthContext";
 import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import Script from "next/script";
 import Head from 'next/head';
 import SessionTimeTracker from "./components/SessionTimeTracker";

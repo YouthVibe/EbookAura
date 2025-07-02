@@ -1,15 +1,33 @@
 /** @type {import('next').NextConfig} */
+const isProduction = process.env.NODE_ENV === 'production';
+
 const nextConfig = {
-  // Conditional configuration based on environment
-  ...(process.env.STATIC_EXPORT === 'true' ? {
-    // Static export configuration
-    output: 'export',
-    images: {
-      domains: ['res.cloudinary.com'],
-      unoptimized: true, // Required for static export
-    },
-    // Static exports don't support rewrites
-    // Disable linting and type checking for faster builds
+  // Common configuration for both environments
+  images: {
+    domains: ['res.cloudinary.com'],
+    ...(isProduction && { unoptimized: true }), // Only unoptimize images in production for static export
+  },
+  webpack: (config) => {
+    // Handle PDF.js worker
+    config.resolve.alias.canvas = false;
+    config.resolve.alias.encoding = false;
+
+    // Add specific rules for PDF.js worker files
+    config.module.rules.push({
+      test: /pdf\.worker\.(min\.)?js/,
+      type: 'asset/resource',
+      generator: {
+        filename: 'static/chunks/[name].[hash][ext]',
+      },
+    });
+
+    return config;
+  },
+
+  // Production-specific configuration
+  ...(isProduction && {
+    output: 'standalone',
+    cssModules: true,
     eslint: {
       ignoreDuringBuilds: true,
     },
@@ -17,60 +35,17 @@ const nextConfig = {
       ignoreBuildErrors: true,
     },
     trailingSlash: true,
-    
-    // Important: When using static export, we need to make sure our book pages
-    // can still be generated dynamically. Individual book pages should be 
-    // rendered on the client-side when not pre-rendered at build time.
-    // The 'dynamic' and 'revalidate' exports in the book page component 
-    // enable this functionality.
-    
-    webpack: (config) => {
-      // Handle PDFjs worker
-      config.resolve.alias.canvas = false;
-      config.resolve.alias.encoding = false;
-      
-      // Add specific rules for PDF.js worker files
-      config.module.rules.push({
-        test: /pdf\.worker\.(min\.)?js/,
-        type: 'asset/resource',
-        generator: {
-          filename: 'static/chunks/[name].[hash][ext]',
-        },
-      });
-      
-      return config;
-    },
-  } : {
-    // Development configuration
-    images: {
-      domains: ['res.cloudinary.com'],
-    },
-    webpack: (config) => {
-      // Handle PDFjs worker
-      config.resolve.alias.canvas = false;
-      config.resolve.alias.encoding = false;
-      
-      // Add specific rules for PDF.js worker files
-      config.module.rules.push({
-        test: /pdf\.worker\.(min\.)?js/,
-        type: 'asset/resource',
-        generator: {
-          filename: 'static/chunks/[name].[hash][ext]',
-        },
-      });
-      
-      return config;
-    },
+  }),
+
+  // Development-specific configuration
+  ...(!isProduction && {
     async rewrites() {
-      // Use the production API URL directly
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
-      
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
       return [
         {
           source: '/api/:path*',
           destination: `${apiBaseUrl}/:path*`,
         },
-        // Add a specific rule for PDF endpoints with query parameters
         {
           source: '/api/books/:id/pdf',
           destination: `${apiBaseUrl}/books/:id/pdf`,

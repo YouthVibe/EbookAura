@@ -10,8 +10,16 @@ import { useParams, usePathname, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { useAuth } from '../../context/AuthContext';
 
-// Dynamically import the BookPageClient component to avoid PDF.js related SSR issues
-const BookPageClient = dynamic(() => import('./BookPageClient'), {
+// Dynamically import the BookPageClient component with improved loading
+const BookPageClient = dynamic(() => import('./BookPageClient').catch(err => {
+  console.error('Error loading BookPageClient:', err);
+  return () => (
+    <div className="error-container">
+      <h2>Error Loading Book Component</h2>
+      <p>There was a problem loading the book viewer. Please try refreshing the page.</p>
+    </div>
+  );
+}), {
   ssr: false,
   loading: () => (
     <div className="loading-container">
