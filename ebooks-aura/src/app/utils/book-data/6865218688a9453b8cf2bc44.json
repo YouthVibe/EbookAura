@@ -1,0 +1,33 @@
+{
+  "_id": "6865218688a9453b8cf2bc44",
+  "title": "NCERT Class 12 Psychology",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751458177/sxspmxt2biwhaffnslfv.jpg",
+  "coverImageId": "image/covers/sxspmxt2biwhaffnslfv",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1-ibPXu0Vao_dayeoGJwNac0z4IuI0SIE&export=download",
+  "pdfId": "custom_url_NCERT_Class_12_Psychology_1751458182532",
+  "pageSize": 131,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 2,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "10.08932"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0,
+  "updatedAt": "2025-07-03T05:39:45.128000"
+}

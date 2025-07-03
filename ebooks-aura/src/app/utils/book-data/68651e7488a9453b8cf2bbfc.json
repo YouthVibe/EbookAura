@@ -1,0 +1,32 @@
+{
+  "_id": "68651e7488a9453b8cf2bbfc",
+  "title": "NCERT Class 11 Home_Science_Part_2_-_Hindi",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751457392/slanmrlxrrdbwemogbgv.jpg",
+  "coverImageId": "image/covers/slanmrlxrrdbwemogbgv",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1e1pmRPwcSB5Uivs3myh2gGB1ScR2gtU_&export=download",
+  "pdfId": "custom_url_NCERT_Class_11_Home_Science_Part_2_-_Hindi_1751457396769",
+  "pageSize": 102,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 0,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "10.287712"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0
+}

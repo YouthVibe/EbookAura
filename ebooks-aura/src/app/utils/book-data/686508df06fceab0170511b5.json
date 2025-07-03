@@ -1,0 +1,33 @@
+{
+  "_id": "686508df06fceab0170511b5",
+  "title": "Class 10 English Marathi Medium",
+  "author": "HSC Board of Secondary and Higher Secondary Education, Pune",
+  "description": "Discover Maharashtra's rich heritage through this book, offering insights into its history, culture, and landscapes, published by the Maharashtra Government.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451867/mbmlqwao8ncmfo7wxq00.jpg",
+  "coverImageId": "image/covers/mbmlqwao8ncmfo7wxq00",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1HUjYqL14H3QLzxOPdOaPjqoz6UJR9Hol&export=download",
+  "pdfId": "custom_url_Class_10_English_Marathi_Medium_1751451871457",
+  "pageSize": 186,
+  "category": "Education",
+  "tags": [
+    "HSC",
+    "Maharashtra"
+  ],
+  "averageRating": 5,
+  "views": 10,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "5.808583"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0,
+  "updatedAt": "2025-07-03T05:39:52.346000"
+}

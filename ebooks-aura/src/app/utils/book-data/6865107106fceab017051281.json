@@ -1,0 +1,32 @@
+{
+  "_id": "6865107106fceab017051281",
+  "title": "Maharastra Board Class 11 itihas Book",
+  "author": "HSC Board of Secondary and Higher Secondary Education, Pune",
+  "description": "Discover Maharashtra's rich heritage through this book, offering insights into its history, culture, and landscapes, published by the Maharashtra Government.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751453805/aqg27mg4vvxf7jpkt01y.jpg",
+  "coverImageId": "image/covers/aqg27mg4vvxf7jpkt01y",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1E-hPSZ3cipX01whxE11dLBWlm8WUYJjR&export=download",
+  "pdfId": "custom_url_Maharastra_Board_Class_11_itihas_Book_1751453809220",
+  "pageSize": 138,
+  "category": "Education",
+  "tags": [
+    "HSC",
+    "Maharashtra"
+  ],
+  "averageRating": 5,
+  "views": 0,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "4.487839"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0
+}

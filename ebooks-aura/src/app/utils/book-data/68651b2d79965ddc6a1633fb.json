@@ -1,0 +1,33 @@
+{
+  "_id": "68651b2d79965ddc6a1633fb",
+  "title": "NCERT Class 1 English",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751456547/a6a5mokxkyafuc3c9ril.jpg",
+  "coverImageId": "image/covers/a6a5mokxkyafuc3c9ril",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1R9yoPCPztcJTkwINWCh82qaOLpY_exaO&export=download",
+  "pdfId": "custom_url_NCERT_Class_1_English_1751456557786",
+  "pageSize": 121,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 2,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "27.063188"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0,
+  "updatedAt": "2025-07-03T05:39:46.033000"
+}

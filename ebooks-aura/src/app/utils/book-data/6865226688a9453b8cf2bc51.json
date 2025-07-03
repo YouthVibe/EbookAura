@@ -1,0 +1,32 @@
+{
+  "_id": "6865226688a9453b8cf2bc51",
+  "title": "NCERT Class 3 Ganit",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751458358/lpqoboubmm0vmawdsac3.jpg",
+  "coverImageId": "image/covers/lpqoboubmm0vmawdsac3",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1yUylx0DS0PY8Q2ovYaf7m_PLbKkfnmzI&export=download",
+  "pdfId": "custom_url_NCERT_Class_3_Ganit_1751458406299",
+  "pageSize": 208,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 0,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "172.341361"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0
+}

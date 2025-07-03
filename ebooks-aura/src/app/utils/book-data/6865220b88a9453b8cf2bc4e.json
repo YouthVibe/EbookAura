@@ -1,0 +1,33 @@
+{
+  "_id": "6865220b88a9453b8cf2bc4e",
+  "title": "NCERT Class 2 Math",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751458301/lc8auir2icz5turftpkn.jpg",
+  "coverImageId": "image/covers/lc8auir2icz5turftpkn",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1QKvTltt40rbAJfV5qO-ChpSGeBp9WUp6&export=download",
+  "pdfId": "custom_url_NCERT_Class_2_Math_1751458315433",
+  "pageSize": 138,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 2,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "35.430905"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0,
+  "updatedAt": "2025-07-03T05:39:46.324000"
+}

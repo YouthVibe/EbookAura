@@ -1,0 +1,32 @@
+{
+  "_id": "6865262288a9453b8cf2bc8b",
+  "title": "NCERT Class 9 Hindi_-_Sprash",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751459358/ypxp50w5patxfxg9vpij.jpg",
+  "coverImageId": "image/covers/ypxp50w5patxfxg9vpij",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1r5u5TR7vfo0VsRP5x7McJ_kmlu18LZvl&export=download",
+  "pdfId": "custom_url_NCERT_Class_9_Hindi_-_Sprash_1751459362147",
+  "pageSize": 92,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 0,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "7.151581"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0
+}

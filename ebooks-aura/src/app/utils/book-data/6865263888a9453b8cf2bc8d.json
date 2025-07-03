@@ -1,0 +1,32 @@
+{
+  "_id": "6865263888a9453b8cf2bc8d",
+  "title": "NCERT Class 9 History_-_Hindi",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751459376/r40qqnjrmplrzlndgp3a.jpg",
+  "coverImageId": "image/covers/r40qqnjrmplrzlndgp3a",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1iVU9GyenvpPC29t2T8IycRhEs7aKEmZN&export=download",
+  "pdfId": "custom_url_NCERT_Class_9_History_-_Hindi_1751459384323",
+  "pageSize": 118,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 0,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "26.014175"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0
+}

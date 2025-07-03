@@ -1,0 +1,33 @@
+{
+  "_id": "686525bf88a9453b8cf2bc7e",
+  "title": "NCERT Class 8 Politocal_Science_-_Hindi",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751459256/v4vzgqhuuqce5axbivby.jpg",
+  "coverImageId": "image/covers/v4vzgqhuuqce5axbivby",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1sJ1H6b_qnvO3q9DKdegECzPr5C72EnG7&export=download",
+  "pdfId": "custom_url_NCERT_Class_8_Politocal_Science_-_Hindi_1751459263745",
+  "pageSize": 115,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 2,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "21.236596"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0,
+  "updatedAt": "2025-07-03T05:39:49.856000"
+}

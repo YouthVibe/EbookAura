@@ -9,6 +9,8 @@ import { default as DynamicImport } from 'next/dynamic';
 import BookPageClient from './BookClientWrapper';
 import STATIC_BOOKS from '../../utils/STATIC_BOOKS';
 import Script from 'next/script';
+import { localAwareFetch } from '../../utils/fetchWrapper';
+import { getBookById, getAllBooks } from '../../utils/localBookData';
 
 // Configure rendering for this page - using 'auto' instead of 'force-dynamic' for static exports
 // export const dynamic = 'force-dynamic';
@@ -36,24 +38,17 @@ export async function generateMetadata(props) {
       return defaultMetadata;
     }
 
-    // Get the API URL with localhost fallback
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+    // Get the API URL with production fallback
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ebookaura.onrender.com/api';
     const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ebookaura.onrender.com';
     
-    // Fetch book details for metadata
+    // Get book details from local JSON file
     try {
-      const response = await fetch(`${apiUrl}/books/${id}`, {
-        next: { revalidate: 3600 }, // Revalidate cache every hour
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      const book = getBookById(id);
       
-      if (!response.ok) {
-        throw new Error(`Failed to fetch book: ${response.status}`);
+      if (!book) {
+        throw new Error(`Book not found: ${id}`);
       }
-      
-      const book = await response.json();
 
       // Format the file size
       const formatFileSize = (sizeInBytes) => {
@@ -160,23 +155,16 @@ async function getBookStructuredData(params) {
       return null;
     }
 
-    // Get the API URL with localhost fallback
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+    // Get the API URL with production fallback
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ebookaura.onrender.com/api';
     const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ebookaura.onrender.com';
     
-    // Fetch book details
-    const response = await fetch(`${apiUrl}/books/${id}`, {
-      next: { revalidate: 3600 }, // Revalidate cache every hour
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
+    // Get book details from local JSON file
+    const book = getBookById(id);
     
-    if (!response.ok) {
-      throw new Error(`Failed to fetch book: ${response.status}`);
+    if (!book) {
+      throw new Error(`Book not found: ${id}`);
     }
-    
-    const book = await response.json();
 
     // Get the book cover URL (ensure it's an absolute URL)
     const coverUrl = book.coverImage && book.coverImage.startsWith('http')
@@ -308,24 +296,16 @@ export async function generateStaticParams() {
       console.log(`Using fallback list of ${STATIC_BOOKS.length} critical book IDs`);
     }
     
-    // Try to fetch additional books from the API if available
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
-    console.log(`Fetching books from API: ${API_URL}/books?limit=200`);
+    // Get all books from local JSON file
+    console.log('Reading books from local books.json file...');
     
-    let apiBooks = [];
+    let localBooks = [];
     try {
-      const response = await fetch(`${API_URL}/books?limit=200`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.books && Array.isArray(data.books)) {
-          apiBooks = data.books.map(book => book.id || book._id);
-          console.log(`Added ${apiBooks.length} books from API (object format)`);
-        }
-      } else {
-        console.warn(`API request failed with status: ${response.status}`);
-      }
+      const allBooks = getAllBooks();
+      localBooks = allBooks.map(book => book._id || book.id);
+      console.log(`Found ${localBooks.length} books in local JSON file`);
     } catch (error) {
-      console.warn("Failed to fetch books from API:", error.message);
+      console.warn("Failed to read books from local JSON:", error.message);
     }
     
     // Always explicitly include critical IDs that must be generated
@@ -336,10 +316,10 @@ export async function generateStaticParams() {
       bookIdMap.set(id, { id, source: 'static-books' });
     });
 
-    // Add API books if any were fetched
-    apiBooks.forEach(id => {
+    // Add books from local JSON file
+    localBooks.forEach(id => {
       if (!bookIdMap.has(id)) {
-        bookIdMap.set(id, { id, source: 'api' });
+        bookIdMap.set(id, { id, source: 'local-json' });
       }
     });
 

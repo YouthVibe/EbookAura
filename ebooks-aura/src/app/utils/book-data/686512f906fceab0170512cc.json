@@ -1,0 +1,33 @@
+{
+  "_id": "686512f906fceab0170512cc",
+  "title": "Maharastra State Board 10th Standard Aksharbharti",
+  "author": "HSC Board of Secondary and Higher Secondary Education, Pune",
+  "description": "Discover Maharashtra's rich heritage through this book, offering insights into its history, culture, and landscapes, published by the Maharashtra Government.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751454453/e5us9wse7vyd0oxnrx4v.jpg",
+  "coverImageId": "image/covers/e5us9wse7vyd0oxnrx4v",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1kWmWa-GPeOCEfKPucla33jtAG0T5OxYw&export=download",
+  "pdfId": "custom_url_Maharastra_State_Board_10th_Standard_Aksharbharti_1751454457888",
+  "pageSize": 90,
+  "category": "Education",
+  "tags": [
+    "HSC",
+    "Maharashtra"
+  ],
+  "averageRating": 5,
+  "views": 2,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "6.781957"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0,
+  "updatedAt": "2025-07-03T05:39:49.665000"
+}

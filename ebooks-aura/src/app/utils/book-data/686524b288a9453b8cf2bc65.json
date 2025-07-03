@@ -1,0 +1,32 @@
+{
+  "_id": "686524b288a9453b8cf2bc65",
+  "title": "NCERT Class 7 Hindi_-_Bal_Mahabharat_Katha",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751458989/poeddwfj2vsfz5zup4wd.jpg",
+  "coverImageId": "image/covers/poeddwfj2vsfz5zup4wd",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1F33hrlTDoSCh_cksCzSYSOZhwEKXgyKA&export=download",
+  "pdfId": "custom_url_NCERT_Class_7_Hindi_-_Bal_Mahabharat_Katha_1751458994307",
+  "pageSize": 100,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 0,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "9.43609"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0
+}

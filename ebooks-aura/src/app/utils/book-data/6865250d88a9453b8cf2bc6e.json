@@ -1,0 +1,33 @@
+{
+  "_id": "6865250d88a9453b8cf2bc6e",
+  "title": "NCERT Class 7 Sanskrit",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751459077/nnkbtzrlrrknvnedur4r.jpg",
+  "coverImageId": "image/covers/nnkbtzrlrrknvnedur4r",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1gz_lObzqmR9GireJkyQ6W0JM2NbQJEjD&export=download",
+  "pdfId": "custom_url_NCERT_Class_7_Sanskrit_1751459085392",
+  "pageSize": 74,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 2,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "19.497574"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0,
+  "updatedAt": "2025-07-03T05:39:48.730000"
+}

@@ -1,0 +1,32 @@
+{
+  "_id": "6865119806fceab0170512a5",
+  "title": "Maharastra Board Class 12 Chemistry Book",
+  "author": "HSC Board of Secondary and Higher Secondary Education, Pune",
+  "description": "Discover Maharashtra's rich heritage through this book, offering insights into its history, culture, and landscapes, published by the Maharashtra Government.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751454095/bsjsc22fhvy3t5kc8ux3.jpg",
+  "coverImageId": "image/covers/bsjsc22fhvy3t5kc8ux3",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1LwJpgjHuGlbSe8716FRrEoYTfD3TQP9P&export=download",
+  "pdfId": "custom_url_Maharastra_Board_Class_12_Chemistry_Book_1751454104350",
+  "pageSize": 362,
+  "category": "Education",
+  "tags": [
+    "HSC",
+    "Maharashtra"
+  ],
+  "averageRating": 5,
+  "views": 0,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "21.804822"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0
+}

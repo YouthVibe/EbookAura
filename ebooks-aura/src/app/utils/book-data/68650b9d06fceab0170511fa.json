@@ -1,0 +1,33 @@
+{
+  "_id": "68650b9d06fceab0170511fa",
+  "title": "Maharashtra Board Class 1 Maths Textbook-Marathi Medium",
+  "author": "HSC Board of Secondary and Higher Secondary Education, Pune",
+  "description": "Discover Maharashtra's rich heritage through this book, offering insights into its history, culture, and landscapes, published by the Maharashtra Government.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452569/dfz1qae4qke5bilgsvvl.jpg",
+  "coverImageId": "image/covers/dfz1qae4qke5bilgsvvl",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1-gWTyTmtEpon6BCeoLR-RKmMJPZ-oq8o&export=download",
+  "pdfId": "custom_url_Maharashtra_Board_Class_1_Maths_Textbook-Marathi_Medium_1751452573838",
+  "pageSize": 86,
+  "category": "Education",
+  "tags": [
+    "HSC",
+    "Maharashtra"
+  ],
+  "averageRating": 5,
+  "views": 2,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "6.763537"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0,
+  "updatedAt": "2025-07-03T05:39:42.349000"
+}

@@ -1,0 +1,33 @@
+{
+  "_id": "6865219688a9453b8cf2bc46",
+  "title": "NCERT Class 12 Sanskrit_-_Bhaswati",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751458194/u1hp6retlier9gxar0tn.jpg",
+  "coverImageId": "image/covers/u1hp6retlier9gxar0tn",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1Rt3tvh6yRQCWr5xv3BuKWQoPNGeofALh&export=download",
+  "pdfId": "custom_url_NCERT_Class_12_Sanskrit_-_Bhaswati_1751458198074",
+  "pageSize": 88,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 2,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "6.886549"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0,
+  "updatedAt": "2025-07-03T05:39:44.827000"
+}

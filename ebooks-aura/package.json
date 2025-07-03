@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test:static": "node scripts/test-static-generation.js",
     "dev": "next dev",
     "build": "next build",
     "build:dev": "cross-env NEXT_PUBLIC_API_URL=http://localhost:5000/api next build",

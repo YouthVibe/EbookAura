@@ -1,0 +1,33 @@
+{
+  "_id": "68650d3b06fceab017051222",
+  "title": "Maharastra Board 10th Standard Ganit 2 Book",
+  "author": "HSC Board of Secondary and Higher Secondary Education, Pune",
+  "description": "Discover Maharashtra's rich heritage through this book, offering insights into its history, culture, and landscapes, published by the Maharashtra Government.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452983/eh5tdeyu9jmnitr5kyuw.jpg",
+  "coverImageId": "image/covers/eh5tdeyu9jmnitr5kyuw",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1nTFIWQfgGvexkSdA0Y0SM_q1-xHhN4ik&export=download",
+  "pdfId": "custom_url_Maharastra_Board_10th_Standard_Ganit_2_Book_1751452987457",
+  "pageSize": 178,
+  "category": "Education",
+  "tags": [
+    "HSC",
+    "Maharashtra"
+  ],
+  "averageRating": 5,
+  "views": 2,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "3.876267"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0,
+  "updatedAt": "2025-07-03T05:39:45.380000"
+}

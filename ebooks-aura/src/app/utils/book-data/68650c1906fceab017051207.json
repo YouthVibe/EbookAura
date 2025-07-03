@@ -1,0 +1,32 @@
+{
+  "_id": "68650c1906fceab017051207",
+  "title": "Maharashtra Board Class 3 Maths Textbook-English Medium",
+  "author": "HSC Board of Secondary and Higher Secondary Education, Pune",
+  "description": "Discover Maharashtra's rich heritage through this book, offering insights into its history, culture, and landscapes, published by the Maharashtra Government.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452693/wwk6rzpwegnp2jskkasc.jpg",
+  "coverImageId": "image/covers/wwk6rzpwegnp2jskkasc",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=19u2UuhE_LJgDGELepET4LwD-vIl2zRik&export=download",
+  "pdfId": "custom_url_Maharashtra_Board_Class_3_Maths_Textbook-English_Medium_1751452697306",
+  "pageSize": 98,
+  "category": "Education",
+  "tags": [
+    "HSC",
+    "Maharashtra"
+  ],
+  "averageRating": 5,
+  "views": 0,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "5.397206"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0
+}

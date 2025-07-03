@@ -1,0 +1,32 @@
+{
+  "_id": "68651b8c79965ddc6a163400",
+  "title": "NCERT Class 10 Economics_-_Hindi",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751456632/zduqhfbedlzro8nse7xi.jpg",
+  "coverImageId": "image/covers/zduqhfbedlzro8nse7xi",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=16sFFLan37TxTXWlqr2moNHwqnpkiAS87&export=download",
+  "pdfId": "custom_url_NCERT_Class_10_Economics_-_Hindi_1751456652401",
+  "pageSize": 91,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 0,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "59.986446"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0
+}

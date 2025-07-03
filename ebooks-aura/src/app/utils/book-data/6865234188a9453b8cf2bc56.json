@@ -1,0 +1,33 @@
+{
+  "_id": "6865234188a9453b8cf2bc56",
+  "title": "NCERT Class 5 EVS",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751458614/e1vjtnelhhjd5bbexzdn.jpg",
+  "coverImageId": "image/covers/e1vjtnelhhjd5bbexzdn",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1sil2dGKm38uDavm9cY3w2hA-jFMglLhf&export=download",
+  "pdfId": "custom_url_NCERT_Class_5_EVS_1751458625878",
+  "pageSize": 204,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 2,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "36.618393"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0,
+  "updatedAt": "2025-07-03T05:39:46.326000"
+}

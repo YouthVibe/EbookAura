@@ -1,0 +1,32 @@
+{
+  "_id": "68651f5488a9453b8cf2bc13",
+  "title": "NCERT Class 12 Accountancy_Part_2_-_Hindi",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751457614/vlzcssnqjzboudmdngyz.jpg",
+  "coverImageId": "image/covers/vlzcssnqjzboudmdngyz",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1w4lX_7FdqaJj3FhOmCVYy6Nan-IE3yez&export=download",
+  "pdfId": "custom_url_NCERT_Class_12_Accountancy_Part_2_-_Hindi_1751457620796",
+  "pageSize": 246,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 0,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "16.711008"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0
+}

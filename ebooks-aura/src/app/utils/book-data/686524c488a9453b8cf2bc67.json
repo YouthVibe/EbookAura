@@ -1,0 +1,32 @@
+{
+  "_id": "686524c488a9453b8cf2bc67",
+  "title": "NCERT Class 7 Hindi_-_Vasant",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751459006/ucmgqyty0zwvlktsy7k0.jpg",
+  "coverImageId": "image/covers/ucmgqyty0zwvlktsy7k0",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1Kk28MiIFoEyUVpOSeRWuLvGu4UUMg6Uk&export=download",
+  "pdfId": "custom_url_NCERT_Class_7_Hindi_-_Vasant_1751459012875",
+  "pageSize": 108,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 0,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "15.563951"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0
+}

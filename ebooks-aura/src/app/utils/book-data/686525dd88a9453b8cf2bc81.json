@@ -1,0 +1,32 @@
+{
+  "_id": "686525dd88a9453b8cf2bc81",
+  "title": "NCERT Class 8 Science_-_Hindi",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751459286/tnt6qaf5xmzftvsp5vc2.jpg",
+  "coverImageId": "image/covers/tnt6qaf5xmzftvsp5vc2",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1pxJrsQzyw--w4A26bH5rui5sIVXjJb0a&export=download",
+  "pdfId": "custom_url_NCERT_Class_8_Science_-_Hindi_1751459293825",
+  "pageSize": 182,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 0,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "22.470664"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0
+}

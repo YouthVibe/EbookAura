@@ -1,0 +1,33 @@
+{
+  "_id": "686523f988a9453b8cf2bc5a",
+  "title": "NCERT Class 6 English",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751458794/rfycuo9msf8br5unftru.jpg",
+  "coverImageId": "image/covers/rfycuo9msf8br5unftru",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1jrK7Bx7u1dvQUKp10U9KlWZKOlOERvHJ&export=download",
+  "pdfId": "custom_url_NCERT_Class_6_English_1751458809348",
+  "pageSize": 164,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 2,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "51.671095"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0,
+  "updatedAt": "2025-07-03T05:39:47.883000"
+}

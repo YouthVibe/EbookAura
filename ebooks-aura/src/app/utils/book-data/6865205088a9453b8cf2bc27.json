@@ -1,0 +1,32 @@
+{
+  "_id": "6865205088a9453b8cf2bc27",
+  "title": "NCERT Class 12 Hindi_-_Antral",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751457868/gel3b2hlucrfm6fkxeim.jpg",
+  "coverImageId": "image/covers/gel3b2hlucrfm6fkxeim",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1JUVF1wFoabubfdBM6jEBvlQzfa2jkigd&export=download",
+  "pdfId": "custom_url_NCERT_Class_12_Hindi_-_Antral_1751457872812",
+  "pageSize": 32,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 0,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "3.264675"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0
+}

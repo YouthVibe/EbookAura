@@ -1,0 +1,32 @@
+{
+  "_id": "6865211a88a9453b8cf2bc3b",
+  "title": "NCERT Class 12 Microeconomics_-_Hindi",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751458069/dpuurtttne0ynsnumeqj.jpg",
+  "coverImageId": "image/covers/dpuurtttne0ynsnumeqj",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1Ex2Oc9XXgVeSSrlLSilmyLIRoN7K9twy&export=download",
+  "pdfId": "custom_url_NCERT_Class_12_Microeconomics_-_Hindi_1751458074267",
+  "pageSize": 102,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 0,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "9.698358"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0
+}

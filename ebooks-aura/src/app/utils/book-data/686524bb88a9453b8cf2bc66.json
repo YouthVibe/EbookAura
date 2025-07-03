@@ -1,0 +1,32 @@
+{
+  "_id": "686524bb88a9453b8cf2bc66",
+  "title": "NCERT Class 7 Hindi_-_Durva",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751458997/dispuidsckdunmhakyii.jpg",
+  "coverImageId": "image/covers/dispuidsckdunmhakyii",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1QjYw1dxIAVrwZpm-mzotK3VmBtUyz7BZ&export=download",
+  "pdfId": "custom_url_NCERT_Class_7_Hindi_-_Durva_1751459003267",
+  "pageSize": 102,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 0,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "13.340448"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0
+}

@@ -1,0 +1,33 @@
+{
+  "_id": "68650b0306fceab0170511ee",
+  "title": "Maha SSC 10th Standard My English Course Book",
+  "author": "HSC Board of Secondary and Higher Secondary Education, Pune",
+  "description": "Discover Maharashtra's rich heritage through this book, offering insights into its history, culture, and landscapes, published by the Maharashtra Government.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452415/rfmsxr3z4cpogmdsbzi2.jpg",
+  "coverImageId": "image/covers/rfmsxr3z4cpogmdsbzi2",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1Nt9R8nnb98Jvw-FPkRKVvqXL3R9oc-MR&export=download",
+  "pdfId": "custom_url_Maha_SSC_10th_Standard_My_English_Course_Book_1751452419438",
+  "pageSize": 186,
+  "category": "Education",
+  "tags": [
+    "HSC",
+    "Maharashtra"
+  ],
+  "averageRating": 5,
+  "views": 2,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "5.808583"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0,
+  "updatedAt": "2025-07-03T05:39:52.335000"
+}

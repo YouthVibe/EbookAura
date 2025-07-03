@@ -1,0 +1,32 @@
+{
+  "_id": "68651e9b88a9453b8cf2bbff",
+  "title": "NCERT Class 11 Physical_Education",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751457422/h6p3el8lrkmjao4l1drd.jpg",
+  "coverImageId": "image/covers/h6p3el8lrkmjao4l1drd",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1VcUxwruWzOeIVMYfSlbxYrAixAmtkStT&export=download",
+  "pdfId": "custom_url_NCERT_Class_11_Physical_Education_1751457435225",
+  "pageSize": 338,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 0,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "43.427213"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0
+}

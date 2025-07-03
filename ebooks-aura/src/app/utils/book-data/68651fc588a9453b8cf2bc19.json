@@ -1,0 +1,32 @@
+{
+  "_id": "68651fc588a9453b8cf2bc19",
+  "title": "NCERT Class 12 Business_Studies_Part_2_-_Hindi",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751457726/xtpwal2zrlfip1yem9fn.jpg",
+  "coverImageId": "image/covers/xtpwal2zrlfip1yem9fn",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1Qs4JyLKW611Ho3BlnkxIsuTKcL7cjNsv&export=download",
+  "pdfId": "custom_url_NCERT_Class_12_Business_Studies_Part_2_-_Hindi_1751457733354",
+  "pageSize": 86,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 0,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "7.679855"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0
+}

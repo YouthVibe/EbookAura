@@ -1,0 +1,32 @@
+{
+  "_id": "68651ebb88a9453b8cf2bc02",
+  "title": "NCERT Class 11 Physics_Part-2",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751457462/u6rcb3qf4ijvizc4u0ta.jpg",
+  "coverImageId": "image/covers/u6rcb3qf4ijvizc4u0ta",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=12NtpDcXqLrKZcyJmtkClbZ5Co73OaOaG&export=download",
+  "pdfId": "custom_url_NCERT_Class_11_Physics_Part-2_1751457467285",
+  "pageSize": 133,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 0,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "12.573972"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0
+}

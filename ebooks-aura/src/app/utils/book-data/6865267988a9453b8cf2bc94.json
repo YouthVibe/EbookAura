@@ -1,0 +1,32 @@
+{
+  "_id": "6865267988a9453b8cf2bc94",
+  "title": "NCERT Class 9 Sanskrit_-_Shemushi",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751459446/kltcpcblh9lind2tfsfl.jpg",
+  "coverImageId": "image/covers/kltcpcblh9lind2tfsfl",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1FDrhgeXwWWJ8IjC3NXetmNaCVfspcjde&export=download",
+  "pdfId": "custom_url_NCERT_Class_9_Sanskrit_-_Shemushi_1751459449824",
+  "pageSize": 74,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 0,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "7.309384"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0
+}

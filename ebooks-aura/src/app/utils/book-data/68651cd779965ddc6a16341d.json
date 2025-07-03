@@ -1,0 +1,33 @@
+{
+  "_id": "68651cd779965ddc6a16341d",
+  "title": "NCERT Class 11 Chemistry_Part-1_-_Hindi",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751456971/fzvimosozhpmct2fom63.jpg",
+  "coverImageId": "image/covers/fzvimosozhpmct2fom63",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1DgqIahw7Wibinl2DVUHMCWP5V1lXCdUY&export=download",
+  "pdfId": "custom_url_NCERT_Class_11_Chemistry_Part-1_-_Hindi_1751456983119",
+  "pageSize": 212,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 2,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "36.222064"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0,
+  "updatedAt": "2025-07-03T05:39:47.034000"
+}

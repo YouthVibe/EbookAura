@@ -1,0 +1,32 @@
+{
+  "_id": "6865265f88a9453b8cf2bc91",
+  "title": "NCERT Class 9 Political_Science_(Civics)",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751459417/tpltjirzcg7aob2xcgii.jpg",
+  "coverImageId": "image/covers/tpltjirzcg7aob2xcgii",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=16yblsYpJ8gFy_SkyJdcdyr7RVJPV6iWP&export=download",
+  "pdfId": "custom_url_NCERT_Class_9_Political_Science_(Civics)_1751459423585",
+  "pageSize": 90,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 0,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "15.664557"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0
+}

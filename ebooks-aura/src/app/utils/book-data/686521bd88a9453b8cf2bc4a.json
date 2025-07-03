@@ -1,0 +1,33 @@
+{
+  "_id": "686521bd88a9453b8cf2bc4a",
+  "title": "NCERT Class 12 Sociology_Part_2",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751458231/dafymidxb5jer8a3ebcb.jpg",
+  "coverImageId": "image/covers/dafymidxb5jer8a3ebcb",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1cvxb1C7EPndsxP8QBU6SFPVE0Tqm1hHA&export=download",
+  "pdfId": "custom_url_NCERT_Class_12_Sociology_Part_2_1751458237574",
+  "pageSize": 132,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 2,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "14.886599"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0,
+  "updatedAt": "2025-07-03T05:39:46.321000"
+}

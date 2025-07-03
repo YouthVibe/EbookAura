@@ -1,0 +1,32 @@
+{
+  "_id": "686520a588a9453b8cf2bc2f",
+  "title": "NCERT Class 12 History_Part_3_-_Hindi",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751457950/itlfzsp0hzsaoolhaemi.jpg",
+  "coverImageId": "image/covers/itlfzsp0hzsaoolhaemi",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1v13Vcp5fJf9CjmRl48Wioz8dagRUCKqd&export=download",
+  "pdfId": "custom_url_NCERT_Class_12_History_Part_3_-_Hindi_1751457957682",
+  "pageSize": 118,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 0,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "19.582852"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0
+}

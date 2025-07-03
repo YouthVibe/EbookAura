@@ -1,0 +1,32 @@
+{
+  "_id": "6865202d88a9453b8cf2bc23",
+  "title": "NCERT Class 12 Geography_-_India_People_and_Economy",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751457831/atkqkbxfr2fk9htfiq63.jpg",
+  "coverImageId": "image/covers/atkqkbxfr2fk9htfiq63",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1NA-BUQwgJXPtDwB6GKehdlqEEkhl0i54&export=download",
+  "pdfId": "custom_url_NCERT_Class_12_Geography_-_India_People_and_Economy_1751457837822",
+  "pageSize": 105,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 0,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "12.20609"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0
+}

@@ -1,0 +1,33 @@
+{
+  "_id": "6865241788a9453b8cf2bc5c",
+  "title": "NCERT Class 6 Math",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751458827/arvrcwo73cq7ifqe2yxy.jpg",
+  "coverImageId": "image/covers/arvrcwo73cq7ifqe2yxy",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=16YinP-fdsxRqTvOnYq88zAGuqdiaKxga&export=download",
+  "pdfId": "custom_url_NCERT_Class_6_Math_1751458839588",
+  "pageSize": 284,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 2,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "38.642448"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0,
+  "updatedAt": "2025-07-03T05:39:47.899000"
+}

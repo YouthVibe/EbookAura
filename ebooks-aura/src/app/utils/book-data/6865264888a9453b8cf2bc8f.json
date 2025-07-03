@@ -1,0 +1,32 @@
+{
+  "_id": "6865264888a9453b8cf2bc8f",
+  "title": "NCERT Class 9 Math_-_Hindi",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751459395/xtmkofnfbzjmqckrjgcv.jpg",
+  "coverImageId": "image/covers/xtmkofnfbzjmqckrjgcv",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1VIBKfPBU9z36Wlc1qNjvqMWpKsJxhjwF&export=download",
+  "pdfId": "custom_url_NCERT_Class_9_Math_-_Hindi_1751459400546",
+  "pageSize": 190,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 0,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "14.90654"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0
+}

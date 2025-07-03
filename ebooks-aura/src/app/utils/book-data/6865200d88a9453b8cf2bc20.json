@@ -1,0 +1,33 @@
+{
+  "_id": "6865200d88a9453b8cf2bc20",
+  "title": "NCERT Class 12 Geography_-_Bharat_Log_Aur_Arthvyasastha",
+  "author": "NCERT",
+  "description": "A comprehensive textbook covering various classes in India NCERT/CBSE.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751457798/jg7gywct3osqwcxs2dz8.jpg",
+  "coverImageId": "image/covers/jg7gywct3osqwcxs2dz8",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1bY_kjzf4OeR_BXViqlRwSmt48utzQcYV&export=download",
+  "pdfId": "custom_url_NCERT_Class_12_Geography_-_Bharat_Log_Aur_Arthvyasastha_1751457805035",
+  "pageSize": 103,
+  "category": "Education",
+  "tags": [
+    "NCERT",
+    "CBSE"
+  ],
+  "averageRating": 5,
+  "views": 2,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "12.814878"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0,
+  "updatedAt": "2025-07-03T05:39:42.925000"
+}

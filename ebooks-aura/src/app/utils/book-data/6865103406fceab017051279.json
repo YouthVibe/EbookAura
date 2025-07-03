@@ -1,0 +1,32 @@
+{
+  "_id": "6865103406fceab017051279",
+  "title": "Maharastra Board Class 11 Geography Book",
+  "author": "HSC Board of Secondary and Higher Secondary Education, Pune",
+  "description": "Discover Maharashtra's rich heritage through this book, offering insights into its history, culture, and landscapes, published by the Maharashtra Government.",
+  "coverImage": "https://res.cloudinary.com/dn0r4gcig/image/upload/v1751453740/rygms7kxz6knbpx6zajt.jpg",
+  "coverImageId": "image/covers/rygms7kxz6knbpx6zajt",
+  "pdfUrl": "https://drive.usercontent.google.com/u/0/uc?id=1xaCEmCRv1qgAiEHpiemRMeum9wQY1I4L&export=download",
+  "pdfId": "custom_url_Maharastra_Board_Class_11_Geography_Book_1751453748089",
+  "pageSize": 146,
+  "category": "Education",
+  "tags": [
+    "HSC",
+    "Maharashtra"
+  ],
+  "averageRating": 5,
+  "views": 0,
+  "downloads": 0,
+  "uploadedBy": {
+    "$oid": "67fe90c67420afcf47105e32"
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "fileSizeMB": {
+    "$numberInt": "16.90867"
+  },
+  "customURLPDF": "",
+  "isCustomUrl": false,
+  "isPremium": false,
+  "price": 0
+}
