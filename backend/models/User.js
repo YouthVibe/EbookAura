@@ -60,6 +60,10 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  nextAdAvailable: {
+    type: Date,
+    default: null
+  },
   sessionTimeToday: {
     type: Number, // in seconds
     default: 0

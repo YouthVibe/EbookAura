@@ -192,23 +192,49 @@ const getSessionStatus = async (req, res) => {
 // @access  Private
 const awardAdCoins = async (req, res) => {
   try {
+    const { adUrl } = req.body;
+    
+    if (!adUrl || adUrl !== 'https://www.profitableratecpm.com/tv0ps1rfet?key=a753be44cf1e6c5a853397fa67fe886c') {
+      return res.status(400).json({ 
+        message: 'Invalid ad URL provided',
+        code: 'INVALID_AD_URL'
+      });
+    }
+
     const user = await User.findById(req.user._id);
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ 
+        message: 'User not found',
+        code: 'USER_NOT_FOUND'
+      });
     }
 
-    // Award 25 coins for watching ad
-    user.coins += 25;
+    // Check if user can watch ad now
+    if (user.nextAdAvailable && new Date() < new Date(user.nextAdAvailable)) {
+      return res.status(429).json({
+        message: 'Please wait before watching another ad',
+        nextAvailable: user.nextAdAvailable,
+        code: 'AD_COOLDOWN'
+      });
+    }
+
+    // Award 10 coins for watching ad
+    user.coins += 10;
+    
+    // Set next available time to 10 seconds from now
+    user.nextAdAvailable = new Date(Date.now() + 10000); // 10 seconds
+    
     await user.save();
 
-    res.status(200).json({ 
-      message: 'Ad reward coins awarded successfully!', 
+    res.status(200).json({
+      message: 'Ad reward coins awarded successfully!',
       coins: user.coins,
-      coinsAdded: 25
+      coinsAdded: 10,
+      nextAdAvailable: user.nextAdAvailable
     });
   } catch (error) {
-    console.error('Error awarding ad reward coins:', error);
+    console.error('Error awarding ad coins:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -671,4 +697,4 @@ module.exports = {
   checkDailyCoinsStatus,
   purchaseBook,
   resetDailySessionTime
-}; 
+};
