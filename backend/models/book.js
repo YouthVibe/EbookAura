@@ -1,47 +1,4 @@
-/**
- * Copyright (c) 2025 UltronTheAI/Swaraj Puppalwar
- * https://github.com/UltronTheAI
- * All rights reserved.
- */
-
 const mongoose = require('mongoose');
-
-// Helper function to normalize MongoDB Extended JSON values
-function normalizeMongoNumber(value) {
-  if (!value) return value;
-  
-  // Handle Extended JSON format
-  if (typeof value === 'object') {
-    if ('$numberInt' in value) return Number(value.$numberInt);
-    if ('$numberDouble' in value) return Number(value.$numberDouble);
-    if ('$numberDecimal' in value) return Number(value.$numberDecimal);
-    if ('$numberLong' in value) return Number(value.$numberLong);
-  }
-  
-  // Handle string numbers
-  if (typeof value === 'string') {
-    return Number(value);
-  }
-  
-  return value;
-}
-
-// Custom Schema Type for handling MongoDB Extended JSON numbers
-class ExtendedNumber extends mongoose.SchemaType {
-  constructor(key, options) {
-    super(key, options, 'ExtendedNumber');
-  }
-
-  cast(val) {
-    const normalized = normalizeMongoNumber(val);
-    if (Number.isNaN(normalized)) {
-      throw new Error('ExtendedNumber: could not convert ' + JSON.stringify(val) + ' to number');
-    }
-    return normalized;
-  }
-}
-
-mongoose.Schema.Types.ExtendedNumber = ExtendedNumber;
 
 // Define the schema
 const bookSchema = new mongoose.Schema({
@@ -75,35 +32,9 @@ const bookSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  // New fields for custom URL PDF upload
-  isCustomUrl: {
-    type: Boolean,
-    default: false
-  },
-  customURLPDF: {
-    type: String,
-    default: ''
-  },
-  // New field for premium PDF status
-  isPremium: {
-    type: Boolean,
-    default: false
-  },
-  // Price in coins for premium books
-  price: {
-    type: ExtendedNumber,
-    default: 0,
-    get: v => Math.round(v)
-  },
   pageSize: {
-    type: ExtendedNumber,
-    required: true,
-    get: v => Math.round(v)
-  },
-  fileSizeMB: {
-    type: ExtendedNumber,
-    default: 0,
-    get: v => Math.round(v)
+    type: Number,
+    required: true
   },
   category: {
     type: String,
@@ -113,19 +44,16 @@ const bookSchema = new mongoose.Schema({
     type: String
   }],
   averageRating: {
-    type: ExtendedNumber,
-    default: 0,
-    get: v => Math.round(v)
+    type: Number,
+    default: 0
   },
   views: {
-    type: ExtendedNumber,
-    default: 0,
-    get: v => Math.round(v)
+    type: Number,
+    default: 0
   },
   downloads: {
-    type: ExtendedNumber,
-    default: 0,
-    get: v => Math.round(v)
+    type: Number,
+    default: 0
   },
   uploadedBy: {
     type: mongoose.Schema.Types.ObjectId,
@@ -133,13 +61,7 @@ const bookSchema = new mongoose.Schema({
     required: true
   }
 }, {
-  timestamps: true,
-  toJSON: { getters: true }
-});
-
-// Add any hooks or virtuals if needed in the future
-bookSchema.pre('save', function(next) {
-  next();
+  timestamps: true
 });
 
 // Create the model from the schema
