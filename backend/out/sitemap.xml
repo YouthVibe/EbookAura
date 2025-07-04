@@ -10,447 +10,97 @@
 
   <url>
     <loc>https://ebookaura.onrender.com/</loc>
-    <lastmod>2025-05-07</lastmod>
+    <lastmod>2025-07-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://ebookaura.onrender.com/search</loc>
-    <lastmod>2025-05-07</lastmod>
+    <lastmod>2025-07-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://ebookaura.onrender.com/bookmarks</loc>
-    <lastmod>2025-05-07</lastmod>
+    <lastmod>2025-07-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://ebookaura.onrender.com/about</loc>
-    <lastmod>2025-05-07</lastmod>
+    <lastmod>2025-07-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://ebookaura.onrender.com/coins</loc>
-    <lastmod>2025-05-07</lastmod>
+    <lastmod>2025-07-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://ebookaura.onrender.com/plans</loc>
-    <lastmod>2025-05-07</lastmod>
+    <lastmod>2025-07-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://ebookaura.onrender.com/search?category=fiction</loc>
-    <lastmod>2025-05-07</lastmod>
+    <lastmod>2025-07-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://ebookaura.onrender.com/search?category=non-fiction</loc>
-    <lastmod>2025-05-07</lastmod>
+    <lastmod>2025-07-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://ebookaura.onrender.com/search?category=science</loc>
-    <lastmod>2025-05-07</lastmod>
+    <lastmod>2025-07-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://ebookaura.onrender.com/search?category=technology</loc>
-    <lastmod>2025-05-07</lastmod>
+    <lastmod>2025-07-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://ebookaura.onrender.com/search?category=biography</loc>
-    <lastmod>2025-05-07</lastmod>
+    <lastmod>2025-07-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://ebookaura.onrender.com/search?category=history</loc>
-    <lastmod>2025-05-07</lastmod>
+    <lastmod>2025-07-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://ebookaura.onrender.com/search?category=programming</loc>
-    <lastmod>2025-05-07</lastmod>
+    <lastmod>2025-07-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://ebookaura.onrender.com/search?category=self-development</loc>
-    <lastmod>2025-05-07</lastmod>
+    <lastmod>2025-07-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://ebookaura.onrender.com/search?category=philosophy</loc>
-    <lastmod>2025-05-07</lastmod>
+    <lastmod>2025-07-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ebookaura.onrender.com/books/681a390729b605d86db6e9e3</loc>
-    <lastmod>2025-05-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1746548996/ebook_aura/covers/kz9z85jlsfpglgm77u4i.jpg</image:loc>
-      <image:title>Unit 7 The P-Block  Elements by Crack JEE</image:title>
-      <image:caption>Cover image for Unit 7 The P-Block  Elements</image:caption>
-    </image:image>
-    <xhtml:link 
-      rel="alternate" 
-      hreflang="en" 
-      href="https://ebookaura.onrender.com/pdf-metadata/681a390729b605d86db6e9e3.html" 
-    />
-  </url>
-  <url>
-    <loc>https://ebookaura.onrender.com/pdf-metadata/681a390729b605d86db6e9e3.html</loc>
-    <lastmod>2025-05-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1746548996/ebook_aura/covers/kz9z85jlsfpglgm77u4i.jpg</image:loc>
-      <image:title>Unit 7 The P-Block  Elements by Crack JEE</image:title>
-      <image:caption>Cover image for Unit 7 The P-Block  Elements</image:caption>
-    </image:image>
-    <news:news>
-      <news:publication>
-        <news:name>EbookAura</news:name>
-        <news:language>en</news:language>
-      </news:publication>
-      <news:publication_date>2025-05-07</news:publication_date>
-      <news:title>Unit 7 The P-Block  Elements by Crack JEE</news:title>
-    </news:news>
-  </url>
-  <url>
-    <loc>https://ebookaura.onrender.com/books/681a383829b605d86db6e9b0</loc>
-    <lastmod>2025-05-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1746548789/ebook_aura/covers/wbwv1swrdmaoc8spkf7g.jpg</image:loc>
-      <image:title>Biomolecules for JEE by Crack JEE</image:title>
-      <image:caption>Cover image for Biomolecules for JEE</image:caption>
-    </image:image>
-    <xhtml:link 
-      rel="alternate" 
-      hreflang="en" 
-      href="https://ebookaura.onrender.com/pdf-metadata/681a383829b605d86db6e9b0.html" 
-    />
-  </url>
-  <url>
-    <loc>https://ebookaura.onrender.com/pdf-metadata/681a383829b605d86db6e9b0.html</loc>
-    <lastmod>2025-05-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1746548789/ebook_aura/covers/wbwv1swrdmaoc8spkf7g.jpg</image:loc>
-      <image:title>Biomolecules for JEE by Crack JEE</image:title>
-      <image:caption>Cover image for Biomolecules for JEE</image:caption>
-    </image:image>
-    <news:news>
-      <news:publication>
-        <news:name>EbookAura</news:name>
-        <news:language>en</news:language>
-      </news:publication>
-      <news:publication_date>2025-05-07</news:publication_date>
-      <news:title>Biomolecules for JEE by Crack JEE</news:title>
-    </news:news>
-  </url>
-  <url>
-    <loc>https://ebookaura.onrender.com/books/681a372a29b605d86db6e97e</loc>
-    <lastmod>2025-05-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1746548519/ebook_aura/covers/jrtdnpqv2knffsdlw2fs.jpg</image:loc>
-      <image:title>THE p -BLOCK ELEMENTS for JEE by Crack JEE</image:title>
-      <image:caption>Cover image for THE p -BLOCK ELEMENTS for JEE</image:caption>
-    </image:image>
-    <xhtml:link 
-      rel="alternate" 
-      hreflang="en" 
-      href="https://ebookaura.onrender.com/pdf-metadata/681a372a29b605d86db6e97e.html" 
-    />
-  </url>
-  <url>
-    <loc>https://ebookaura.onrender.com/pdf-metadata/681a372a29b605d86db6e97e.html</loc>
-    <lastmod>2025-05-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1746548519/ebook_aura/covers/jrtdnpqv2knffsdlw2fs.jpg</image:loc>
-      <image:title>THE p -BLOCK ELEMENTS for JEE by Crack JEE</image:title>
-      <image:caption>Cover image for THE p -BLOCK ELEMENTS for JEE</image:caption>
-    </image:image>
-    <news:news>
-      <news:publication>
-        <news:name>EbookAura</news:name>
-        <news:language>en</news:language>
-      </news:publication>
-      <news:publication_date>2025-05-07</news:publication_date>
-      <news:title>THE p -BLOCK ELEMENTS for JEE by Crack JEE</news:title>
-    </news:news>
-  </url>
-  <url>
-    <loc>https://ebookaura.onrender.com/books/681a355c29b605d86db6e912</loc>
-    <lastmod>2025-05-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1746548057/ebook_aura/covers/nxahng6vja5iy2o7wwie.jpg</image:loc>
-      <image:title>Unit 2 Solutions for JEE by Crack JEE</image:title>
-      <image:caption>Cover image for Unit 2 Solutions for JEE</image:caption>
-    </image:image>
-    <xhtml:link 
-      rel="alternate" 
-      hreflang="en" 
-      href="https://ebookaura.onrender.com/pdf-metadata/681a355c29b605d86db6e912.html" 
-    />
-  </url>
-  <url>
-    <loc>https://ebookaura.onrender.com/pdf-metadata/681a355c29b605d86db6e912.html</loc>
-    <lastmod>2025-05-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1746548057/ebook_aura/covers/nxahng6vja5iy2o7wwie.jpg</image:loc>
-      <image:title>Unit 2 Solutions for JEE by Crack JEE</image:title>
-      <image:caption>Cover image for Unit 2 Solutions for JEE</image:caption>
-    </image:image>
-    <news:news>
-      <news:publication>
-        <news:name>EbookAura</news:name>
-        <news:language>en</news:language>
-      </news:publication>
-      <news:publication_date>2025-05-07</news:publication_date>
-      <news:title>Unit 2 Solutions for JEE by Crack JEE</news:title>
-    </news:news>
-  </url>
-  <url>
-    <loc>https://ebookaura.onrender.com/books/6819d0ab560ce1fd792c2d86</loc>
-    <lastmod>2025-05-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1746522279/ebook_aura/covers/g0dzhgntxv1rwtx6ttu9.jpg</image:loc>
-      <image:title>Class 12 NCERT Chemistry Part-2 in English by NCERT</image:title>
-      <image:caption>Cover image for Class 12 NCERT Chemistry Part-2 in English</image:caption>
-    </image:image>
-    <xhtml:link 
-      rel="alternate" 
-      hreflang="en" 
-      href="https://ebookaura.onrender.com/pdf-metadata/6819d0ab560ce1fd792c2d86.html" 
-    />
-  </url>
-  <url>
-    <loc>https://ebookaura.onrender.com/pdf-metadata/6819d0ab560ce1fd792c2d86.html</loc>
-    <lastmod>2025-05-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1746522279/ebook_aura/covers/g0dzhgntxv1rwtx6ttu9.jpg</image:loc>
-      <image:title>Class 12 NCERT Chemistry Part-2 in English by NCERT</image:title>
-      <image:caption>Cover image for Class 12 NCERT Chemistry Part-2 in English</image:caption>
-    </image:image>
-    <news:news>
-      <news:publication>
-        <news:name>EbookAura</news:name>
-        <news:language>en</news:language>
-      </news:publication>
-      <news:publication_date>2025-05-07</news:publication_date>
-      <news:title>Class 12 NCERT Chemistry Part-2 in English by NCERT</news:title>
-    </news:news>
-  </url>
-  <url>
-    <loc>https://ebookaura.onrender.com/books/6819cfc7560ce1fd792c2d71</loc>
-    <lastmod>2025-05-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1746522054/ebook_aura/covers/qbaiq2yavmx41wpdcs5n.jpg</image:loc>
-      <image:title>Class 12 NCERT Chemistry Part-1 in English by NCERT</image:title>
-      <image:caption>Cover image for Class 12 NCERT Chemistry Part-1 in English</image:caption>
-    </image:image>
-    <xhtml:link 
-      rel="alternate" 
-      hreflang="en" 
-      href="https://ebookaura.onrender.com/pdf-metadata/6819cfc7560ce1fd792c2d71.html" 
-    />
-  </url>
-  <url>
-    <loc>https://ebookaura.onrender.com/pdf-metadata/6819cfc7560ce1fd792c2d71.html</loc>
-    <lastmod>2025-05-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1746522054/ebook_aura/covers/qbaiq2yavmx41wpdcs5n.jpg</image:loc>
-      <image:title>Class 12 NCERT Chemistry Part-1 in English by NCERT</image:title>
-      <image:caption>Cover image for Class 12 NCERT Chemistry Part-1 in English</image:caption>
-    </image:image>
-    <news:news>
-      <news:publication>
-        <news:name>EbookAura</news:name>
-        <news:language>en</news:language>
-      </news:publication>
-      <news:publication_date>2025-05-07</news:publication_date>
-      <news:title>Class 12 NCERT Chemistry Part-1 in English by NCERT</news:title>
-    </news:news>
-  </url>
-  <url>
-    <loc>https://ebookaura.onrender.com/books/6819ce86560ce1fd792c2d1e</loc>
-    <lastmod>2025-05-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1746521733/ebook_aura/covers/q7ejpivx9tvlhvgchxci.jpg</image:loc>
-      <image:title>Class 12 NCERT Physics Part-2 in English by NCERT</image:title>
-      <image:caption>Cover image for Class 12 NCERT Physics Part-2 in English</image:caption>
-    </image:image>
-    <xhtml:link 
-      rel="alternate" 
-      hreflang="en" 
-      href="https://ebookaura.onrender.com/pdf-metadata/6819ce86560ce1fd792c2d1e.html" 
-    />
-  </url>
-  <url>
-    <loc>https://ebookaura.onrender.com/pdf-metadata/6819ce86560ce1fd792c2d1e.html</loc>
-    <lastmod>2025-05-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1746521733/ebook_aura/covers/q7ejpivx9tvlhvgchxci.jpg</image:loc>
-      <image:title>Class 12 NCERT Physics Part-2 in English by NCERT</image:title>
-      <image:caption>Cover image for Class 12 NCERT Physics Part-2 in English</image:caption>
-    </image:image>
-    <news:news>
-      <news:publication>
-        <news:name>EbookAura</news:name>
-        <news:language>en</news:language>
-      </news:publication>
-      <news:publication_date>2025-05-07</news:publication_date>
-      <news:title>Class 12 NCERT Physics Part-2 in English by NCERT</news:title>
-    </news:news>
-  </url>
-  <url>
-    <loc>https://ebookaura.onrender.com/books/6819cd9c560ce1fd792c2d0c</loc>
-    <lastmod>2025-05-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1746521499/ebook_aura/covers/sobrlabs5f5exzgjnsi0.jpg</image:loc>
-      <image:title>Class 12 NCERT Physics Part-1 in English by NCERT</image:title>
-      <image:caption>Cover image for Class 12 NCERT Physics Part-1 in English</image:caption>
-    </image:image>
-    <xhtml:link 
-      rel="alternate" 
-      hreflang="en" 
-      href="https://ebookaura.onrender.com/pdf-metadata/6819cd9c560ce1fd792c2d0c.html" 
-    />
-  </url>
-  <url>
-    <loc>https://ebookaura.onrender.com/pdf-metadata/6819cd9c560ce1fd792c2d0c.html</loc>
-    <lastmod>2025-05-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1746521499/ebook_aura/covers/sobrlabs5f5exzgjnsi0.jpg</image:loc>
-      <image:title>Class 12 NCERT Physics Part-1 in English by NCERT</image:title>
-      <image:caption>Cover image for Class 12 NCERT Physics Part-1 in English</image:caption>
-    </image:image>
-    <news:news>
-      <news:publication>
-        <news:name>EbookAura</news:name>
-        <news:language>en</news:language>
-      </news:publication>
-      <news:publication_date>2025-05-07</news:publication_date>
-      <news:title>Class 12 NCERT Physics Part-1 in English by NCERT</news:title>
-    </news:news>
-  </url>
-  <url>
-    <loc>https://ebookaura.onrender.com/books/6819cafb560ce1fd792c2cc3</loc>
-    <lastmod>2025-05-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1746520826/ebook_aura/covers/efgiyi03t4cx1m6emkjt.jpg</image:loc>
-      <image:title>Class 12 NCERT MATHEMATICS Part-2 in English by NCERT</image:title>
-      <image:caption>Cover image for Class 12 NCERT MATHEMATICS Part-2 in English</image:caption>
-    </image:image>
-    <xhtml:link 
-      rel="alternate" 
-      hreflang="en" 
-      href="https://ebookaura.onrender.com/pdf-metadata/6819cafb560ce1fd792c2cc3.html" 
-    />
-  </url>
-  <url>
-    <loc>https://ebookaura.onrender.com/pdf-metadata/6819cafb560ce1fd792c2cc3.html</loc>
-    <lastmod>2025-05-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1746520826/ebook_aura/covers/efgiyi03t4cx1m6emkjt.jpg</image:loc>
-      <image:title>Class 12 NCERT MATHEMATICS Part-2 in English by NCERT</image:title>
-      <image:caption>Cover image for Class 12 NCERT MATHEMATICS Part-2 in English</image:caption>
-    </image:image>
-    <news:news>
-      <news:publication>
-        <news:name>EbookAura</news:name>
-        <news:language>en</news:language>
-      </news:publication>
-      <news:publication_date>2025-05-07</news:publication_date>
-      <news:title>Class 12 NCERT MATHEMATICS Part-2 in English by NCERT</news:title>
-    </news:news>
-  </url>
-  <url>
-    <loc>https://ebookaura.onrender.com/books/6819c9bc560ce1fd792c2c98</loc>
-    <lastmod>2025-05-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1746520508/ebook_aura/covers/x4t2mjknlv4onbqqfrld.jpg</image:loc>
-      <image:title>Class 12 NCERT MATHEMATICS Part-1 in English by NCERT</image:title>
-      <image:caption>Cover image for Class 12 NCERT MATHEMATICS Part-1 in English</image:caption>
-    </image:image>
-    <xhtml:link 
-      rel="alternate" 
-      hreflang="en" 
-      href="https://ebookaura.onrender.com/pdf-metadata/6819c9bc560ce1fd792c2c98.html" 
-    />
-  </url>
-  <url>
-    <loc>https://ebookaura.onrender.com/pdf-metadata/6819c9bc560ce1fd792c2c98.html</loc>
-    <lastmod>2025-05-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1746520508/ebook_aura/covers/x4t2mjknlv4onbqqfrld.jpg</image:loc>
-      <image:title>Class 12 NCERT MATHEMATICS Part-1 in English by NCERT</image:title>
-      <image:caption>Cover image for Class 12 NCERT MATHEMATICS Part-1 in English</image:caption>
-    </image:image>
-    <news:news>
-      <news:publication>
-        <news:name>EbookAura</news:name>
-        <news:language>en</news:language>
-      </news:publication>
-      <news:publication_date>2025-05-07</news:publication_date>
-      <news:title>Class 12 NCERT MATHEMATICS Part-1 in English by NCERT</news:title>
-    </news:news>
-  </url>
-  <url>
     <loc>https://ebookaura.onrender.com/books/680735665ceba10744914991</loc>
-    <lastmod>2025-05-07</lastmod>
+    <lastmod>2025-07-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <image:image>
@@ -466,7 +116,7 @@
   </url>
   <url>
     <loc>https://ebookaura.onrender.com/pdf-metadata/680735665ceba10744914991.html</loc>
-    <lastmod>2025-05-07</lastmod>
+    <lastmod>2025-07-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     <image:image>
@@ -479,148 +129,1723 @@
         <news:name>EbookAura</news:name>
         <news:language>en</news:language>
       </news:publication>
-      <news:publication_date>2025-05-07</news:publication_date>
+      <news:publication_date>2025-07-02</news:publication_date>
       <news:title>HEART'S  ESSENCE by Pranay</news:title>
     </news:news>
   </url>
   <url>
-    <loc>https://ebookaura.onrender.com/books/681859bd560ce1fd792c2745</loc>
-    <lastmod>2025-05-07</lastmod>
+    <loc>https://ebookaura.onrender.com/books/6865099406fceab0170511c9</loc>
+    <lastmod>2025-07-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <image:image>
-      <image:loc>https://ebookaura.onrender.com/images/default-cover.jpg</image:loc>
-      <image:title>Book 681859bd560ce1fd792c2745 by Unknown Author</image:title>
-      <image:caption>Cover image for Book 681859bd560ce1fd792c2745</image:caption>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452046/mux5iu63as4ucfadknjw.jpg</image:loc>
+      <image:title>Class 7 History Textbook in Marathi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 7 History Textbook in Marathi PDF</image:caption>
     </image:image>
     <xhtml:link 
       rel="alternate" 
       hreflang="en" 
-      href="https://ebookaura.onrender.com/pdf-metadata/681859bd560ce1fd792c2745.html" 
+      href="https://ebookaura.onrender.com/pdf-metadata/6865099406fceab0170511c9.html" 
     />
   </url>
   <url>
-    <loc>https://ebookaura.onrender.com/pdf-metadata/681859bd560ce1fd792c2745.html</loc>
-    <lastmod>2025-05-07</lastmod>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/6865099406fceab0170511c9.html</loc>
+    <lastmod>2025-07-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     <image:image>
-      <image:loc>https://ebookaura.onrender.com/images/default-cover.jpg</image:loc>
-      <image:title>Book 681859bd560ce1fd792c2745 by Unknown Author</image:title>
-      <image:caption>Cover image for Book 681859bd560ce1fd792c2745</image:caption>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452046/mux5iu63as4ucfadknjw.jpg</image:loc>
+      <image:title>Class 7 History Textbook in Marathi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 7 History Textbook in Marathi PDF</image:caption>
     </image:image>
     <news:news>
       <news:publication>
         <news:name>EbookAura</news:name>
         <news:language>en</news:language>
       </news:publication>
-      <news:publication_date>2025-05-07</news:publication_date>
-      <news:title>Book 681859bd560ce1fd792c2745 by Unknown Author</news:title>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 7 History Textbook in Marathi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
     </news:news>
   </url>
   <url>
-    <loc>https://ebookaura.onrender.com/books/6807c9d24fb1873f72080fb1</loc>
-    <lastmod>2025-05-07</lastmod>
+    <loc>https://ebookaura.onrender.com/books/68650a0606fceab0170511d9</loc>
+    <lastmod>2025-07-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <image:image>
-      <image:loc>https://ebookaura.onrender.com/images/default-cover.jpg</image:loc>
-      <image:title>Book 6807c9d24fb1873f72080fb1 by Unknown Author</image:title>
-      <image:caption>Cover image for Book 6807c9d24fb1873f72080fb1</image:caption>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452163/o4mlmryg62dvycuypvn6.jpg</image:loc>
+      <image:title>General Science for Class 7 Maharashtra Board Chapter 11 to 20 by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for General Science for Class 7 Maharashtra Board Chapter 11 to 20</image:caption>
     </image:image>
     <xhtml:link 
       rel="alternate" 
       hreflang="en" 
-      href="https://ebookaura.onrender.com/pdf-metadata/6807c9d24fb1873f72080fb1.html" 
+      href="https://ebookaura.onrender.com/pdf-metadata/68650a0606fceab0170511d9.html" 
     />
   </url>
   <url>
-    <loc>https://ebookaura.onrender.com/pdf-metadata/6807c9d24fb1873f72080fb1.html</loc>
-    <lastmod>2025-05-07</lastmod>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/68650a0606fceab0170511d9.html</loc>
+    <lastmod>2025-07-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     <image:image>
-      <image:loc>https://ebookaura.onrender.com/images/default-cover.jpg</image:loc>
-      <image:title>Book 6807c9d24fb1873f72080fb1 by Unknown Author</image:title>
-      <image:caption>Cover image for Book 6807c9d24fb1873f72080fb1</image:caption>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452163/o4mlmryg62dvycuypvn6.jpg</image:loc>
+      <image:title>General Science for Class 7 Maharashtra Board Chapter 11 to 20 by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for General Science for Class 7 Maharashtra Board Chapter 11 to 20</image:caption>
     </image:image>
     <news:news>
       <news:publication>
         <news:name>EbookAura</news:name>
         <news:language>en</news:language>
       </news:publication>
-      <news:publication_date>2025-05-07</news:publication_date>
-      <news:title>Book 6807c9d24fb1873f72080fb1 by Unknown Author</news:title>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>General Science for Class 7 Maharashtra Board Chapter 11 to 20 by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
     </news:news>
   </url>
   <url>
-    <loc>https://ebookaura.onrender.com/books/6807be6cf05cdd8f4bdf933c</loc>
-    <lastmod>2025-05-07</lastmod>
+    <loc>https://ebookaura.onrender.com/books/68650a5706fceab0170511e1</loc>
+    <lastmod>2025-07-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <image:image>
-      <image:loc>https://ebookaura.onrender.com/images/default-cover.jpg</image:loc>
-      <image:title>Book 6807be6cf05cdd8f4bdf933c by Unknown Author</image:title>
-      <image:caption>Cover image for Book 6807be6cf05cdd8f4bdf933c</image:caption>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452242/eg2slbc0q2hbobzjyrjv.jpg</image:loc>
+      <image:title>Hindi Class 9th Marathi Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Hindi Class 9th Marathi Medium</image:caption>
     </image:image>
     <xhtml:link 
       rel="alternate" 
       hreflang="en" 
-      href="https://ebookaura.onrender.com/pdf-metadata/6807be6cf05cdd8f4bdf933c.html" 
+      href="https://ebookaura.onrender.com/pdf-metadata/68650a5706fceab0170511e1.html" 
     />
   </url>
   <url>
-    <loc>https://ebookaura.onrender.com/pdf-metadata/6807be6cf05cdd8f4bdf933c.html</loc>
-    <lastmod>2025-05-07</lastmod>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/68650a5706fceab0170511e1.html</loc>
+    <lastmod>2025-07-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     <image:image>
-      <image:loc>https://ebookaura.onrender.com/images/default-cover.jpg</image:loc>
-      <image:title>Book 6807be6cf05cdd8f4bdf933c by Unknown Author</image:title>
-      <image:caption>Cover image for Book 6807be6cf05cdd8f4bdf933c</image:caption>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452242/eg2slbc0q2hbobzjyrjv.jpg</image:loc>
+      <image:title>Hindi Class 9th Marathi Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Hindi Class 9th Marathi Medium</image:caption>
     </image:image>
     <news:news>
       <news:publication>
         <news:name>EbookAura</news:name>
         <news:language>en</news:language>
       </news:publication>
-      <news:publication_date>2025-05-07</news:publication_date>
-      <news:title>Book 6807be6cf05cdd8f4bdf933c by Unknown Author</news:title>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Hindi Class 9th Marathi Medium by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
     </news:news>
   </url>
   <url>
-    <loc>https://ebookaura.onrender.com/books/6803d0c8cd7950184b1e8cf3</loc>
-    <lastmod>2025-05-07</lastmod>
+    <loc>https://ebookaura.onrender.com/books/686509ee06fceab0170511d5</loc>
+    <lastmod>2025-07-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <image:image>
-      <image:loc>https://ebookaura.onrender.com/images/default-cover.jpg</image:loc>
-      <image:title>Book 6803d0c8cd7950184b1e8cf3 by Unknown Author</image:title>
-      <image:caption>Cover image for Book 6803d0c8cd7950184b1e8cf3</image:caption>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452139/ps6olooyo1pont7nhsgp.jpg</image:loc>
+      <image:title>General Science for Class 6 Maharashtra Board Chapter 4 to 7 by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for General Science for Class 6 Maharashtra Board Chapter 4 to 7</image:caption>
     </image:image>
     <xhtml:link 
       rel="alternate" 
       hreflang="en" 
-      href="https://ebookaura.onrender.com/pdf-metadata/6803d0c8cd7950184b1e8cf3.html" 
+      href="https://ebookaura.onrender.com/pdf-metadata/686509ee06fceab0170511d5.html" 
     />
   </url>
   <url>
-    <loc>https://ebookaura.onrender.com/pdf-metadata/6803d0c8cd7950184b1e8cf3.html</loc>
-    <lastmod>2025-05-07</lastmod>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/686509ee06fceab0170511d5.html</loc>
+    <lastmod>2025-07-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     <image:image>
-      <image:loc>https://ebookaura.onrender.com/images/default-cover.jpg</image:loc>
-      <image:title>Book 6803d0c8cd7950184b1e8cf3 by Unknown Author</image:title>
-      <image:caption>Cover image for Book 6803d0c8cd7950184b1e8cf3</image:caption>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452139/ps6olooyo1pont7nhsgp.jpg</image:loc>
+      <image:title>General Science for Class 6 Maharashtra Board Chapter 4 to 7 by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for General Science for Class 6 Maharashtra Board Chapter 4 to 7</image:caption>
     </image:image>
     <news:news>
       <news:publication>
         <news:name>EbookAura</news:name>
         <news:language>en</news:language>
       </news:publication>
-      <news:publication_date>2025-05-07</news:publication_date>
-      <news:title>Book 6803d0c8cd7950184b1e8cf3 by Unknown Author</news:title>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>General Science for Class 6 Maharashtra Board Chapter 4 to 7 by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/6865096906fceab0170511c5</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452001/ytnl53x4shuuf5fejsqt.jpg</image:loc>
+      <image:title>Class 7 Geography Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 7 Geography Textbook in Hindi PDF</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/6865096906fceab0170511c5.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/6865096906fceab0170511c5.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452001/ytnl53x4shuuf5fejsqt.jpg</image:loc>
+      <image:title>Class 7 Geography Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 7 Geography Textbook in Hindi PDF</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 7 Geography Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/68650a2806fceab0170511dd</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452195/lvwksth9qp6hugrgcuit.jpg</image:loc>
+      <image:title>General Science for Class 8 Maharashtra Board by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for General Science for Class 8 Maharashtra Board</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/68650a2806fceab0170511dd.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/68650a2806fceab0170511dd.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452195/lvwksth9qp6hugrgcuit.jpg</image:loc>
+      <image:title>General Science for Class 8 Maharashtra Board by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for General Science for Class 8 Maharashtra Board</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>General Science for Class 8 Maharashtra Board by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/6865092506fceab0170511bd</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451935/piqvf3h1vuuyhdvf9vkx.jpg</image:loc>
+      <image:title>Class 6 Geography Textbook in Marathi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 6 Geography Textbook in Marathi PDF</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/6865092506fceab0170511bd.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/6865092506fceab0170511bd.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451935/piqvf3h1vuuyhdvf9vkx.jpg</image:loc>
+      <image:title>Class 6 Geography Textbook in Marathi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 6 Geography Textbook in Marathi PDF</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 6 Geography Textbook in Marathi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/6865093606fceab0170511bf</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451952/m1wlznhvpawphv1fbvgh.jpg</image:loc>
+      <image:title>Class 6 History Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 6 History Textbook in Hindi PDF</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/6865093606fceab0170511bf.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/6865093606fceab0170511bf.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451952/m1wlznhvpawphv1fbvgh.jpg</image:loc>
+      <image:title>Class 6 History Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 6 History Textbook in Hindi PDF</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 6 History Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/68650a7006fceab0170511e4</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452267/refbz6d8ar2bibcwgyii.jpg</image:loc>
+      <image:title>History and Polity Class 9th English Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for History and Polity Class 9th English Medium</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/68650a7006fceab0170511e4.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/68650a7006fceab0170511e4.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452267/refbz6d8ar2bibcwgyii.jpg</image:loc>
+      <image:title>History and Polity Class 9th English Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for History and Polity Class 9th English Medium</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>History and Polity Class 9th English Medium by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/686509ba06fceab0170511cd</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452082/czkftu97zrx5jdupmgco.jpg</image:loc>
+      <image:title>Class 8 Geography Textbook in Marathi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 8 Geography Textbook in Marathi PDF</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/686509ba06fceab0170511cd.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/686509ba06fceab0170511cd.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452082/czkftu97zrx5jdupmgco.jpg</image:loc>
+      <image:title>Class 8 Geography Textbook in Marathi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 8 Geography Textbook in Marathi PDF</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 8 Geography Textbook in Marathi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/686509e306fceab0170511d3</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452128/ktc6whqiqsurojr4nrem.jpg</image:loc>
+      <image:title>English 9th Standard English Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for English 9th Standard English Medium</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/686509e306fceab0170511d3.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/686509e306fceab0170511d3.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452128/ktc6whqiqsurojr4nrem.jpg</image:loc>
+      <image:title>English 9th Standard English Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for English 9th Standard English Medium</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>English 9th Standard English Medium by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/6865095306fceab0170511c3</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451984/xvhyvddjmuwleail4m9w.jpg</image:loc>
+      <image:title>Class 7 Civics Textbook in Marathi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 7 Civics Textbook in Marathi PDF</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/6865095306fceab0170511c3.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/6865095306fceab0170511c3.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451984/xvhyvddjmuwleail4m9w.jpg</image:loc>
+      <image:title>Class 7 Civics Textbook in Marathi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 7 Civics Textbook in Marathi PDF</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 7 Civics Textbook in Marathi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/686509fb06fceab0170511d7</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452150/anoxr58cnfyvqfzltasr.jpg</image:loc>
+      <image:title>General Science for Class 6 Maharashtra Board by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for General Science for Class 6 Maharashtra Board</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/686509fb06fceab0170511d7.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/686509fb06fceab0170511d7.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452150/anoxr58cnfyvqfzltasr.jpg</image:loc>
+      <image:title>General Science for Class 6 Maharashtra Board by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for General Science for Class 6 Maharashtra Board</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>General Science for Class 6 Maharashtra Board by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/6865090f06fceab0170511bb</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451915/owmpu0qsuufcvxuwaijj.jpg</image:loc>
+      <image:title>Class 6 Geography Textbook in English PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 6 Geography Textbook in English PDF</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/6865090f06fceab0170511bb.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/6865090f06fceab0170511bb.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451915/owmpu0qsuufcvxuwaijj.jpg</image:loc>
+      <image:title>Class 6 Geography Textbook in English PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 6 Geography Textbook in English PDF</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 6 Geography Textbook in English PDF by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/68650a1906fceab0170511db</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452182/vpmgzckkyzgmlezieiz5.jpg</image:loc>
+      <image:title>General Science for Class 8 Maharashtra Board Chapter 1 to 9 by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for General Science for Class 8 Maharashtra Board Chapter 1 to 9</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/68650a1906fceab0170511db.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/68650a1906fceab0170511db.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452182/vpmgzckkyzgmlezieiz5.jpg</image:loc>
+      <image:title>General Science for Class 8 Maharashtra Board Chapter 1 to 9 by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for General Science for Class 8 Maharashtra Board Chapter 1 to 9</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>General Science for Class 8 Maharashtra Board Chapter 1 to 9 by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/6865097e06fceab0170511c7</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452027/hpljtmo2jg3alyy8jwce.jpg</image:loc>
+      <image:title>Class 7 History Textbook in English PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 7 History Textbook in English PDF</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/6865097e06fceab0170511c7.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/6865097e06fceab0170511c7.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452027/hpljtmo2jg3alyy8jwce.jpg</image:loc>
+      <image:title>Class 7 History Textbook in English PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 7 History Textbook in English PDF</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 7 History Textbook in English PDF by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/68650a3f06fceab0170511df</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452219/nfh7bsxc9oyqpoa19mrc.jpg</image:loc>
+      <image:title>Geography Class 9 Marathi Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Geography Class 9 Marathi Medium</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/68650a3f06fceab0170511df.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/68650a3f06fceab0170511df.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452219/nfh7bsxc9oyqpoa19mrc.jpg</image:loc>
+      <image:title>Geography Class 9 Marathi Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Geography Class 9 Marathi Medium</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Geography Class 9 Marathi Medium by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/686508f606fceab0170511b7</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451886/xfwvcwakhoeqowuhuy9m.jpg</image:loc>
+      <image:title>Class 10 Geography Marathi Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 10 Geography Marathi Medium</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/686508f606fceab0170511b7.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/686508f606fceab0170511b7.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451886/xfwvcwakhoeqowuhuy9m.jpg</image:loc>
+      <image:title>Class 10 Geography Marathi Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 10 Geography Marathi Medium</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 10 Geography Marathi Medium by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/68650a6406fceab0170511e3</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452257/fijzpegmfo8ljd0bq1ka.jpg</image:loc>
+      <image:title>History and Polity Class 10th Marathi Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for History and Polity Class 10th Marathi Medium</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/68650a6406fceab0170511e3.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/68650a6406fceab0170511e3.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452257/fijzpegmfo8ljd0bq1ka.jpg</image:loc>
+      <image:title>History and Polity Class 10th Marathi Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for History and Polity Class 10th Marathi Medium</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>History and Polity Class 10th Marathi Medium by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/686509a406fceab0170511cb</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452062/oj6glusa7s7ohhq3paxi.jpg</image:loc>
+      <image:title>Class 8 Geography Textbook in English PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 8 Geography Textbook in English PDF</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/686509a406fceab0170511cb.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/686509a406fceab0170511cb.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452062/oj6glusa7s7ohhq3paxi.jpg</image:loc>
+      <image:title>Class 8 Geography Textbook in English PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 8 Geography Textbook in English PDF</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 8 Geography Textbook in English PDF by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/686509ae06fceab0170511cc</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452071/epswtct5z6bhbtqdyg7o.jpg</image:loc>
+      <image:title>Class 8 Geography Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 8 Geography Textbook in Hindi PDF</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/686509ae06fceab0170511cc.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/686509ae06fceab0170511cc.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452071/epswtct5z6bhbtqdyg7o.jpg</image:loc>
+      <image:title>Class 8 Geography Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 8 Geography Textbook in Hindi PDF</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 8 Geography Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/686508fb06fceab0170511b8</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451896/qfxu5aszzysdhqwli3ru.jpg</image:loc>
+      <image:title>Class 6 Civics Textbook in English PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 6 Civics Textbook in English PDF</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/686508fb06fceab0170511b8.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/686508fb06fceab0170511b8.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451896/qfxu5aszzysdhqwli3ru.jpg</image:loc>
+      <image:title>Class 6 Civics Textbook in English PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 6 Civics Textbook in English PDF</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 6 Civics Textbook in English PDF by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/6865093f06fceab0170511c0</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451961/dtkz0qaexzhpepe0zr4w.jpg</image:loc>
+      <image:title>Class 6 History Textbook in Marathi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 6 History Textbook in Marathi PDF</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/6865093f06fceab0170511c0.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/6865093f06fceab0170511c0.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451961/dtkz0qaexzhpepe0zr4w.jpg</image:loc>
+      <image:title>Class 6 History Textbook in Marathi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 6 History Textbook in Marathi PDF</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 6 History Textbook in Marathi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/686509c006fceab0170511ce</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452093/q4sod9mqkil4q5gfqmuw.jpg</image:loc>
+      <image:title>Class 8 History Textbook in English PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 8 History Textbook in English PDF</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/686509c006fceab0170511ce.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/686509c006fceab0170511ce.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452093/q4sod9mqkil4q5gfqmuw.jpg</image:loc>
+      <image:title>Class 8 History Textbook in English PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 8 History Textbook in English PDF</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 8 History Textbook in English PDF by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/686509c806fceab0170511cf</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452099/o9bnfl43vfrv9jhqirvx.jpg</image:loc>
+      <image:title>Class 8 History Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 8 History Textbook in Hindi PDF</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/686509c806fceab0170511cf.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/686509c806fceab0170511cf.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452099/o9bnfl43vfrv9jhqirvx.jpg</image:loc>
+      <image:title>Class 8 History Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 8 History Textbook in Hindi PDF</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 8 History Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/686509db06fceab0170511d2</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452120/lolqeu8bvvmgjverc4pi.jpg</image:loc>
+      <image:title>Defense Studies Class 9th Marathi Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Defense Studies Class 9th Marathi Medium</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/686509db06fceab0170511d2.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/686509db06fceab0170511d2.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452120/lolqeu8bvvmgjverc4pi.jpg</image:loc>
+      <image:title>Defense Studies Class 9th Marathi Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Defense Studies Class 9th Marathi Medium</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Defense Studies Class 9th Marathi Medium by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/6865094d06fceab0170511c2</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451976/dtharezndv5bszh0gc5p.jpg</image:loc>
+      <image:title>Class 7 Civics Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 7 Civics Textbook in Hindi PDF</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/6865094d06fceab0170511c2.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/6865094d06fceab0170511c2.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451976/dtharezndv5bszh0gc5p.jpg</image:loc>
+      <image:title>Class 7 Civics Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 7 Civics Textbook in Hindi PDF</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 7 Civics Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/686509e906fceab0170511d4</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452134/cxzm2lsstajezokbrzor.jpg</image:loc>
+      <image:title>General Science for Class 6 Maharashtra Board Chapter 1 to 3 by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for General Science for Class 6 Maharashtra Board Chapter 1 to 3</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/686509e906fceab0170511d4.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/686509e906fceab0170511d4.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452134/cxzm2lsstajezokbrzor.jpg</image:loc>
+      <image:title>General Science for Class 6 Maharashtra Board Chapter 1 to 3 by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for General Science for Class 6 Maharashtra Board Chapter 1 to 3</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>General Science for Class 6 Maharashtra Board Chapter 1 to 3 by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/6865090606fceab0170511ba</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451907/vdqde6k7ettebj9oqngx.jpg</image:loc>
+      <image:title>Class 6 Civics Textbook in Marathi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 6 Civics Textbook in Marathi PDF</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/6865090606fceab0170511ba.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/6865090606fceab0170511ba.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451907/vdqde6k7ettebj9oqngx.jpg</image:loc>
+      <image:title>Class 6 Civics Textbook in Marathi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 6 Civics Textbook in Marathi PDF</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 6 Civics Textbook in Marathi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/686509f406fceab0170511d6</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452145/soltogzc4ffscqopxp2c.jpg</image:loc>
+      <image:title>General Science for Class 6 Maharashtra Board Chapter 8 to 14 by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for General Science for Class 6 Maharashtra Board Chapter 8 to 14</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/686509f406fceab0170511d6.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/686509f406fceab0170511d6.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452145/soltogzc4ffscqopxp2c.jpg</image:loc>
+      <image:title>General Science for Class 6 Maharashtra Board Chapter 8 to 14 by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for General Science for Class 6 Maharashtra Board Chapter 8 to 14</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>General Science for Class 6 Maharashtra Board Chapter 8 to 14 by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/6865095e06fceab0170511c4</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451990/usv8pe5nqfofqbgkivgj.jpg</image:loc>
+      <image:title>Class 7 Geography Textbook in English PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 7 Geography Textbook in English PDF</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/6865095e06fceab0170511c4.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/6865095e06fceab0170511c4.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451990/usv8pe5nqfofqbgkivgj.jpg</image:loc>
+      <image:title>Class 7 Geography Textbook in English PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 7 Geography Textbook in English PDF</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 7 Geography Textbook in English PDF by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/68650a0106fceab0170511d8</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452157/fz3mgxwvduktjypykapy.jpg</image:loc>
+      <image:title>General Science for Class 7 Maharashtra Board Chapter 1 to 10 by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for General Science for Class 7 Maharashtra Board Chapter 1 to 10</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/68650a0106fceab0170511d8.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/68650a0106fceab0170511d8.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452157/fz3mgxwvduktjypykapy.jpg</image:loc>
+      <image:title>General Science for Class 7 Maharashtra Board Chapter 1 to 10 by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for General Science for Class 7 Maharashtra Board Chapter 1 to 10</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>General Science for Class 7 Maharashtra Board Chapter 1 to 10 by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/686508ea06fceab0170511b6</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451874/n6zdxdfa7kmtf4oiagv5.jpg</image:loc>
+      <image:title>Class 10 Geography English Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 10 Geography English Medium</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/686508ea06fceab0170511b6.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/686508ea06fceab0170511b6.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451874/n6zdxdfa7kmtf4oiagv5.jpg</image:loc>
+      <image:title>Class 10 Geography English Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 10 Geography English Medium</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 10 Geography English Medium by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/68650a1406fceab0170511da</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452169/fjakoxrgnviogycoflpp.jpg</image:loc>
+      <image:title>General Science for Class 7 Maharashtra Board by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for General Science for Class 7 Maharashtra Board</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/68650a1406fceab0170511da.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/68650a1406fceab0170511da.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452169/fjakoxrgnviogycoflpp.jpg</image:loc>
+      <image:title>General Science for Class 7 Maharashtra Board by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for General Science for Class 7 Maharashtra Board</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>General Science for Class 7 Maharashtra Board by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/6865097106fceab0170511c6</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452012/lpnapmcgagbe0rsljfdp.jpg</image:loc>
+      <image:title>Class 7 Geography Textbook in Marathi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 7 Geography Textbook in Marathi PDF</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/6865097106fceab0170511c6.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/6865097106fceab0170511c6.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452012/lpnapmcgagbe0rsljfdp.jpg</image:loc>
+      <image:title>Class 7 Geography Textbook in Marathi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 7 Geography Textbook in Marathi PDF</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 7 Geography Textbook in Marathi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/68650a2006fceab0170511dc</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452187/qbbvhyaox99jut3shnwi.jpg</image:loc>
+      <image:title>General Science for Class 8 Maharashtra Board Chapter 10 to 19 by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for General Science for Class 8 Maharashtra Board Chapter 10 to 19</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/68650a2006fceab0170511dc.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/68650a2006fceab0170511dc.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452187/qbbvhyaox99jut3shnwi.jpg</image:loc>
+      <image:title>General Science for Class 8 Maharashtra Board Chapter 10 to 19 by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for General Science for Class 8 Maharashtra Board Chapter 10 to 19</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>General Science for Class 8 Maharashtra Board Chapter 10 to 19 by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/6865091c06fceab0170511bc</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451925/nkewjcwlwiotpml87r8p.jpg</image:loc>
+      <image:title>Class 6 Geography Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 6 Geography Textbook in Hindi PDF</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/6865091c06fceab0170511bc.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/6865091c06fceab0170511bc.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451925/nkewjcwlwiotpml87r8p.jpg</image:loc>
+      <image:title>Class 6 Geography Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 6 Geography Textbook in Hindi PDF</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 6 Geography Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/68650a3606fceab0170511de</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452206/rhfleb5ixignshuszodz.jpg</image:loc>
+      <image:title>Geography Class 9 English Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Geography Class 9 English Medium</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/68650a3606fceab0170511de.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/68650a3606fceab0170511de.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452206/rhfleb5ixignshuszodz.jpg</image:loc>
+      <image:title>Geography Class 9 English Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Geography Class 9 English Medium</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Geography Class 9 English Medium by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/6865098b06fceab0170511c8</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452033/wzqsyamdh1wmupek8uok.jpg</image:loc>
+      <image:title>Class 7 History Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 7 History Textbook in Hindi PDF</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/6865098b06fceab0170511c8.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/6865098b06fceab0170511c8.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452033/wzqsyamdh1wmupek8uok.jpg</image:loc>
+      <image:title>Class 7 History Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 7 History Textbook in Hindi PDF</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 7 History Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/68650a4a06fceab0170511e0</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452230/ggcrqrf60r2jqbawradt.jpg</image:loc>
+      <image:title>Hindi Class 9th English Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Hindi Class 9th English Medium</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/68650a4a06fceab0170511e0.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/68650a4a06fceab0170511e0.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452230/ggcrqrf60r2jqbawradt.jpg</image:loc>
+      <image:title>Hindi Class 9th English Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Hindi Class 9th English Medium</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Hindi Class 9th English Medium by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/686508d706fceab0170511b4</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451859/h9bel612sksafbp5lubz.jpg</image:loc>
+      <image:title>Akshar Bharti Marathi 10th English Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Akshar Bharti Marathi 10th English Medium</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/686508d706fceab0170511b4.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/686508d706fceab0170511b4.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451859/h9bel612sksafbp5lubz.jpg</image:loc>
+      <image:title>Akshar Bharti Marathi 10th English Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Akshar Bharti Marathi 10th English Medium</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Akshar Bharti Marathi 10th English Medium by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/68650a5d06fceab0170511e2</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452250/ymjascsrpoes13tygtil.jpg</image:loc>
+      <image:title>History and Polity Class 10th English Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for History and Polity Class 10th English Medium</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/68650a5d06fceab0170511e2.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/68650a5d06fceab0170511e2.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452250/ymjascsrpoes13tygtil.jpg</image:loc>
+      <image:title>History and Polity Class 10th English Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for History and Polity Class 10th English Medium</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>History and Polity Class 10th English Medium by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/6865099b06fceab0170511ca</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452055/ocebha3565a6jt1sgbdy.jpg</image:loc>
+      <image:title>Class 8 Civics Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 8 Civics Textbook in Hindi PDF</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/6865099b06fceab0170511ca.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/6865099b06fceab0170511ca.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452055/ocebha3565a6jt1sgbdy.jpg</image:loc>
+      <image:title>Class 8 Civics Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 8 Civics Textbook in Hindi PDF</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 8 Civics Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/6865092d06fceab0170511be</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451944/aivpptdyopgyx4rewha5.jpg</image:loc>
+      <image:title>Class 6 History Textbook in English PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 6 History Textbook in English PDF</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/6865092d06fceab0170511be.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/6865092d06fceab0170511be.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451944/aivpptdyopgyx4rewha5.jpg</image:loc>
+      <image:title>Class 6 History Textbook in English PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 6 History Textbook in English PDF</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 6 History Textbook in English PDF by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/686509ce06fceab0170511d0</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452107/i6n4zh2wxxzxy0akvvzp.jpg</image:loc>
+      <image:title>Class 8 History Textbook in Marathi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 8 History Textbook in Marathi PDF</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/686509ce06fceab0170511d0.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/686509ce06fceab0170511d0.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452107/i6n4zh2wxxzxy0akvvzp.jpg</image:loc>
+      <image:title>Class 8 History Textbook in Marathi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 8 History Textbook in Marathi PDF</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 8 History Textbook in Marathi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/686508df06fceab0170511b5</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451867/mbmlqwao8ncmfo7wxq00.jpg</image:loc>
+      <image:title>Class 10 English Marathi Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 10 English Marathi Medium</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/686508df06fceab0170511b5.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/686508df06fceab0170511b5.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451867/mbmlqwao8ncmfo7wxq00.jpg</image:loc>
+      <image:title>Class 10 English Marathi Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 10 English Marathi Medium</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 10 English Marathi Medium by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/6865090006fceab0170511b9</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451901/xmmdufhewmyrgvfs6xx4.jpg</image:loc>
+      <image:title>Class 6 Civics Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 6 Civics Textbook in Hindi PDF</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/6865090006fceab0170511b9.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/6865090006fceab0170511b9.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451901/xmmdufhewmyrgvfs6xx4.jpg</image:loc>
+      <image:title>Class 6 Civics Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 6 Civics Textbook in Hindi PDF</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 6 Civics Textbook in Hindi PDF by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/6865094506fceab0170511c1</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451970/r7sf5rpmpmnzslqhttry.jpg</image:loc>
+      <image:title>Class 7 Civics Textbook in English PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 7 Civics Textbook in English PDF</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/6865094506fceab0170511c1.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/6865094506fceab0170511c1.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751451970/r7sf5rpmpmnzslqhttry.jpg</image:loc>
+      <image:title>Class 7 Civics Textbook in English PDF by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Class 7 Civics Textbook in English PDF</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Class 7 Civics Textbook in English PDF by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/books/686509d406fceab0170511d1</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452113/dmksq1ckstcrocgiyzls.jpg</image:loc>
+      <image:title>Defense Studies Class 10 Marathi Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Defense Studies Class 10 Marathi Medium</image:caption>
+    </image:image>
+    <xhtml:link 
+      rel="alternate" 
+      hreflang="en" 
+      href="https://ebookaura.onrender.com/pdf-metadata/686509d406fceab0170511d1.html" 
+    />
+  </url>
+  <url>
+    <loc>https://ebookaura.onrender.com/pdf-metadata/686509d406fceab0170511d1.html</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751452113/dmksq1ckstcrocgiyzls.jpg</image:loc>
+      <image:title>Defense Studies Class 10 Marathi Medium by HSC Board of Secondary and Higher Secondary Education, Pune</image:title>
+      <image:caption>Cover image for Defense Studies Class 10 Marathi Medium</image:caption>
+    </image:image>
+    <news:news>
+      <news:publication>
+        <news:name>EbookAura</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2025-07-02</news:publication_date>
+      <news:title>Defense Studies Class 10 Marathi Medium by HSC Board of Secondary and Higher Secondary Education, Pune</news:title>
     </news:news>
   </url>
 </urlset>
