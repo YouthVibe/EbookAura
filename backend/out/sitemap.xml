@@ -21,41 +21,6 @@
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://ebookaura.onrender.com/books/686ac7512d6603f210ca125e</loc>
-    <lastmod>2025-07-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>1</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751828303/rythv8w34x7gtpqih6pu.jpg</image:loc>
-      <image:title>Write & Sell: The Ultimate Guide to Creating Ebooks That Make Money</image:title>
-      <image:caption>Cover image for Write & Sell: The Ultimate Guide to Creating Ebooks That Make Money</image:caption>
-    </image:image>
-    <xhtml:link 
-      rel="alternate" 
-      hreflang="en" 
-      href="https://ebookaura.onrender.com/pdf-metadata/686ac7512d6603f210ca125e.html" 
-    />
-  </url>
-  <url>
-    <loc>https://ebookaura.onrender.com/pdf-metadata/686ac7512d6603f210ca125e.html</loc>
-    <lastmod>2025-07-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>https://res.cloudinary.com/dn0r4gcig/image/upload/v1751828303/rythv8w34x7gtpqih6pu.jpg</image:loc>
-      <image:title>Write & Sell: The Ultimate Guide to Creating Ebooks That Make Money</image:title>
-      <image:caption>Cover image for Write & Sell: The Ultimate Guide to Creating Ebooks That Make Money</image:caption>
-    </image:image>
-    <news:news>
-      <news:publication>
-        <news:name>EbookAura</news:name>
-        <news:language>en</news:language>
-      </news:publication>
-      <news:publication_date>2025-07-02</news:publication_date>
-      <news:title>Write & Sell: The Ultimate Guide to Creating Ebooks That Make Money by eBookAura</news:title>
-    </news:news>
-  </url>
-  <url>
     <loc>https://ebookaura.onrender.com/bookmarks</loc>
     <lastmod>2025-07-02</lastmod>
     <changefreq>weekly</changefreq>
